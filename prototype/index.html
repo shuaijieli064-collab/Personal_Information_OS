@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SIGNAL — Prototype</title>
+<style>
+  :root{
+    --bg-0:#050505; --bg-1:#080808; --bg-2:#0b0b0b; --bg-3:#121214;
+    --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.14);
+    --text-1:#f5f6f7; --text-2:#9ba1a8; --text-3:#62666d;
+    --signal:#4d9dff; --signal-dim:rgba(77,157,255,.12);
+    --success:#3ecf8e; --warning:#f0b35e; --danger:#f26d6d;
+    --r-sm:6px; --r-md:10px; --r-lg:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg-0);color:var(--text-1);}
+  body{
+    font-family:"Inter","Geist",-apple-system,"SF Pro Text",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    font-size:15px; padding:48px 24px 120px;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  .mono{font-variant-numeric:tabular-nums; font-feature-settings:"tnum";}
+  .label{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); font-weight:500;}
+
+  /* top bar */
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:56px;}
+  .logo{font-weight:600;letter-spacing:.28em;font-size:14px;}
+  .logo span{color:var(--signal);}
+  .kbd{font-size:12px;color:var(--text-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;}
+
+  /* greeting */
+  h1{font-size:40px;line-height:1.1;letter-spacing:-.02em;font-weight:600;margin-bottom:8px;}
+  .sub{color:var(--text-2);margin-bottom:40px;}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:56px;}
+  .stat{background:var(--bg-1);padding:20px 24px;}
+  .stat .n{font-size:28px;font-weight:600;letter-spacing:-.02em;}
+  .stat .n.accent{color:var(--signal);}
+  .stat .n.warn{color:var(--warning);}
+  .stat .t{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-top:4px;}
+
+  section{margin-bottom:56px;}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;}
+  .sec-head .count{color:var(--text-3);font-size:12px;}
+
+  /* action item */
+  .action{display:flex;align-items:center;gap:16px;padding:16px 20px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--bg-1);margin-bottom:8px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--warning);flex:none;}
+  .action.overdue .dot{background:var(--danger);}
+  .action .what{flex:1;}
+  .action .due{font-size:12px;color:var(--text-3);}
+  .action .due b{color:var(--warning);font-weight:500;}
+  .action.overdue .due b{color:var(--danger);}
+
+  /* signal card */
+  .card{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--bg-1);padding:22px 24px;margin-bottom:10px;transition:border-color .12s ease, background .12s ease;}
+  .card:hover{border-color:var(--line-strong);background:var(--bg-2);}
+  .card .src{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .src-badge{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);font-weight:500;}
+  .score{font-size:20px;font-weight:600;color:var(--signal);}
+  .score.mid{color:var(--text-2);}
+  .card h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px;}
+  .card p.sum{color:var(--text-2);margin-bottom:14px;}
+  .tags{display:flex;gap:6px;margin-bottom:14px;}
+  .tag{font-size:12px;color:var(--text-2);border:1px solid var(--line);border-radius:var(--r-full);padding:2px 10px;}
+  .why{border-left:2px solid var(--signal-dim);padding:6px 0 6px 14px;margin-bottom:14px;}
+  .why .wl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
+  .why p{font-size:13px;color:var(--text-2);}
+  .meta{font-size:12px;color:var(--text-3);}
+
+  /* brief */
+  .brief{border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;background:linear-gradient(180deg,var(--bg-1),var(--bg-1));}
+  .brief p{color:var(--text-2);}
+  .brief p b{color:var(--text-1);font-weight:500;}
+
+  /* command center mock */
+  .cmd{border:1px solid var(--line-strong);border-radius:var(--r-lg);background:var(--bg-2);box-shadow:0 24px 80px rgba(0,0,0,.5);overflow:hidden;}
+  .cmd .input{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);color:var(--text-3);}
+  .cmd .list{padding:8px;}
+  .cmd .row{padding:10px 14px;border-radius:var(--r-sm);color:var(--text-2);font-size:14px;}
+  .cmd .row.active{background:var(--signal-dim);color:var(--text-1);}
+  .cmd .row .k{color:var(--text-3);font-size:12px;float:right;}
+
+  /* states */
+  .states{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .state{border:1px dashed var(--line);border-radius:var(--r-md);padding:18px 20px;}
+  .state .t{font-size:12px;color:var(--text-3);margin-bottom:6px;}
+  .state .c{color:var(--text-1);font-size:14px;}
+  .state .c.dim{color:var(--text-2);}
+
+  .footnote{margin-top:80px;color:var(--text-3);font-size:12px;text-align:center;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="logo">SIG<span>N</span>AL</div>
+    <div class="kbd">⌘ K</div>
+  </div>
+
+  <h1>Good morning.</h1>
+  <p class="sub">Your information has been filtered.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n mono">126</div><div class="t">New information</div></div>
+    <div class="stat"><div class="n mono accent">9</div><div class="t">Signals</div></div>
+    <div class="stat"><div class="n mono warn">3</div><div class="t">Action required</div></div>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="label">Needs your attention</span><span class="count">2</span></div>
+    <div class="action overdue"><span class="dot"></span><span class="what">Course design submission</span><span class="due">Due today · <b>18:00</b></span></div>
+    <div class="action"><span class="dot"></span><span class="what">AI Lab application</span><span class="due">Due tomorrow</span></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="label">For you</span><span class="count">4</span></div>
+
+    <div class="card">
+      <div class="src"><span class="src-badge">GitHub</span><span class="score mono">94</span></div>
+      <h3>Java 21 Virtual Threads in Practice</h3>
+      <p class="sum">A production-oriented walkthrough of virtual thread pinning, pooling pitfalls, and migration from platform threads.</p>
+      <div class="tags"><span class="tag">Java</span><span class="tag">Concurrency</span><span class="tag">JVM</span></div>
+      <div class="why"><div class="wl">Why this matters</div>
+        <p>You are currently learning <b>Java Backend</b>. This covers Virtual Threads &amp; concurrency — matches 3 of your interests.</p></div>
+      <div class="meta">27 min read · covered by 3 sources</div>
+    </div>
+
+    <div class="card">
+      <div class="src"><span class="src-badge">RSS · Architecture Digest</span><span class="score mono">91</span></div>
+      <h3>Inside the MCP Architecture</h3>
+      <p class="sum">How model context protocols standardize tool discovery, session handoff, and permission boundaries across clients.</p>
+      <div class="tags"><span class="tag">MCP</span><span class="tag">Agent</span></div>
+      <div class="why"><div class="wl">Why this matters</div>
+        <p>Aligned with your active goal <b>AI Agent</b>. You saved 5 related items recently.</p></div>
+      <div class="meta">12 min read</div>
+    </div>
+
+    <div class="card">
+      <div class="src"><span class="src-badge">Web · Hugging Face</span><span class="score mono mid">76</span></div>
+      <h3>New lightweight embedding model for local RAG</h3>
+      <p class="sum">A 400M-parameter embedding model that runs on CPU and rivals larger open baselines on Chinese benchmarks.</p>
+      <div class="tags"><span class="tag">RAG</span><span class="tag">Embedding</span></div>
+      <div class="meta">8 min read</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="label">AI brief</span></div>
+    <div class="brief">
+      <p>Today's information clusters around <b>Java backend</b>, <b>AI agents</b> and <b>research opportunities</b>.
+      You should handle the course-design deadline first; after that, the Virtual Threads piece best advances your current goal.
+      <b>117 of 126 items were filtered out.</b></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="label">Command center</span></div>
+    <div class="cmd">
+      <div class="input">Ask Signal…</div>
+      <div class="list">
+        <div class="row active">Summarize today <span class="k">↵</span></div>
+        <div class="row">What should I focus on?</div>
+        <div class="row">Find relevant Java content</div>
+        <div class="row">Show important GitHub updates</div>
+        <div class="row">What did I miss?</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="label">State vocabulary</span></div>
+    <div class="states">
+      <div class="state"><div class="t">Empty</div><div class="c">You're all clear. No important signals right now.</div></div>
+      <div class="state"><div class="t">Loading</div><div class="c dim">Filtering the noise…</div></div>
+      <div class="state"><div class="t">Error</div><div class="c">Something interrupted the signal.</div></div>
+      <div class="state"><div class="t">Feedback</div><div class="c dim">👍 Useful · 👎 Not useful · Save · Why?</div></div>
+    </div>
+  </section>
+
+  <div class="footnote">SIGNAL — Phase 1 static prototype · dark, cinematic, restrained accent · not final UI</div>
+</div>
+</body>
+</html>

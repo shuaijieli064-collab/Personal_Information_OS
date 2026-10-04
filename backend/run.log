@@ -1,0 +1,69 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-10-04T21:55:36.784+08:00  INFO 20776 --- [signal] [           main] com.signal.SignalApplication             : Starting SignalApplication v0.0.1-SNAPSHOT using Java 25.0.2 with PID 20776 (D:\A_Items\Personal_Information_OS\backend\target\signal-0.0.1-SNAPSHOT.jar started by lsj in D:\A_Items\Personal_Information_OS\backend)
+2026-10-04T21:55:36.788+08:00  INFO 20776 --- [signal] [           main] com.signal.SignalApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T21:55:37.600+08:00  INFO 20776 --- [signal] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-10-04T21:55:37.602+08:00  INFO 20776 --- [signal] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T21:55:37.710+08:00  INFO 20776 --- [signal] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 99 ms. Found 12 JPA repository interfaces.
+2026-10-04T21:55:37.746+08:00  INFO 20776 --- [signal] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-10-04T21:55:37.748+08:00  INFO 20776 --- [signal] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-10-04T21:55:37.758+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.auth.repository.RefreshTokenRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.758+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.goal.repository.GoalRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.759+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.ingestion.repository.InformationRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.759+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.ingestion.repository.SourceItemRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.759+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.ingestion.repository.SourceRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.760+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.interest.repository.InterestRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.760+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.signal.repository.SignalRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.760+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.signal.repository.UserFeedbackRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.761+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.skill.repository.SkillRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.762+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.understanding.repository.InformationUnderstandingRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.762+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.user.repository.UserProfileRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.762+08:00  INFO 20776 --- [signal] [           main] .RepositoryConfigurationExtensionSupport : Spring Data Redis - Could not safely identify store assignment for repository candidate interface com.signal.user.repository.UserRepository; If you want this repository to be a Redis repository, consider annotating your entities with one of these annotations: org.springframework.data.redis.core.RedisHash (preferred), or consider extending one of the following types with your repository: org.springframework.data.keyvalue.repository.KeyValueRepository
+2026-10-04T21:55:37.762+08:00  INFO 20776 --- [signal] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 7 ms. Found 0 Redis repository interfaces.
+2026-10-04T21:55:38.394+08:00  INFO 20776 --- [signal] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-04T21:55:38.416+08:00  INFO 20776 --- [signal] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-04T21:55:38.417+08:00  INFO 20776 --- [signal] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-04T21:55:38.460+08:00  INFO 20776 --- [signal] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1607 ms
+2026-10-04T21:55:38.863+08:00  INFO 20776 --- [signal] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-04T21:55:39.033+08:00  INFO 20776 --- [signal] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@1c2096c6
+2026-10-04T21:55:39.034+08:00  INFO 20776 --- [signal] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-04T21:55:39.052+08:00  INFO 20776 --- [signal] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:5432/signal (PostgreSQL 16.15)
+2026-10-04T21:55:39.125+08:00  INFO 20776 --- [signal] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 11 migrations (execution time 00:00.029s)
+2026-10-04T21:55:39.158+08:00  INFO 20776 --- [signal] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 11
+2026-10-04T21:55:39.165+08:00  INFO 20776 --- [signal] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T21:55:39.261+08:00  INFO 20776 --- [signal] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-04T21:55:39.305+08:00  INFO 20776 --- [signal] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-10-04T21:55:39.623+08:00  INFO 20776 --- [signal] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T21:55:39.688+08:00  INFO 20776 --- [signal] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:postgresql://localhost:5432/signal]
+	Database driver: PostgreSQL JDBC Driver
+	Database dialect: PostgreSQLDialect
+	Database version: 16.15
+	Default catalog/schema: signal/public
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T21:55:40.667+08:00  INFO 20776 --- [signal] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T21:55:40.719+08:00  INFO 20776 --- [signal] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T21:55:40.778+08:00  INFO 20776 --- [signal] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-04T21:55:41.367+08:00  WARN 20776 --- [signal] [           main] .s.a.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 96dcb07d-84f4-4af7-bed7-ab4823499b9f
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-10-04T21:55:41.376+08:00  INFO 20776 --- [signal] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-10-04T21:55:41.974+08:00  INFO 20776 --- [signal] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-10-04T21:55:42.370+08:00  INFO 20776 --- [signal] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-10-04T21:55:42.380+08:00  INFO 20776 --- [signal] [           main] com.signal.SignalApplication             : Started SignalApplication in 5.96 seconds (process running for 6.359)

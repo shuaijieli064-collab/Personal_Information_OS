@@ -1,0 +1,61 @@
+/* SIGNAL design tokens — single source of truth.
+   Consumed by Tailwind (via @theme) in Phase 2. Do not hardcode colors elsewhere. */
+
+:root {
+  /* Surfaces (dark-first) */
+  --bg-0: #050505;
+  --bg-1: #080808;
+  --bg-2: #0b0b0b;
+  --bg-3: #121214;
+
+  /* Lines */
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --text-1: #f5f6f7;
+  --text-2: #9ba1a8;
+  --text-3: #62666d;
+
+  /* Signal accent — the only accent */
+  --signal: #4d9dff;
+  --signal-dim: rgba(77, 157, 255, 0.12);
+
+  /* Semantic */
+  --success: #3ecf8e;
+  --warning: #f0b35e;
+  --danger: #f26d6d;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-full: 9999px;
+
+  /* Typography */
+  --font-sans: "Inter", "Geist", -apple-system, "SF Pro Text", system-ui,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  /* Motion */
+  --dur-instant: 120ms;
+  --dur-fast: 200ms;
+  --dur-base: 280ms;
+  --dur-slow: 500ms;
+  --dur-cinematic: 1100ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasize: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Light mode is defined but dark is the default cinematic target */
+[data-theme="light"] {
+  --bg-0: #fafafa;
+  --bg-1: #ffffff;
+  --bg-2: #ffffff;
+  --bg-3: #f0f0f1;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.14);
+  --text-1: #0a0a0b;
+  --text-2: #4b5563;
+  --text-3: #8a8f98;
+}

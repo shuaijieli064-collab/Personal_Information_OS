@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /** Transactional DB writes only — no network here. */
 @Service
@@ -32,6 +34,7 @@ public class IngestionPersister {
     @Transactional
     public IngestionService.SyncResult persist(Source source, List<NormalizedItem> list) {
         int created = 0, updated = 0, duplicates = 0, failed = 0;
+        List<UUID> createdIds = new ArrayList<>();
         for (NormalizedItem it : list) {
             try {
                 String key = it.externalId() != null && !it.externalId().isBlank()
@@ -77,13 +80,15 @@ public class IngestionPersister {
                 infoRow.setContentHash(contentHash);
                 infoRow.setLanguage(it.language());
                 infoRow.setUpdatedAt(Instant.now());
-                info.save(infoRow);
-                if (!isNew) updated++;
+                infoRow = info.save(infoRow);
+                if (isNew) createdIds.add(infoRow.getId());
+                else updated++;
             } catch (Exception e) {
                 failed++;
                 log.warn("Item persist failed source={} err={}", source.getId(), e.toString());
             }
         }
-        return new IngestionService.SyncResult(source.getId(), list.size(), created, updated, duplicates, failed);
+        return new IngestionService.SyncResult(source.getId(), list.size(), created, updated,
+                duplicates, failed, createdIds);
     }
 }

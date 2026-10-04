@@ -30,10 +30,14 @@ public class JwtService {
         this.refreshExpirySec = refreshExpirySec;
     }
 
+    private static final String TYPE_ACCESS = "access";
+    private static final String TYPE_REFRESH = "refresh";
+
     public String generateAccessToken(UUID userId) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("typ", TYPE_ACCESS)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + accessExpirySec * 1000))
                 .id(UUID.randomUUID().toString())
@@ -46,6 +50,7 @@ public class JwtService {
         Date now = new Date();
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("typ", TYPE_REFRESH)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + refreshExpirySec * 1000))
@@ -53,14 +58,39 @@ public class JwtService {
                 .compact();
     }
 
-    public UUID parseUserId(String token) {
-        Claims c = Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token).getPayload();
+    /**
+     * Parses a token and rejects it unless it is an ACCESS token.
+     * A refresh token must never authenticate a protected endpoint.
+     */
+    public UUID parseAccessToken(String token) {
+        return parseTyped(token, TYPE_ACCESS);
+    }
+
+    /** Parses a token and rejects it unless it is a REFRESH token. */
+    public UUID parseRefreshToken(String token) {
+        return parseTyped(token, TYPE_REFRESH);
+    }
+
+    private UUID parseTyped(String token, String expectedType) {
+        Claims c = parse(token);
+        String typ = c.get("typ", String.class);
+        if (!expectedType.equals(typ)) {
+            throw new io.jsonwebtoken.JwtException("wrong token type: expected " + expectedType);
+        }
         return UUID.fromString(c.getSubject());
     }
 
-    public String jti(String token) {
+    private Claims parse(String token) {
         return Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token).getPayload().getId();
+                .parseSignedClaims(token).getPayload();
+    }
+
+    public String jti(String token) {
+        return parse(token).getId();
+    }
+
+    /** Configured refresh lifetime in seconds — keeps DB expiry in sync with the JWT. */
+    public long refreshExpirySeconds() {
+        return refreshExpirySec;
     }
 }

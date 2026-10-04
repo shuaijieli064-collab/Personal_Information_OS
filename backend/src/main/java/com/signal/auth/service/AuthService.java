@@ -12,6 +12,8 @@ import com.signal.user.entity.User;
 import com.signal.user.entity.UserProfile;
 import com.signal.user.repository.UserProfileRepository;
 import com.signal.user.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ import java.util.HexFormat;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository users;
     private final UserProfileRepository profiles;
@@ -82,6 +86,8 @@ public class AuthService {
     public AuthResponse refresh(String rawToken) {
         String jti;
         try {
+            // Enforce token type — an ACCESS token must not be accepted here either.
+            jwt.parseRefreshToken(rawToken);
             jti = jwt.jti(rawToken);
         } catch (Exception e) {
             throw new BadCredentialsException("invalid refresh token");
@@ -105,11 +111,15 @@ public class AuthService {
     @Transactional
     public void logout(String rawToken) {
         try {
+            jwt.parseRefreshToken(rawToken);
             refreshTokens.findByJti(jwt.jti(rawToken)).ifPresent(rt -> {
                 rt.setRevokedAt(Instant.now());
                 refreshTokens.save(rt);
             });
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // Not a refresh token, or already garbage — nothing to revoke either way.
+            log.debug("Logout revocation skipped: {}", e.getMessage());
+        }
     }
 
     private AuthResponse issueTokens(User u) {
@@ -120,8 +130,7 @@ public class AuthService {
         rt.setUserId(u.getId());
         rt.setJti(jwt.jti(refresh));
         rt.setTokenHash(sha256(refresh));
-        rt.setExpiresAt(jwt.parseUserId(refresh) != null
-                ? java.time.Instant.now().plusSeconds(604800) : Instant.now());
+        rt.setExpiresAt(Instant.now().plusSeconds(jwt.refreshExpirySeconds()));
         refreshTokens.save(rt);
 
         return new AuthResponse(access, refresh,

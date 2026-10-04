@@ -1,0 +1,210 @@
+{
+  "Metadata": {
+    "title": "SIGNAL — 个人信息操作系统",
+    "description": "信息无限，注意力有限。"
+  },
+  "Home": {
+    "line1": "信息无限。",
+    "line2": "注意力有限。",
+    "subtitle": "第二阶段基础。产品本体将在后续阶段落地 —— 此处先呈现讲述「信息 → 信号」的动效语言。",
+    "cta": "进入动效实验室 →"
+  },
+  "Login": {
+    "title": "欢迎回来。",
+    "subtitle": "你的信息已被过滤。",
+    "email": "邮箱",
+    "password": "密码",
+    "submit": "登录",
+    "submitting": "登录中…",
+    "noAccount": "还没有账号？",
+    "createAccount": "创建账号",
+    "fallbackError": "信号被中断了。"
+  },
+  "Register": {
+    "title": "创建你的信号。",
+    "subtitle": "从对你真正重要的事开始。",
+    "email": "邮箱",
+    "password": "密码",
+    "confirm": "确认密码",
+    "submit": "创建账号",
+    "submitting": "创建中…",
+    "hasAccount": "已经有账号了？",
+    "signIn": "登录",
+    "errShort": "密码至少需要 8 个字符。",
+    "errMismatch": "两次输入的密码不一致。",
+    "fallbackError": "信号被中断了。"
+  },
+  "Onboarding": {
+    "title": "你的信号已就绪。",
+    "subtitle": "帮助 SIGNAL 理解你的背景 —— 这些信息随时可以修改。",
+    "goalLabel": "你正在朝什么目标努力？",
+    "goalPlaceholder": "例如：Java 后端 + AI Agent",
+    "interestsLabel": "兴趣（用逗号分隔）",
+    "interestsPlaceholder": "例如：AI, Spring, RAG",
+    "skillsLabel": "技能（用逗号分隔）",
+    "skillsPlaceholder": "例如：Java, Python",
+    "finish": "完成设置",
+    "done": "你的信号已就绪。"
+  },
+  "Today": {
+    "greeting": "早上好。",
+    "subtitle": "你的信息已被过滤。",
+    "statNew": "新增信息",
+    "statSignals": "信号",
+    "statAction": "需要行动",
+    "emptyTitle": "暂时还没有信号。",
+    "emptyBody": "连接信息源，让 SIGNAL 为你过滤噪音。",
+    "navSources": "信息源",
+    "navProfile": "个人资料",
+    "loadFailed": "加载失败"
+  },
+  "Inbox": {
+    "title": "收件箱",
+    "loading": "正在收集…",
+    "count": "{count} 条信息",
+    "emptyTitle": "你的信号很安静。",
+    "emptyBody": "连接一个信息源，开始收集信息。",
+    "addSource": "添加信息源",
+    "loadFailed": "收件箱加载失败"
+  },
+  "Detail": {
+    "loading": "读取中…",
+    "notFound": "未找到该条信息",
+    "noContent": "未提取到内容。",
+    "openOriginal": "打开原文 ↗",
+    "back": "← 返回收件箱"
+  },
+  "Sources": {
+    "title": "信息源",
+    "subtitle": "连接你真正在乎的信息。",
+    "namePlaceholder": "名称（例如 OpenAI Blog）",
+    "urlPlaceholder": "https://…",
+    "add": "添加",
+    "loading": "正在读取你的信息源…",
+    "emptyTitle": "你的信号很安静。",
+    "emptyBody": "添加一个信息源，开始收集信息。",
+    "sync": "同步",
+    "syncing": "同步中…",
+    "delete": "删除",
+    "synced": "同步于 {time}",
+    "openInbox": "打开收件箱 →",
+    "errLoad": "信息源加载失败",
+    "errAdd": "无法添加该信息源",
+    "errSync": "同步失败"
+  },
+  "Profile": {
+    "title": "个人资料",
+    "displayName": "显示名称",
+    "bio": "个人简介",
+    "language": "语言",
+    "timezone": "时区",
+    "save": "保存",
+    "saved": "已保存。"
+  },
+  "Security": {
+    "title": "安全",
+    "changePassword": "修改密码",
+    "later": "将在后续阶段提供。",
+    "logout": "退出登录"
+  },
+  "Intro": {
+    "title": "互联网从不停歇。",
+    "processing": "处理中",
+    "signals": "9 条信号",
+    "outOf": "来自 126 条信息。",
+    "greeting": "早上好。",
+    "subtitle": "你的信息已被过滤。",
+    "enter": "进入 SIGNAL →"
+  },
+  "Motion": {
+    "lab": "SIGNAL / 动效实验室",
+    "h1": "动效，而非装饰。",
+    "intro": "下方每段动画都在表达 信息 → 处理 → 过滤 → 信号 → 行动。切换 <reduced>prefers-reduced-motion</reduced> 可查看无障碍降级效果。",
+    "section1": "信息洪水",
+    "section2": "降噪 · 126 → 87 → 43 → 19 → 9",
+    "section3": "信号涌现",
+    "section4": "信号评分",
+    "section5": "AI 处理",
+    "section6": "指令中心",
+    "section7": "页面转场",
+    "section8": "信号宇宙",
+    "noiseFiltering": "正在过滤的信息",
+    "noiseSignals": "值得关注的信号",
+    "statNew": "条新信息",
+    "statSignals": "条值得关注的信号",
+    "statAction": "条需要行动",
+    "cardWhy": "为何重要 —— 与你当前的学习路径一致。",
+    "cardJava": "Java 虚拟线程实战",
+    "cardMcp": "深入 MCP 架构",
+    "cardRag": "本地 RAG 向量模型",
+    "scoreFactors": "相关性 · 目标对齐 · 质量 · 紧迫度",
+    "pressK": "按 ⌘K 打开",
+    "ask": "问 Signal…",
+    "q1": "今天我该专注什么？",
+    "q2": "我错过了什么？",
+    "q3": "帮我找有用的 Java 资源",
+    "transition": "页面以淡入 + blur(8px) + 上移 10px 进入，280ms，ease-out。除开场的电影化序列外，没有幻灯片，也没有镜头运动。"
+  },
+  "Processing": {
+    "p1": "正在读取信息源…",
+    "p2": "正在寻找关联…",
+    "p3": "正在过滤噪音…",
+    "p4": "正在排序相关性…",
+    "p5": "正在构建你的信号…",
+    "p6": "就绪。"
+  },
+  "Flow": {
+    "github": "GitHub",
+    "rss": "RSS",
+    "web": "网页",
+    "news": "新闻",
+    "video": "视频",
+    "research": "研究",
+    "email": "邮件",
+    "tools": "工具"
+  },
+  "LocaleSwitch": {
+    "label": "切换语言",
+    "zh": "中文",
+    "en": "English"
+  },
+  "Enums": {
+    "infoType": {
+      "ARTICLE": "文章",
+      "POST": "帖子",
+      "RELEASE": "发布",
+      "REPO": "仓库",
+      "ISSUE": "议题",
+      "VIDEO": "视频",
+      "EMAIL": "邮件",
+      "FILE": "文件"
+    },
+    "sourceType": {
+      "RSS": "RSS",
+      "GITHUB": "GitHub",
+      "URL": "网页",
+      "WEB": "网页",
+      "IMPORT": "导入",
+      "EMAIL": "邮件",
+      "FILE": "文件"
+    },
+    "sourceStatus": {
+      "ACTIVE": "运行中",
+      "PAUSED": "已暂停",
+      "ERROR": "出错",
+      "DISABLED": "已停用"
+    },
+    "classification": {
+      "NEWS": "新闻",
+      "TECHNOLOGY": "技术",
+      "RESEARCH": "研究",
+      "PRODUCT": "产品",
+      "TUTORIAL": "教程",
+      "RELEASE": "发布",
+      "JOB": "招聘",
+      "EVENT": "活动",
+      "ANNOUNCEMENT": "公告",
+      "OTHER": "其他"
+    }
+  }
+}

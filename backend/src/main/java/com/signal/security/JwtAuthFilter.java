@@ -32,13 +32,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             try {
-                UUID userId = jwtService.parseUserId(header.substring(7));
+                // Only ACCESS tokens may authenticate a request; a refresh token is rejected here.
+                UUID userId = jwtService.parseAccessToken(header.substring(7));
                 var auth = new UsernamePasswordAuthenticationToken(
                         userId, null, AuthorityUtils.NO_AUTHORITIES);
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (Exception ignored) {
-                // invalid token → stay unauthenticated; security rules decide
+            } catch (Exception e) {
+                // invalid/expired/wrong-type token → stay unauthenticated; security rules decide
+                logger.debug("Rejected bearer token: " + e.getMessage());
             }
         }
         chain.doFilter(request, response);

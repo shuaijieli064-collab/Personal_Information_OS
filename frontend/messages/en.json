@@ -1,0 +1,210 @@
+{
+  "Metadata": {
+    "title": "SIGNAL — Personal Information OS",
+    "description": "Information is infinite. Attention is not."
+  },
+  "Home": {
+    "line1": "Information is infinite.",
+    "line2": "Attention is not.",
+    "subtitle": "Phase 2 foundation. The product itself lands in later phases — for now, the motion language that tells the Information → Signal story.",
+    "cta": "Enter Motion Laboratory →"
+  },
+  "Login": {
+    "title": "Welcome back.",
+    "subtitle": "Your information has been filtered.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create account",
+    "fallbackError": "Something interrupted the signal."
+  },
+  "Register": {
+    "title": "Create your signal.",
+    "subtitle": "Start with what matters to you.",
+    "email": "Email",
+    "password": "Password",
+    "confirm": "Confirm password",
+    "submit": "Create account",
+    "submitting": "Creating…",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "errShort": "Password must be at least 8 characters.",
+    "errMismatch": "Passwords do not match.",
+    "fallbackError": "Something interrupted the signal."
+  },
+  "Onboarding": {
+    "title": "Your Signal is ready.",
+    "subtitle": "Help SIGNAL understand your context — you can change this anytime.",
+    "goalLabel": "What are you working toward?",
+    "goalPlaceholder": "e.g. Java backend + AI Agent",
+    "interestsLabel": "Interests (comma separated)",
+    "interestsPlaceholder": "e.g. AI, Spring, RAG",
+    "skillsLabel": "Skills (comma separated)",
+    "skillsPlaceholder": "e.g. Java, Python",
+    "finish": "Finish setup",
+    "done": "Your Signal is ready."
+  },
+  "Today": {
+    "greeting": "Good morning.",
+    "subtitle": "Your information has been filtered.",
+    "statNew": "New information",
+    "statSignals": "Signals",
+    "statAction": "Action required",
+    "emptyTitle": "No signals yet.",
+    "emptyBody": "Connect sources and let SIGNAL filter the noise.",
+    "navSources": "Sources",
+    "navProfile": "Profile",
+    "loadFailed": "Failed"
+  },
+  "Inbox": {
+    "title": "Inbox",
+    "loading": "Collecting…",
+    "count": "{count, plural, one {# information item} other {# information items}}",
+    "emptyTitle": "Your signal is quiet.",
+    "emptyBody": "Connect a source to start collecting information.",
+    "addSource": "Add Source",
+    "loadFailed": "Failed to load inbox"
+  },
+  "Detail": {
+    "loading": "Reading…",
+    "notFound": "Not found",
+    "noContent": "No content extracted.",
+    "openOriginal": "Open original ↗",
+    "back": "← Back to inbox"
+  },
+  "Sources": {
+    "title": "Sources",
+    "subtitle": "Connect the information you care about.",
+    "namePlaceholder": "Name (e.g. OpenAI Blog)",
+    "urlPlaceholder": "https://…",
+    "add": "Add",
+    "loading": "Reading your sources…",
+    "emptyTitle": "Your signal is quiet.",
+    "emptyBody": "Add a source to start collecting information.",
+    "sync": "Sync",
+    "syncing": "Syncing…",
+    "delete": "Delete",
+    "synced": "synced {time}",
+    "openInbox": "Open inbox →",
+    "errLoad": "Failed to load sources",
+    "errAdd": "Could not add source",
+    "errSync": "Sync failed"
+  },
+  "Profile": {
+    "title": "Profile",
+    "displayName": "Display name",
+    "bio": "Bio",
+    "language": "Language",
+    "timezone": "Timezone",
+    "save": "Save",
+    "saved": "Saved."
+  },
+  "Security": {
+    "title": "Security",
+    "changePassword": "Change password",
+    "later": "Available in a later phase.",
+    "logout": "Log out"
+  },
+  "Intro": {
+    "title": "THE INTERNET NEVER STOPS.",
+    "processing": "Processing",
+    "signals": "9 SIGNALS",
+    "outOf": "out of 126.",
+    "greeting": "Good morning.",
+    "subtitle": "Your information has been filtered.",
+    "enter": "Enter Signal →"
+  },
+  "Motion": {
+    "lab": "SIGNAL / Motion Laboratory",
+    "h1": "Motion, not decoration.",
+    "intro": "Every animation below expresses Information → Processing → Filtering → Signal → Action. Toggle <reduced>prefers-reduced-motion</reduced> to see the accessible fallback.",
+    "section1": "Information Flood",
+    "section2": "Noise Reduction · 126 → 87 → 43 → 19 → 9",
+    "section3": "Signal Emergence",
+    "section4": "Signal Score",
+    "section5": "AI Processing",
+    "section6": "Command Center",
+    "section7": "Page Transition",
+    "section8": "Signal Universe",
+    "noiseFiltering": "information being filtered",
+    "noiseSignals": "signals worth attention",
+    "statNew": "new information",
+    "statSignals": "signals worth attention",
+    "statAction": "require action",
+    "cardWhy": "Why this matters — aligned with your current learning path.",
+    "cardJava": "Java Virtual Threads in Practice",
+    "cardMcp": "Inside the MCP Architecture",
+    "cardRag": "Local RAG embedding model",
+    "scoreFactors": "Relevance · Goal alignment · Quality · Urgency",
+    "pressK": "Press ⌘K to open",
+    "ask": "Ask Signal…",
+    "q1": "What should I focus on today?",
+    "q2": "What did I miss?",
+    "q3": "Find useful Java resources",
+    "transition": "Pages enter with fade + blur(8px) + 10px rise, 280ms, ease-out. No slide-decks, no camera moves outside the cinematic intro."
+  },
+  "Processing": {
+    "p1": "Reading your sources…",
+    "p2": "Finding connections…",
+    "p3": "Filtering the noise…",
+    "p4": "Ranking relevance…",
+    "p5": "Building your signal…",
+    "p6": "Ready."
+  },
+  "Flow": {
+    "github": "GitHub",
+    "rss": "RSS",
+    "web": "Web",
+    "news": "News",
+    "video": "Video",
+    "research": "Research",
+    "email": "Email",
+    "tools": "Tools"
+  },
+  "LocaleSwitch": {
+    "label": "Switch language",
+    "zh": "中文",
+    "en": "English"
+  },
+  "Enums": {
+    "infoType": {
+      "ARTICLE": "Article",
+      "POST": "Post",
+      "RELEASE": "Release",
+      "REPO": "Repo",
+      "ISSUE": "Issue",
+      "VIDEO": "Video",
+      "EMAIL": "Email",
+      "FILE": "File"
+    },
+    "sourceType": {
+      "RSS": "RSS",
+      "GITHUB": "GitHub",
+      "URL": "Web",
+      "WEB": "Web",
+      "IMPORT": "Import",
+      "EMAIL": "Email",
+      "FILE": "File"
+    },
+    "sourceStatus": {
+      "ACTIVE": "Active",
+      "PAUSED": "Paused",
+      "ERROR": "Error",
+      "DISABLED": "Disabled"
+    },
+    "classification": {
+      "NEWS": "News",
+      "TECHNOLOGY": "Technology",
+      "RESEARCH": "Research",
+      "PRODUCT": "Product",
+      "TUTORIAL": "Tutorial",
+      "RELEASE": "Release",
+      "JOB": "Job",
+      "EVENT": "Event",
+      "ANNOUNCEMENT": "Announcement",
+      "OTHER": "Other"
+    }
+  }
+}

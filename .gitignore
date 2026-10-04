@@ -1,0 +1,32 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+**/.env
+!**/.env.example
+
+# Logs
+*.log
+*.log.*
+logs/
+
+# Local tooling state
+.gstack/
+
+# Build output
+**/target/
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/dist/
+
+# Coverage / tooling
+**/coverage/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

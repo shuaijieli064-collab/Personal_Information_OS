@@ -1,7 +1,7 @@
 package com.signal.understanding.controller;
 
 import com.signal.common.ApiResponse;
-import com.signal.understanding.entity.InformationUnderstanding;
+import com.signal.understanding.dto.UnderstandingResponse;
 import com.signal.understanding.service.InformationUnderstandingService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +19,13 @@ public class UnderstandingController {
     }
 
     @GetMapping
-    public ApiResponse<InformationUnderstanding> get(@PathVariable UUID id) {
-        return ApiResponse.ok(service.get(userId(), id));
+    public ApiResponse<UnderstandingResponse> get(@PathVariable UUID id) {
+        return ApiResponse.ok(UnderstandingResponse.from(service.get(userId(), id)));
     }
 
     @PostMapping
-    public ApiResponse<InformationUnderstanding> process(@PathVariable UUID id) {
-        return ApiResponse.ok(service.process(userId(), id));
+    public ApiResponse<UnderstandingResponse> process(@PathVariable UUID id) {
+        return ApiResponse.ok(UnderstandingResponse.from(service.process(userId(), id)));
     }
 
     private UUID userId() {

@@ -6,8 +6,84 @@
   "Home": {
     "line1": "信息无限。",
     "line2": "注意力有限。",
-    "subtitle": "第二阶段基础。产品本体将在后续阶段落地 —— 此处先呈现讲述「信息 → 信号」的动效语言。",
-    "cta": "进入动效实验室 →"
+    "subtitle": "把散落的信息源压缩成少数高价值的信号，再把它们变成行动。",
+    "ctaAuthed": "进入今日 →",
+    "ctaGuest": "登录 / 开始使用 →",
+    "replay": "重播",
+    "act1Title": "互联网从不停歇。",
+    "act1Sub": "你的信息也一样。",
+    "act2Title": "AI 正在处理",
+    "act3Title": "9 个信号",
+    "act3Sub": "剩下的，才值得你注意。",
+    "act4Title": "你的个人智能系统。",
+    "act4Sub": "SIGNAL 把混乱变成决策。"
+  },
+  "Nav": {
+    "label": "主导航",
+    "menu": "菜单",
+    "menuLabel": "菜单导航",
+    "today": "今日",
+    "inbox": "收件箱",
+    "discover": "发现",
+    "knowledge": "知识",
+    "ai": "AI",
+    "activity": "动态",
+    "sources": "信息源",
+    "settings": "设置",
+    "me": "我的"
+  },
+  "SignalCard": {
+    "highImpact": "🔥 高影响",
+    "whyItMatters": "为什么重要",
+    "related": "相关",
+    "sources": "个来源",
+    "read": "阅读",
+    "save": "保存",
+    "action": "行动"
+  },
+  "Score": {
+    "why": "为什么是 {score}？",
+    "impact": "影响",
+    "relevance": "相关度",
+    "urgency": "紧迫度",
+    "confidence": "置信度"
+  },
+  "SignalTimeline": {
+    "score": "信号分"
+  },
+  "SourceCard": {
+    "connected": "已连接",
+    "syncing": "同步中",
+    "lastSync": "上次同步",
+    "sync": "同步",
+    "itemsCollected": "已收集"
+  },
+  "InboxItem": {
+    "keepHint": "向右拖动保留",
+    "ignoreHint": "向左拖动忽略",
+    "keep": "保留",
+    "ignore": "忽略",
+    "createSignal": "生成信号"
+  },
+  "Command": {
+    "label": "命令中心",
+    "placeholder": "问 SIGNAL 下一步做什么…",
+    "summarizeWeek": "总结我这一周",
+    "learningGaps": "找到学习缺口",
+    "planTasks": "规划今天的任务",
+    "explainSignal": "解释这个信号",
+    "processing": "SIGNAL 正在处理…",
+    "unavailable": "AI 网关将在后续阶段接入。"
+  },
+  "NotFound": {
+    "body": "这条路径没有信号。",
+    "backHome": "回到首页"
+  },
+  "Error": {
+    "title": "出错了。",
+    "body": "信号在传输中中断，请重试。",
+    "retry": "重试",
+    "backHome": "回到今日"
   },
   "Login": {
     "title": "欢迎回来。",
@@ -44,10 +120,16 @@
     "skillsLabel": "技能（用逗号分隔）",
     "skillsPlaceholder": "例如：Java, Python",
     "finish": "完成设置",
-    "done": "你的信号已就绪。"
+    "done": "你的信号已就绪。",
+    "skip": "跳过",
+    "submitting": "保存中…",
+    "errSubmit": "部分信息未能保存，可稍后在设置中补充。"
   },
   "Today": {
     "greeting": "早上好。",
+    "morning": "早上好。",
+    "afternoon": "下午好。",
+    "evening": "晚上好。",
     "subtitle": "你的信息已被过滤。",
     "statNew": "新增信息",
     "statSignals": "信号",
@@ -56,7 +138,29 @@
     "emptyBody": "连接信息源，让 SIGNAL 为你过滤噪音。",
     "navSources": "信息源",
     "navProfile": "个人资料",
-    "loadFailed": "加载失败"
+    "loadFailed": "加载失败",
+    "refresh": "刷新",
+    "save": "保存",
+    "important": "标记重要",
+    "ignore": "忽略",
+    "statusSaved": "已保存",
+    "statusImportant": "重要",
+    "statusArchived": "已归档",
+    "actionFailed": "操作失败",
+    "youHave": "你有",
+    "newInformation": "条新信息",
+    "aiCompressed": "AI 已压缩",
+    "signals": "个信号",
+    "topSignals": "热门信号",
+    "actionsTitle": "今日行动",
+    "actionsPending": "个行动待处理",
+    "actionsEmpty": "没有需要行动的信号。",
+    "actionsEmptyBody": "当新信号需要你时，行动会出现在这里。",
+    "knowledgeTitle": "知识增长",
+    "knowledgeSub": "信息 → 信号的压缩，就是你的知识增长。",
+    "chartNew": "新信息",
+    "chartSignals": "信号",
+    "chartActions": "行动"
   },
   "Inbox": {
     "title": "收件箱",
@@ -65,7 +169,16 @@
     "emptyTitle": "你的信号很安静。",
     "emptyBody": "连接一个信息源，开始收集信息。",
     "addSource": "添加信息源",
-    "loadFailed": "收件箱加载失败"
+    "loadFailed": "收件箱加载失败",
+    "loadMore": "加载更多",
+    "loadingMore": "加载中…",
+    "sectionReview": "需要处理",
+    "sectionFiltered": "AI 过滤",
+    "sectionSignals": "已生成信号",
+    "filteredCount": "{count} 条已忽略",
+    "filteredEmpty": "被 AI 判定为噪音的条目会出现在这里。",
+    "signalsEmpty": "今天的信号将在这里生成。",
+    "localOnly": "已本地忽略 {count} 条（归档将在后续版本同步到后端）。"
   },
   "Detail": {
     "loading": "读取中…",
@@ -77,6 +190,7 @@
   "Sources": {
     "title": "信息源",
     "subtitle": "连接你真正在乎的信息。",
+    "addSource": "添加信息源",
     "namePlaceholder": "名称（例如 OpenAI Blog）",
     "urlPlaceholder": "https://…",
     "add": "添加",
@@ -85,12 +199,61 @@
     "emptyBody": "添加一个信息源，开始收集信息。",
     "sync": "同步",
     "syncing": "同步中…",
+    "adding": "添加中…",
     "delete": "删除",
+    "confirmDelete": "确认删除",
+    "deleting": "删除中…",
+    "cancel": "取消",
     "synced": "同步于 {time}",
     "openInbox": "打开收件箱 →",
     "errLoad": "信息源加载失败",
     "errAdd": "无法添加该信息源",
-    "errSync": "同步失败"
+    "errSync": "同步失败",
+    "errDelete": "删除失败",
+    "syncResult": "同步完成：获取 {fetched} 条，新增 {created}，重复 {duplicates}，失败 {failed}",
+    "added": "信息源已添加。"
+  },
+  "Discover": {
+    "title": "发现",
+    "basedOn": "基于你的目标",
+    "whyRecommended": "为什么推荐",
+    "loadFailed": "推荐加载失败"
+  },
+  "Knowledge": {
+    "title": "知识",
+    "subtitle": "你的信号正在织成一张知识图谱。",
+    "loading": "正在构建图谱…",
+    "emptyTitle": "图谱还没有节点。",
+    "emptyBody": "信号出现后，知识图谱会从这里生长。",
+    "graphLabel": "信号知识图谱",
+    "phase6": "完整图谱引擎（关系挖掘、聚类、交互布局）将在 Phase 6 接入；当前展示今日信号的真实节点。"
+  },
+  "AI": {
+    "title": "AI",
+    "subtitle": "命令中心 —— 问 SIGNAL 下一步该做什么。",
+    "askPlaceholder": "Ask SIGNAL…",
+    "summarizeWeek": "总结我这一周",
+    "learningGaps": "找到学习缺口",
+    "planTasks": "规划今天的任务",
+    "explainSignal": "解释这个信号",
+    "gatewayNote": "完整对话能力由 AI 网关提供，将在后续阶段接入。⌘K 随时打开命令中心。"
+  },
+  "Signals": {
+    "notFoundTitle": "未找到该信号。",
+    "notFoundBody": "它可能已被归档，或这条链接已经过期。",
+    "back": "回到今日",
+    "whyItMatters": "为什么重要",
+    "save": "保存",
+    "important": "标记重要",
+    "ignore": "忽略",
+    "analysisNote": "深度分析与相关信号链将在后续版本接入。"
+  },
+  "Activity": {
+    "title": "动态",
+    "subtitle": "你的信号历史将在这里展开。",
+    "loading": "正在读取…",
+    "emptyTitle": "还没有信号活动。",
+    "emptyBody": "信号被处理后，历史会沉淀在这里。"
   },
   "Profile": {
     "title": "个人资料",
@@ -99,13 +262,18 @@
     "language": "语言",
     "timezone": "时区",
     "save": "保存",
-    "saved": "已保存。"
+    "saved": "已保存。",
+    "saving": "保存中…",
+    "errSave": "保存失败"
   },
   "Security": {
     "title": "安全",
     "changePassword": "修改密码",
     "later": "将在后续阶段提供。",
-    "logout": "退出登录"
+    "logout": "退出登录",
+    "confirmLogout": "确认退出",
+    "loggingOut": "退出中…",
+    "cancel": "取消"
   },
   "Intro": {
     "title": "互联网从不停歇。",
@@ -114,7 +282,8 @@
     "outOf": "来自 126 条信息。",
     "greeting": "早上好。",
     "subtitle": "你的信息已被过滤。",
-    "enter": "进入 SIGNAL →"
+    "enter": "进入 SIGNAL →",
+    "skip": "跳过"
   },
   "Motion": {
     "lab": "SIGNAL / 动效实验室",

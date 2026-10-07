@@ -41,6 +41,15 @@ export default function IntroPage() {
 
   return (
     <main className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-bg-0 px-6 text-center">
+      {phase !== "done" && (
+        <button
+          type="button"
+          onClick={() => setPhase("done")}
+          className="absolute right-5 top-5 rounded-md border border-line bg-bg-1/80 px-3 py-1.5 text-xs text-text-2 backdrop-blur-md transition-colors hover:border-signal hover:text-text-1"
+        >
+          {t("skip")}
+        </button>
+      )}
       <AnimatePresence mode="wait">
         {phase === "title" && (
           <motion.div

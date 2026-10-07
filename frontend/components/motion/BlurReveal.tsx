@@ -2,18 +2,41 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { ease, dur } from "./motion-config";
+import { dur, ease, blurReveal } from "./motion-config";
 
-/** One-shot blur/fade reveal on mount — used for titles entering from noise. */
+/**
+ * One-shot blur/fade reveal on mount — used for titles entering from noise.
+ *
+ * Pass `index` for a list row: the shared `blurReveal` variant is used, so the
+ * entrance reads as "noise resolving into signal" with `SIGNAL_STAGGER`
+ * spacing, instead of every row popping at once.
+ */
 export function BlurReveal({
   children,
+  index,
   delay = 0,
   className,
 }: {
   children: ReactNode;
+  /** Position in a staggered list. Enables the shared `blurReveal` variant. */
+  index?: number;
   delay?: number;
   className?: string;
 }) {
+  if (index !== undefined) {
+    return (
+      <motion.div
+        className={className}
+        variants={blurReveal}
+        initial="hidden"
+        animate="show"
+        custom={index}
+      >
+        {children}
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className={className}

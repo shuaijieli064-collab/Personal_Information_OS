@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIGNAL Frontend
 
-## Getting Started
+Frontend of **Personal Information OS** — an information OS that compresses
+scattered information sources into high-value signals and turns them into
+actions.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, Turbopack) · React 19
+- next-intl 4 — locales `zh-CN` (default) and `en`
+- Tailwind CSS v4 · framer-motion 14
+- SWR — data fetching (today, sources)
+- Vitest + Testing Library — unit tests
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Backend default base URL is `http://localhost:8080`
+(`NEXT_PUBLIC_API_URL`, see `.env.example`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint       # ESLint
+npx tsc --noEmit   # typecheck
+npm test           # Vitest (jsdom)
+npm run build      # production build (typecheck + static generation)
+```
 
-## Learn More
+CI runs all four on every push/PR (`.github/workflows/ci.yml`).
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `app/[locale]/` — pages, grouped by `(auth)` (login/register) and
+  `(app)` (authenticated pages behind `AuthGuard` + `AppShell`)
+- `components/` — `AuthGuard`, `AppShell`, `ui/` primitives, `motion/`
+  animations, `motion-demo/` laboratory
+- `lib/api/client.ts` — typed API client with single-flight token refresh
+  and `signal:unauthorized` broadcast
+- `i18n/` — routing + request config; user-visible strings live in
+  `messages/*.json`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `../docs/API.md` for the API contract and `../docs/DEPLOYMENT.md` for
+deployment.

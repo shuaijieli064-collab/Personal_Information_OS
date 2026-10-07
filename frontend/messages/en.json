@@ -6,8 +6,84 @@
   "Home": {
     "line1": "Information is infinite.",
     "line2": "Attention is not.",
-    "subtitle": "Phase 2 foundation. The product itself lands in later phases — for now, the motion language that tells the Information → Signal story.",
-    "cta": "Enter Motion Laboratory →"
+    "subtitle": "Compress scattered sources into a few high-value Signals — then turn them into action.",
+    "ctaAuthed": "Enter Today →",
+    "ctaGuest": "Sign in / Get started →",
+    "replay": "Replay",
+    "act1Title": "THE INTERNET NEVER STOPS.",
+    "act1Sub": "Neither does your information.",
+    "act2Title": "AI PROCESSING",
+    "act3Title": "9 SIGNALS",
+    "act3Sub": "The rest is noise. This is what matters.",
+    "act4Title": "YOUR PERSONAL INTELLIGENCE SYSTEM.",
+    "act4Sub": "SIGNAL turns chaos into decisions."
+  },
+  "Nav": {
+    "label": "Primary",
+    "menu": "Menu",
+    "menuLabel": "Menu navigation",
+    "today": "Today",
+    "inbox": "Inbox",
+    "discover": "Discover",
+    "knowledge": "Knowledge",
+    "ai": "AI",
+    "activity": "Activity",
+    "sources": "Sources",
+    "settings": "Settings",
+    "me": "Me"
+  },
+  "SignalCard": {
+    "highImpact": "🔥 High Impact",
+    "whyItMatters": "Why it matters",
+    "related": "Related",
+    "sources": "sources",
+    "read": "Read",
+    "save": "Save",
+    "action": "Action"
+  },
+  "Score": {
+    "why": "Why {score}?",
+    "impact": "Impact",
+    "relevance": "Relevance",
+    "urgency": "Urgency",
+    "confidence": "Confidence"
+  },
+  "SignalTimeline": {
+    "score": "Score"
+  },
+  "SourceCard": {
+    "connected": "Connected",
+    "syncing": "Syncing",
+    "lastSync": "Last sync",
+    "sync": "Sync",
+    "itemsCollected": "Items collected"
+  },
+  "InboxItem": {
+    "keepHint": "Drag right to keep",
+    "ignoreHint": "Drag left to ignore",
+    "keep": "Keep",
+    "ignore": "Ignore",
+    "createSignal": "Create Signal"
+  },
+  "Command": {
+    "label": "Command Center",
+    "placeholder": "Ask SIGNAL what to do next…",
+    "summarizeWeek": "Summarize my week",
+    "learningGaps": "Find learning gaps",
+    "planTasks": "Plan today's tasks",
+    "explainSignal": "Explain this signal",
+    "processing": "SIGNAL is processing…",
+    "unavailable": "The AI gateway arrives in a later phase."
+  },
+  "NotFound": {
+    "body": "No signal on this path.",
+    "backHome": "Back home"
+  },
+  "Error": {
+    "title": "Something went wrong.",
+    "body": "The signal was interrupted. Try again.",
+    "retry": "Retry",
+    "backHome": "Back to Today"
   },
   "Login": {
     "title": "Welcome back.",
@@ -44,10 +120,16 @@
     "skillsLabel": "Skills (comma separated)",
     "skillsPlaceholder": "e.g. Java, Python",
     "finish": "Finish setup",
-    "done": "Your Signal is ready."
+    "done": "Your Signal is ready.",
+    "skip": "Skip",
+    "submitting": "Saving…",
+    "errSubmit": "Some items could not be saved — you can add them later in Settings."
   },
   "Today": {
     "greeting": "Good morning.",
+    "morning": "Good morning.",
+    "afternoon": "Good afternoon.",
+    "evening": "Good evening.",
     "subtitle": "Your information has been filtered.",
     "statNew": "New information",
     "statSignals": "Signals",
@@ -56,7 +138,29 @@
     "emptyBody": "Connect sources and let SIGNAL filter the noise.",
     "navSources": "Sources",
     "navProfile": "Profile",
-    "loadFailed": "Failed"
+    "loadFailed": "Failed",
+    "refresh": "Refresh",
+    "save": "Save",
+    "important": "Important",
+    "ignore": "Ignore",
+    "statusSaved": "Saved",
+    "statusImportant": "Important",
+    "statusArchived": "Archived",
+    "actionFailed": "Action failed",
+    "youHave": "You have",
+    "newInformation": "new information",
+    "aiCompressed": "AI compressed",
+    "signals": "Signals",
+    "topSignals": "Top Signals",
+    "actionsTitle": "Today's Actions",
+    "actionsPending": "actions pending",
+    "actionsEmpty": "No actions needed.",
+    "actionsEmptyBody": "When a signal needs you, the action will appear here.",
+    "knowledgeTitle": "Knowledge Growth",
+    "knowledgeSub": "Information → Signal compression is your knowledge growth.",
+    "chartNew": "New information",
+    "chartSignals": "Signals",
+    "chartActions": "Actions"
   },
   "Inbox": {
     "title": "Inbox",
@@ -65,7 +169,16 @@
     "emptyTitle": "Your signal is quiet.",
     "emptyBody": "Connect a source to start collecting information.",
     "addSource": "Add Source",
-    "loadFailed": "Failed to load inbox"
+    "loadFailed": "Failed to load inbox",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "sectionReview": "Need Review",
+    "sectionFiltered": "AI Filtered",
+    "sectionSignals": "Signals Generated",
+    "filteredCount": "{count} ignored",
+    "filteredEmpty": "Items the AI judges as noise will land here.",
+    "signalsEmpty": "Today's signals will appear here.",
+    "localOnly": "{count} ignored locally (archiving syncs to the backend in a later version)."
   },
   "Detail": {
     "loading": "Reading…",
@@ -77,6 +190,7 @@
   "Sources": {
     "title": "Sources",
     "subtitle": "Connect the information you care about.",
+    "addSource": "Add Source",
     "namePlaceholder": "Name (e.g. OpenAI Blog)",
     "urlPlaceholder": "https://…",
     "add": "Add",
@@ -85,12 +199,61 @@
     "emptyBody": "Add a source to start collecting information.",
     "sync": "Sync",
     "syncing": "Syncing…",
+    "adding": "Adding…",
     "delete": "Delete",
+    "confirmDelete": "Confirm",
+    "deleting": "Deleting…",
+    "cancel": "Cancel",
     "synced": "synced {time}",
     "openInbox": "Open inbox →",
     "errLoad": "Failed to load sources",
     "errAdd": "Could not add source",
-    "errSync": "Sync failed"
+    "errSync": "Sync failed",
+    "errDelete": "Could not delete",
+    "syncResult": "Synced: {fetched} fetched, {created} created, {duplicates} duplicates, {failed} failed",
+    "added": "Source added."
+  },
+  "Discover": {
+    "title": "Discover",
+    "basedOn": "Based on your goals",
+    "whyRecommended": "Why recommended?",
+    "loadFailed": "Failed to load recommendations"
+  },
+  "Knowledge": {
+    "title": "Knowledge",
+    "subtitle": "Your signals are weaving into a knowledge graph.",
+    "loading": "Building the graph…",
+    "emptyTitle": "The graph has no nodes yet.",
+    "emptyBody": "Once signals appear, your knowledge graph will grow from here.",
+    "graphLabel": "Signal knowledge graph",
+    "phase6": "The full graph engine (relation mining, clustering, interactive layout) arrives in Phase 6; nodes shown are today's real signals."
+  },
+  "AI": {
+    "title": "AI",
+    "subtitle": "Command Center — ask SIGNAL what to do next.",
+    "askPlaceholder": "Ask SIGNAL…",
+    "summarizeWeek": "Summarize my week",
+    "learningGaps": "Find learning gaps",
+    "planTasks": "Plan today's tasks",
+    "explainSignal": "Explain this signal",
+    "gatewayNote": "Full conversation arrives with the AI gateway in a later phase. ⌘K opens the Command Center anytime."
+  },
+  "Signals": {
+    "notFoundTitle": "Signal not found.",
+    "notFoundBody": "It may have been archived, or this link has expired.",
+    "back": "Back to Today",
+    "whyItMatters": "Why it matters",
+    "save": "Save",
+    "important": "Important",
+    "ignore": "Ignore",
+    "analysisNote": "Deep analysis and related signal chains arrive in a later version."
+  },
+  "Activity": {
+    "title": "Activity",
+    "subtitle": "Your signal history will unfold here.",
+    "loading": "Reading…",
+    "emptyTitle": "No signal activity yet.",
+    "emptyBody": "Once signals are processed, history will settle here."
   },
   "Profile": {
     "title": "Profile",
@@ -99,13 +262,18 @@
     "language": "Language",
     "timezone": "Timezone",
     "save": "Save",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "saving": "Saving…",
+    "errSave": "Could not save"
   },
   "Security": {
     "title": "Security",
     "changePassword": "Change password",
     "later": "Available in a later phase.",
-    "logout": "Log out"
+    "logout": "Log out",
+    "confirmLogout": "Confirm log out",
+    "loggingOut": "Logging out…",
+    "cancel": "Cancel"
   },
   "Intro": {
     "title": "THE INTERNET NEVER STOPS.",
@@ -114,7 +282,8 @@
     "outOf": "out of 126.",
     "greeting": "Good morning.",
     "subtitle": "Your information has been filtered.",
-    "enter": "Enter Signal →"
+    "enter": "Enter Signal →",
+    "skip": "Skip"
   },
   "Motion": {
     "lab": "SIGNAL / Motion Laboratory",

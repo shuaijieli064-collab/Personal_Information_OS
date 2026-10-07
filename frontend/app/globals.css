@@ -19,6 +19,23 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  /* Type scale (design guide) */
+  --text-hero: var(--text-hero);
+  --text-page-title: var(--text-page-title);
+  --text-section-title: var(--text-section-title);
+  --text-card-title: var(--text-card-title);
+  --text-body: var(--text-body);
+  --text-meta: var(--text-meta);
+
+  /* Radius roles (design guide: Card 16 / Button 10 / Input 12) */
+  --radius-shell: var(--r-shell);
+  --radius-card: var(--r-card);
+  --radius-input: var(--r-input);
+  --radius-button: var(--r-button);
+  --radius-pill: var(--r-pill);
 }
 
 html, body {
@@ -26,6 +43,15 @@ html, body {
   color: var(--text-1);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth theme switching — avoids jarring color jumps */
+html[data-theme] *,
+html[data-theme] *::before,
+html[data-theme] *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
 }
 
 /* tabular numerals for all score/stat figures */

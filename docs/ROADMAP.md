@@ -29,7 +29,7 @@
 | H3 | Git Consolidation | 单仓、业务代码全入库、无密钥入库 | ✅ 2026-10-07（`frontend/.git` 不存在；`resources/.env` 已移除防打包泄漏） |
 | H4 | Auth Hardening | Route Guard 全覆盖；401 refresh 单飞；重放仍 401 → clear+broadcast（不吞错） | ✅ 2026-10-07（client.ts 重放边界修复 + 回归测试，Vitest 11/11） |
 | H5 | Runtime QA | 真实 PG/Redis/Flyway/Spring 启动 + 全链路 API 走查 + 浏览器走查，结果记入 `docs/RUNTIME_VERIFICATION.md` | ▶ API 走查 ✅（`scripts/e2e-smoke.ps1` 29/29，含 IDOR/登出吊销/RSS sync）；浏览器走查并入 Phase 5.5 S5 |
-| H6 | Dead Code | 清理空目录/死 hook/死状态/无引用依赖；无误删核心能力 | ⬜ 待办 |
+| H6 | Dead Code | 清理空目录/死 hook/死状态/无引用依赖；无误删核心能力 | ✅ 2026-10-07（inbox 详情接入 TanStack hooks；移除 inboxFilter/mobileNavOpen 死状态、puppeteer-core、空目录；lint 0 warning / tsc 0 / Vitest 11 / build 通过） |
 
 ## Risks
 

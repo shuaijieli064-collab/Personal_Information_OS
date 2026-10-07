@@ -15,6 +15,9 @@
   --color-text-3: var(--text-3);
   --color-signal: var(--signal);
   --color-signal-dim: var(--signal-dim);
+  --color-signal-2: var(--signal-2);
+  --color-signal-2-dim: var(--signal-2-dim);
+  --color-glow: var(--glow);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -22,7 +25,8 @@
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
 
-  /* Type scale (design guide) */
+  /* Type scale (方向A: display = data hero, cliff ≥2.8) */
+  --text-display: var(--text-display);
   --text-hero: var(--text-hero);
   --text-page-title: var(--text-page-title);
   --text-section-title: var(--text-section-title);
@@ -30,7 +34,11 @@
   --text-body: var(--text-body);
   --text-meta: var(--text-meta);
 
-  /* Radius roles (design guide: Card 16 / Button 10 / Input 12) */
+  /* Shadows — deep-field glow recipes */
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+
+  /* Radius roles (方向A: shell 28 / card 16 / control 10 / pill 999) */
   --radius-shell: var(--r-shell);
   --radius-card: var(--r-card);
   --radius-input: var(--r-input);

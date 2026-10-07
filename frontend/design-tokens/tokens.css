@@ -1,57 +1,71 @@
 /* SIGNAL design tokens — single source of truth.
-   Consumed by Tailwind (via @theme) in Phase 2. Do not hardcode colors elsewhere. */
+   方向A「信号控制台」: cool-slate deep field, indigo accent + cyan second series.
+   Consumed by Tailwind (via @theme in app/globals.css). Do not hardcode colors elsewhere. */
 
 :root {
-  /* Surfaces (dark-first) */
-  --bg-0: #050505;
-  --bg-1: #080808;
-  --bg-2: #0b0b0b;
-  --bg-3: #121214;
+  /* Surfaces — cool slate wash (L≈8 blue-black), never pure gray/black */
+  --bg-0: #0c0f14; /* page */
+  --bg-1: #1a1f27; /* card */
+  --bg-2: #242b36; /* panel inset */
+  --bg-3: #2e3642; /* panel-2 */
 
   /* Lines */
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.1);
 
-  /* Text */
-  --text-1: #f5f6f7;
-  --text-2: #9ba1a8;
-  --text-3: #62666d;
+  /* Text — three inks; text-3 keeps ≥4.5:1 on --bg-1 */
+  --text-1: #f4f6f8;
+  --text-2: #b8c2ce;
+  --text-3: #8a97a8;
 
-  /* Signal accent — the only accent */
-  --signal: #4d9dff;
-  --signal-dim: rgba(77, 157, 255, 0.12);
+  /* Accent — indigo primary (non-default blue) + cyan second series for charts.
+     accent 出现类别 ≤2 per design plan. */
+  --signal: #8b85ff;
+  --signal-2: #3fc5e8;
+  --signal-dim: rgba(139, 133, 255, 0.14);
+  --signal-2-dim: rgba(63, 198, 232, 0.12);
+  --glow: rgba(139, 133, 255, 0.3);
 
   /* Semantic */
-  --success: #3ecf8e;
-  --warning: #f0b35e;
-  --danger: #f26d6d;
+  --success: #3fcb86;
+  --warning: #e8a33d;
+  --danger: #f07c93;
 
-  /* Radius — role-based (design guide: Card 16 / Button 10 / Input 12, not too round) */
-  --r-shell: 24px;
+  /* Radius — 4 roles: shell 28 / card 16 / control 10 / pill 999 */
+  --r-shell: 28px;
   --r-card: 16px;
-  --r-input: 12px;
+  --r-input: 10px;
   --r-button: 10px;
   --r-pill: 9999px;
   /* Legacy aliases (kept for existing usages during migration) */
   --r-sm: 6px;
   --r-md: 10px;
-  --r-lg: 14px;
+  --r-lg: 16px;
 
-  /* Typography — stepped scale (guide: Hero 48–64 / Page Title 32 / Card Title 18 / Body 14–16) */
-  --text-hero: clamp(3rem, 5vw, 4rem);        /* 48–64 */
-  --text-page-title: 2rem;                     /* 32 */
-  --text-section-title: 1.375rem;              /* 22 */
-  --text-card-title: 1.125rem;                 /* 18 */
-  --text-body: 0.9375rem;                      /* 15 */
-  --text-meta: 0.75rem;                        /* 12, tracking-wide uppercase */
+  /* Typography — stepped scale, cliff ≥2.8 against --text-body */
+  --text-display: clamp(2.75rem, 4.5vw, 3.5rem); /* 44–56, data hero */
+  --text-hero: clamp(3rem, 5vw, 4rem); /* 48–64, marketing */
+  --text-page-title: clamp(1.75rem, 2.2vw, 2rem); /* 28–32 */
+  --text-section-title: 1.25rem; /* 20 */
+  --text-card-title: 1.125rem; /* 18 */
+  --text-body: 0.9375rem; /* 15 */
+  --text-meta: 0.75rem; /* 12, tracking-wide uppercase */
 
-  /* Typography — families */
-  --font-sans: "Inter", "Geist", -apple-system, "SF Pro Text", system-ui,
-    "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-display: "Geist", "Inter", -apple-system, "SF Pro Display",
-    "PingFang SC", sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, "Cascadia Code",
-    Consolas, monospace;
+  /* Typography — geometric display + humanist body + mono digits
+     (next/font variables resolve in layout; literal fallbacks keep
+     tokens.css usable standalone, e.g. in prototypes) */
+  --font-sans: var(--font-inter), "Inter", -apple-system, "SF Pro Text",
+    system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", var(--font-inter),
+    "Inter", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", "SFMono-Regular",
+    ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  /* Shadows — deep-field glow recipes (≤3 sets) */
+  --shadow-card: 0 24px 60px -20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-float: 0 40px 90px -30px rgba(139, 133, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
   /* Motion */
   --dur-instant: 120ms;
@@ -66,13 +80,25 @@
 
 /* Light mode is defined but dark is the default cinematic target */
 [data-theme="light"] {
-  --bg-0: #fafafa;
+  --bg-0: #f5f6f8;
   --bg-1: #ffffff;
   --bg-2: #ffffff;
-  --bg-3: #f0f0f1;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.14);
-  --text-1: #0a0a0b;
-  --text-2: #4b5563;
-  --text-3: #8a8f98;
+  --bg-3: #eef1f5;
+  --line: rgba(10, 14, 20, 0.08);
+  --line-strong: rgba(10, 14, 20, 0.14);
+  --text-1: #10141a;
+  --text-2: #3d4756;
+  --text-3: #5f6b7c;
+  --signal: #5b54e6;
+  --signal-2: #0e86a8;
+  --signal-dim: rgba(91, 84, 230, 0.1);
+  --signal-2-dim: rgba(14, 134, 168, 0.1);
+  --glow: rgba(91, 84, 230, 0.25);
+  --success: #1e9e64;
+  --warning: #b97a15;
+  --danger: #d6456a;
+  --shadow-card: 0 20px 50px -24px rgba(16, 24, 40, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-float: 0 30px 70px -30px rgba(91, 84, 230, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }

@@ -185,7 +185,8 @@
     "notFound": "Not found",
     "noContent": "No content extracted.",
     "openOriginal": "Open original ↗",
-    "back": "← Back to inbox"
+    "back": "← Back to inbox",
+    "retry": "Retry"
   },
   "Sources": {
     "title": "Sources",

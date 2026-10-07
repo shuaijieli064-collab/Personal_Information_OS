@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -35,18 +35,18 @@ export default function Home() {
   const t = useTranslations("Home");
   const [act, setAct] = useState(0);
   const [run, setRun] = useState(0);
-
-  const nodes = useMemo(() => randomNodes(), [run]);
+  const [nodes, setNodes] = useState<NoiseNode[]>(() => randomNodes());
 
   useEffect(() => {
     if (act >= ACT_DURATION.length - 1) return;
     const timer = window.setTimeout(() => setAct((a) => a + 1), ACT_DURATION[act]);
     return () => window.clearTimeout(timer);
-  }, [act, run]);
+  }, [act]);
 
   const replay = () => {
     setAct(0);
     setRun((r) => r + 1);
+    setNodes(randomNodes());
   };
 
   return (

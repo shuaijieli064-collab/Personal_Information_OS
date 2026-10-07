@@ -10,7 +10,6 @@ import {
   Tray,
 } from "@phosphor-icons/react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { useUiStore } from "@/lib/stores/ui";
 
 const NAV = [
   { href: "/today", key: "today", icon: House },
@@ -84,7 +83,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 export function MobileNav() {
   const t = useTranslations("Nav");
   const pathname = usePathname();
-  const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen);
 
   const items = [
     { href: "/today", key: "today", icon: House },
@@ -106,7 +104,6 @@ export function MobileNav() {
             <Link
               key={href}
               href={href}
-              onClick={() => setMobileNavOpen(false)}
               aria-current={active ? "page" : undefined}
               className={`flex flex-col items-center gap-1 py-2.5 text-[10px] transition-colors ${
                 active ? "text-signal" : "text-text-3 hover:text-text-2"

@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { informationApi, type InformationItem, type Understanding } from "@/lib/api/client";
+import { useInformation, useUnderstanding } from "@/lib/api/queries";
 import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -13,20 +12,20 @@ export default function InformationDetail() {
   const e = useTranslations("Enums");
   const locale = useLocale();
   const { id } = useParams<{ id: string }>();
-  const [info, setInfo] = useState<InformationItem | null>(null);
-  const [und, setUnd] = useState<Understanding | null>(null);
-  const [error, setError] = useState("");
+  const infoQ = useInformation(id);
+  const undQ = useUnderstanding(id);
 
-  useEffect(() => {
-    informationApi.get(id)
-      .then(setInfo)
-      .catch((err) => setError(err.message ?? t("notFound")));
-    informationApi.understanding(id).then(setUnd).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-
-  if (error) return <main className="mx-auto max-w-2xl px-6 py-20"><p className="text-danger">{error}</p></main>;
-  if (!info) {
+  if (infoQ.isError) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-20">
+        <p className="text-danger">{infoQ.error?.message ?? t("notFound")}</p>
+        <button className="mt-4 text-sm text-signal" onClick={() => infoQ.refetch()}>
+          {t("retry")}
+        </button>
+      </main>
+    );
+  }
+  if (infoQ.isPending || !infoQ.data) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-20">
         <Skeleton className="h-3 w-24" />
@@ -36,6 +35,9 @@ export default function InformationDetail() {
       </main>
     );
   }
+
+  const info = infoQ.data;
+  const und = undQ.data ?? null;
 
   const classification = und?.classification
     ? (e.has(`classification.${und.classification}`)

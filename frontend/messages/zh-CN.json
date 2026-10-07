@@ -185,7 +185,8 @@
     "notFound": "未找到该条信息",
     "noContent": "未提取到内容。",
     "openOriginal": "打开原文 ↗",
-    "back": "← 返回收件箱"
+    "back": "← 返回收件箱",
+    "retry": "重试"
   },
   "Sources": {
     "title": "信息源",

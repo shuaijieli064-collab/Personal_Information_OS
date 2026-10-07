@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Spinner } from "./Spinner";
 import { EmptyState } from "./EmptyState";
 import { Skeleton } from "./Skeleton";
+import { Button } from "./Button";
+import { Input } from "./Input";
+import { CountUp } from "@/components/motion/CountUp";
 
 describe("ui primitives", () => {
   it("Spinner exposes a status role for screen readers", () => {
@@ -19,8 +22,49 @@ describe("ui primitives", () => {
     expect(screen.getByRole("button", { name: "go" })).toBeInTheDocument();
   });
 
+  it("EmptyState renders a default icon plate and honors a custom icon", () => {
+    const { container, unmount } = render(<EmptyState title="empty" />);
+    expect(container.querySelector("svg")).toBeInTheDocument();
+    unmount();
+    const custom = render(<EmptyState title="empty" icon={<span data-testid="custom" />} />);
+    expect(custom.container.querySelector("svg")).toBeNull();
+    expect(screen.getByTestId("custom")).toBeInTheDocument();
+  });
+
   it("Skeleton renders a placeholder block", () => {
     render(<Skeleton className="h-4 w-40" />);
     expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
+  });
+
+  it("Button primary carries the glow shadow and focus-visible ring", () => {
+    render(<Button>go</Button>);
+    const btn = screen.getByRole("button", { name: "go" });
+    expect(btn.className).toContain("bg-signal");
+    expect(btn.className).toContain("shadow-[0_14px_38px");
+    expect(btn.className).toContain("focus-visible:ring-2");
+  });
+
+  it("Button loading disables itself and exposes the spinner", () => {
+    render(<Button loading>go</Button>);
+    const btn = screen.getByRole("button", { name: "go" }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(screen.getByRole("status")).toBeInTheDocument();
+  });
+
+  it("Input focus uses the accent glow recipe", () => {
+    render(<Input placeholder="p" />);
+    const input = screen.getByPlaceholderText("p");
+    expect(input.className).toContain("focus:border-signal/70");
+    expect(input.className).toContain("focus:shadow-[0_0_18px");
+  });
+
+  it("CountUp jumps to the final value under prefers-reduced-motion", async () => {
+    const matchMedia = vi.fn().mockReturnValue({ matches: true });
+    const original = window.matchMedia;
+    window.matchMedia = matchMedia as unknown as typeof window.matchMedia;
+    render(<CountUp to={42} suffix="%" />);
+    expect(matchMedia).toHaveBeenCalledWith("(prefers-reduced-motion: reduce)");
+    expect(await screen.findByText("42%")).toBeInTheDocument();
+    window.matchMedia = original;
   });
 });

@@ -65,6 +65,14 @@ html[data-theme] *::after {
 /* tabular numerals for all score/stat figures */
 .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
+/* Signature motion: signal pulse — breathing glow for active nav / new signal.
+   Zero-duration under prefers-reduced-motion (global clamp below). */
+@keyframes signal-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--glow); }
+  50% { box-shadow: 0 0 0 7px rgba(139, 133, 255, 0); }
+}
+.animate-signal-pulse { animation: signal-pulse 2.4s cubic-bezier(0.32, 0.72, 0, 1) infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

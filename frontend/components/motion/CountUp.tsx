@@ -23,6 +23,14 @@ export function CountUp({
   const text = useTransform(mv, (v) => `${Math.round(v)}${suffix}`);
 
   useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      mv.set(to);
+      return;
+    }
     const controls = animate(mv, to, { duration, ease: ease.emphasize });
     return controls.stop;
   }, [to, duration, mv]);

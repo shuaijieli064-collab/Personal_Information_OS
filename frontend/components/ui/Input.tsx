@@ -15,7 +15,7 @@ export function Input({
   return (
     <input
       {...rest}
-      className={`w-full rounded-input border border-line px-3.5 py-2.5 text-sm text-text-1 outline-none transition-all duration-200 placeholder:text-text-3 focus:border-signal focus:ring-2 focus:ring-signal/20 ${className}`}
+      className={`w-full rounded-input border border-line px-3.5 py-2.5 text-sm text-text-1 outline-none transition-all duration-200 placeholder:text-text-3 focus:border-signal/70 focus:ring-2 focus:ring-signal/25 focus:shadow-[0_0_18px_-6px_var(--glow)] ${className}`}
     />
   );
 }

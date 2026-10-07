@@ -13,7 +13,7 @@
 | 4 | Information Ingestion | RSS/GitHub/URL/File、标准化、Exact Dedup、Inbox、SSRF | ✅ Frozen |
 | 5 | Intelligence & Signals | Understanding、Embedding、Semantic Dedup、Relevance、Signal Score、Today、Feedback | ✅ Frozen |
 | **P0** | **Engineering Hardening** | H1–H6（下表） | **✅ 完成 2026-10-07** |
-| **5.5** | **Frontend Experience** | Today 2.0、Signal Card 2.0、Information Detail、Command Center UI、Motion、Responsive、全状态、Browser QA（设计方向 A 信号控制台） | **▶ 当前（S0–S4 ✅，S5 待做）** |
+| **5.5** | **Frontend Experience** | Today 2.0、Signal Card 2.0、Information Detail、Command Center UI、Motion、Responsive、全状态、Browser QA（设计方向 A 信号控制台） | **✅ 完成 2026-10-07（S0–S5 全部）** |
 | 6 | Knowledge & Retrieval | Chunk、Embedding、Vector Retrieval、Hybrid Search、Rerank、RAG、Citation | 📋 规划 |
 | 7 | Agent & Tools | Tool Registry、Permission、Planner/Executor、Audit、Confirmation | 📋 规划 |
 | 8 | Automation | Scheduled Sync、Daily Brief、Notification、Feedback Loop、监控/重试 | 📋 规划 |
@@ -40,7 +40,7 @@
 | S2 | Components | Button 三态发光 + focus ring、Input/Select 发光 focus、EmptyState 图标盘、CountUp reduced-motion、signal-pulse keyframes（ui tests 16/16） | ✅ `aaf54cd` |
 | S3 | Pages | P0 三屏（today 信号控制台 / 分屏 auth / 满版 landing）+ P1 五页（AppShell 发光导航+移动顶栏、inbox 分组头+新鲜度点+mono 时间戳、sources 主卡+状态徽章、onboarding 步进器+胶囊 TagInput、settings 图标轨两栏）+ P2 a11y（对比度复验、统一 focus 指示） | ✅ `a227ea1` + `50b99ef` + P2 |
 | S4 | 验证 | lint 0 / tsc 0 / vitest 16 / build 0；16 路由浏览器走查 h1 渲染 + console 0 错；UI 数据链路实测（注册→onboarding→today；建源→同步 20 条→inbox 行）；文档同步 | ✅ 2026-10-07 |
-| S5 | 响应式 + 全状态 | 1440/1024/768/390 响应式走查 + 空/加载/错误态截图对比板（a11y 快扫复查） | ⏭ 下一步 |
+| S5 | 响应式 + 全状态 | 1440/1024/768/390 响应式走查 + 空/加载/错误态截图对比板（a11y 快扫复查） | ✅ 2026-10-07（18 组宽度×页面 0 横向溢出，断点切换 DOM 实证；loading/empty/error/login-401 共 8 态截图 + `ui-design-runs/s5-board.html` 对比板；证据 `docs/RUNTIME_VERIFICATION.md` 23–25 行） |
 
 **已记录偏差（数据/范围现实与设计稿差异）**：today API 无时间序列与时间戳 → sparkline/同比徽章以 CountUp + 信号占比压缩条替代，时间线用 rank 序号；inbox 无读/未读字段 → 新鲜度点（≤24h 绿 / ≤7d 琥珀 / 更早灰）做密度分级；移动端不做抽屉 → 底栏导航 + 新增顶栏品牌场承担；focus ring 用 signal 2px（较 accent-soft 更强可见性）；`useDiscover` 不再探测 planned 端点（本地兜底，端点上线后恢复）。
 

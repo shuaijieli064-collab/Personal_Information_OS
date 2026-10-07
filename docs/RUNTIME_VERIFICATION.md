@@ -1,4 +1,4 @@
-# Runtime Verification — P0 Hardening (H5) + Phase 5.5 S4
+# Runtime Verification — P0 Hardening (H5) + Phase 5.5 S4–S5
 
 > Rule: every line is backed by a command that actually ran in this environment.
 > Anything not executed stays **NOT VERIFIED** — never "should work".
@@ -41,13 +41,21 @@ Tool: gstack browse (headless Chromium, 1440x900 unless noted) against `next dev
 | 21 | Focus indicators | `:focus-visible` states via `element.focus()` | ✅ links & raw buttons: `outline solid 2px rgb(139,133,255)` offset 2px (globals `@layer base` rule, no double-ring — inputs stay `outline-none` + ring-signal/25 + glow; Button keeps focus-visible ring /40); login Tab order: email → password → 登录 → 创建账号 → locale |
 | 22 | Reduced motion | `@media (prefers-reduced-motion)` clamp in globals + CountUp unit test | ✅ animation-duration clamped to 0.01ms (signal-pulse settles static); CountUp jumps to final value (vitest) |
 
+## Phase 5.5 S5 — Responsive + state screenshots (2026-10-07)
+
+| # | Check | Method | Result |
+|---|---|---|---|
+| 23 | Responsive overflow walk | `$B chain`: `viewport` 1024x800 / 768x1024 / 390x844 × 6 pages (landing, login, today, inbox, sources, settings/profile), each `goto → wait h1 → js scrollWidth check → screenshot` | ✅ **18/18 no horizontal overflow** (`scrollWidth == innerWidth` everywhere); breakpoints verified by computed style: ≥768 → aside `display:flex` 224px + mobile header/bottom-nav `display:none`; <768 → aside gone + gradient top bar + bottom nav present; screenshots in `ui-design-runs/s5-shots/{page}-{width}.png` |
+| 24 | State capture (loading / empty / error / auth error) | In-page `fetch` patches (delay 10s / reject for `GET /api`, SPA-only so tokens+nav survive) + temp account **B** (`s5qa-…@signal.test`): register → onboarding → skip → today; login page fed wrong password | ✅ 8 shots: `today-loading` (4 `.animate-pulse` skeletons on `/today`), `today/inbox/sources-empty` (account B zero-data), `today/inbox/sources-error` (refetch rejected → inline danger copy), `login-error` (`Email or password is incorrect`); patch removal → navigate → **recovery confirmed** (error gone, data loads) |
+| 25 | Session restored after QA | saved account **A** `signal.access/refresh` → ran state flows as B → `localStorage.setItem` A tokens + reload | ✅ inbox back to **20 rows** (A's real RSS data); no residual patches (`window.fetch` restored) |
+
+Board: `ui-design-runs/s5-board.html` (26 screenshots, grouped Responsive / States) — `ui-design-runs/` is gitignored, local review artifact.
+
 ## NOT VERIFIED yet
 
-- Responsive widths 1024 / 768 (375 was spot-checked for shell header/nav only) — Phase 5.5 S5
-- Full empty/loading/error state screenshot comparison board — Phase 5.5 S5
 - Cross-browser (Firefox/WebKit) and screen-reader pass
 - Live AI provider responses (Mock only, per verification scope)
 - Scheduled sync / notifications (Phase 8 scope)
 
 ---
-Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; finalized at Phase 5.5 freeze.
+Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze.

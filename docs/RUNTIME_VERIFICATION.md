@@ -1,4 +1,4 @@
-# Runtime Verification — P0 Hardening (H5)
+# Runtime Verification — P0 Hardening (H5) + Phase 5.5 S4
 
 > Rule: every line is backed by a command that actually ran in this environment.
 > Anything not executed stays **NOT VERIFIED** — never "should work".
@@ -11,7 +11,7 @@ Verification backend: `signal-0.0.1-SNAPSHOT.jar`, `AI_API_KEY=` (empty → **Mo
 | # | Check | Method | Result |
 |---|---|---|---|
 | 1 | Backend unit/integration tests | `./mvnw -B verify` (2026-10-07) | ✅ 55 run, 0 failures |
-| 2 | Frontend lint / tsc / vitest / build | `npm run lint` · `npx tsc --noEmit` · `npm test` · `npm run build` | ✅ 0 errors (1 pre-existing warning, fixed in H6) · clean · 10/10 · 18 routes built |
+| 2 | Frontend lint / tsc / vitest / build | `npm run lint` · `npx tsc --noEmit` · `npx vitest run` · `npm run build` (2026-10-07, final S4 run) | ✅ 0 errors / 0 warnings · clean · 16/16 (3 files) · build 0 |
 | 3 | Empty-DB migration V1→V11 | fresh `signal_flyway_check`, Flyway on boot | ✅ `Successfully applied 11 migrations … now at version v11` |
 | 4 | Hibernate `ddl-auto=validate` on fresh DB | same boot (failed pre-V12: `missing column created_at in goals`) | ✅ after `V12__jpa_schema_alignment` — startup proceeds past EMF creation |
 | 5 | Full boot on fresh DB | jar start, Mock AI | ✅ `Started SignalApplication` + `GET /api/v1/ping` → `{"success":true,...}` |
@@ -21,11 +21,33 @@ Verification backend: `signal-0.0.1-SNAPSHOT.jar`, `AI_API_KEY=` (empty → **Mo
 | 9 | Bugs found & fixed by E2E | — | ✅ `SignalGenerationService.generate` now idempotent (re-running understanding on an item that already has a Signal no longer 500s); feedback API contract corrected in `docs/API.md` (`{type: USEFUL…}`) |
 | 10 | Infra resilience | Docker Desktop engine stopped mid-session; containers exited; restarted via `docker compose up -d` | ✅ `signal-pgdata` volume survived, flyway history intact, HikariCP reconnected without restart |
 
+## Phase 5.5 S4 — Browser walkthrough (direction A, 2026-10-07)
+
+Tool: gstack browse (headless Chromium, 1440x900 unless noted) against `next dev` :3000
+(proxying to the same verification jar :8080).
+
+| # | Check | Method | Result |
+|---|---|---|---|
+| 11 | Route walk — all pages render | `$B chain` (goto → wait h1 → js) over 16 routes: `/zh-CN` landing, login, register, today, inbox, sources, discover, knowledge, ai, activity, onboarding, settings/profile, settings/security, `/en`, `/en/today`, `/zh-CN/inbox/{id}` | ✅ every route 200 with correct localized h1 (e.g. 信息无限。注意力有限。/ 把互联网的噪声折叠成你的信号 / 晚上好。/ Good evening. / detail title) |
+| 12 | Console clean across walk | `console --clear` → full walk → `console --errors` | ✅ 0 errors (after `useDiscover` stopped probing the planned `/api/v1/discover` — it was producing a 500 per visit; page now serves the documented local fallback) |
+| 13 | Direction-A tokens live | `getComputedStyle` spot checks | ✅ today h1 = Space Grotesk, stat = 56px JetBrains Mono in `#8B85FF`, body bg `#0C0F14`, `.shadow-card` = `0 24px 60px -20px rgba(0,0,0,.55)`; login shell radius `28px`, inputs bg `#0C0F14`; landing h1 76px with `bg-clip-text` gradient `signal→signal-2`, hero CTA shadow `0 18px 46px -14px rgba(139,133,255,.3)` |
+| 14 | Shell & nav | computed + DOM | ✅ sidebar gradient wordmark (Space Grotesk) + live dot (`animate-signal-pulse`); active nav `animationName: signal-pulse`; @375px: mobile top bar (gradient SIGNAL + pulse dot) + bottom nav both present |
+| 15 | Inbox with real data | UI-created source synced live (`hnrss.org`, fetched=20 created=20; retries duplicates=20) | ✅ 20 rows; freshness dot `rgb(63,203,134)` (≤24h); meta row JetBrains Mono `ARTICLE · 2026/10/7`; excerpt tier line; group header 12px uppercase + mono count pill `20` |
+| 16 | Sources featured layout | DOM after create | ✅ hero card: icon plate `rgba(139,133,255,.14)`, status pill `已连接` (mono uppercase, success border); sync mid-state pill `同步中` + `.animate-spin`; error path also observed (`Unable to synchronize source.` inline — backend `HTTP connect timed out`, env network flakiness, retried OK) |
+| 17 | Onboarding stepper | step-through via clicks + native-setter input injection | ✅ `步骤 1/3 → 2/3 → 3/3`; segment colors active `#8B85FF` / done `signal-dim` / todo `#242B36`; tag chip pill `bg rgba(139,133,255,.14)`; buttons 上一步/下一步/完成设置/跳过 |
+| 18 | Settings two-column | DOM | ✅ grid `208px 728px`; rail group label 设置, active link `aria-current=page` + signal-pulse; cards 账户/偏好/会话 with `shadow-card`; security logout button renders |
+| 19 | Detail page | click 首行「生成信号」→ `/inbox/{id}` | ✅ h1 = item title, article body, type eyebrow; console 0 errors |
+| 20 | Contrast (computed from token hex) | WCAG ratio script | ✅ ink-3 `#8A97A8` 5.57 (card) / 6.46 (page) / 4.80 (panel); ink-2 9.18; ink-1 15.27; signal 5.43; signal-2 8.16; success 7.96; danger 6.31; warning 7.67 — all ≥4.5:1 |
+| 21 | Focus indicators | `:focus-visible` states via `element.focus()` | ✅ links & raw buttons: `outline solid 2px rgb(139,133,255)` offset 2px (globals `@layer base` rule, no double-ring — inputs stay `outline-none` + ring-signal/25 + glow; Button keeps focus-visible ring /40); login Tab order: email → password → 登录 → 创建账号 → locale |
+| 22 | Reduced motion | `@media (prefers-reduced-motion)` clamp in globals + CountUp unit test | ✅ animation-duration clamped to 0.01ms (signal-pulse settles static); CountUp jumps to final value (vitest) |
+
 ## NOT VERIFIED yet
 
-- Browser visual QA (1440/1024/768/390) — Phase 5.5 S5 (combined with H5 browser walkthrough)
+- Responsive widths 1024 / 768 (375 was spot-checked for shell header/nav only) — Phase 5.5 S5
+- Full empty/loading/error state screenshot comparison board — Phase 5.5 S5
+- Cross-browser (Firefox/WebKit) and screen-reader pass
 - Live AI provider responses (Mock only, per verification scope)
 - Scheduled sync / notifications (Phase 8 scope)
 
 ---
-Filled incrementally by P0 Hardening; finalized at Phase 5.5 freeze.
+Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; finalized at Phase 5.5 freeze.

@@ -2,7 +2,6 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  api,
   informationApi,
   signalsApi,
   sourcesApi,
@@ -110,25 +109,19 @@ export type DiscoverItem = {
 };
 
 /**
- * Discover — AI-recommended sources. The backend endpoint is planned; until it
- * ships we fall back to a deterministic local recommendation layer so the page
- * is fully interactive.
+ * Discover — AI-recommended sources. GET /api/v1/discover is still planned
+ * (docs/API.md, no controller yet), so we serve a deterministic local
+ * recommendation layer directly: the page stays interactive and the console
+ * stays clean. Re-add the live probe when the endpoint ships.
  */
 export function useDiscover() {
   return useQuery({
     queryKey: queryKeys.discover,
-    queryFn: async (): Promise<DiscoverItem[]> => {
-      try {
-        const res = await api.get<DiscoverItem[]>("/api/v1/discover");
-        return res;
-      } catch {
-        return [
-          { name: "Spring AI", reason: "You follow Java · AI backend", category: "Library", confidence: 92 },
-          { name: "Project Reactor", reason: "Reactive pipelines match your stack", category: "Library", confidence: 87 },
-          { name: "JVM Internals", reason: "Deepens your backend foundation", category: "Learning", confidence: 84 },
-          { name: "LangChain4j", reason: "LLM tooling aligned with your goals", category: "Library", confidence: 79 },
-        ];
-      }
-    },
+    queryFn: async (): Promise<DiscoverItem[]> => [
+      { name: "Spring AI", reason: "You follow Java · AI backend", category: "Library", confidence: 92 },
+      { name: "Project Reactor", reason: "Reactive pipelines match your stack", category: "Library", confidence: 87 },
+      { name: "JVM Internals", reason: "Deepens your backend foundation", category: "Learning", confidence: 84 },
+      { name: "LangChain4j", reason: "LLM tooling aligned with your goals", category: "Library", confidence: 79 },
+    ],
   });
 }

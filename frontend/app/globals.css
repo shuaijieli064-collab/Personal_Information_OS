@@ -65,6 +65,16 @@ html[data-theme] *::after {
 /* tabular numerals for all score/stat figures */
 .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 
+/* Unified focus indicator (a11y): signal outline on any interactive element
+   that doesn't opt out. In @layer base + :where() so Tailwind utilities
+   (outline-none + ring-* on Input/Button) still win — no double rings. */
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+  }
+}
+
 /* Signature motion: signal pulse — breathing glow for active nav / new signal.
    Zero-duration under prefers-reduced-motion (global clamp below). */
 @keyframes signal-pulse {

@@ -30,7 +30,8 @@
     "activity": "Activity",
     "sources": "Sources",
     "settings": "Settings",
-    "me": "Me"
+    "me": "Me",
+    "live": "Live"
   },
   "SignalCard": {
     "highImpact": "🔥 High Impact",
@@ -56,7 +57,8 @@
     "syncing": "Syncing",
     "lastSync": "Last sync",
     "sync": "Sync",
-    "itemsCollected": "Items collected"
+    "itemsCollected": "Items collected",
+    "statusFailed": "Attention"
   },
   "InboxItem": {
     "keepHint": "Drag right to keep",
@@ -135,7 +137,10 @@
     "done": "Your Signal is ready.",
     "skip": "Skip",
     "submitting": "Saving…",
-    "errSubmit": "Some items could not be saved — you can add them later in Settings."
+    "errSubmit": "Some items could not be saved — you can add them later in Settings.",
+    "stepProgress": "Step {current} of {total}",
+    "next": "Next",
+    "back": "Back"
   },
   "Today": {
     "greeting": "Good morning.",
@@ -279,7 +284,9 @@
     "save": "Save",
     "saved": "Saved.",
     "saving": "Saving…",
-    "errSave": "Could not save"
+    "errSave": "Could not save",
+    "groupAccount": "Account",
+    "groupPreferences": "Preferences"
   },
   "Security": {
     "title": "Security",
@@ -288,7 +295,8 @@
     "logout": "Log out",
     "confirmLogout": "Confirm log out",
     "loggingOut": "Logging out…",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "groupSession": "Session"
   },
   "Intro": {
     "title": "THE INTERNET NEVER STOPS.",

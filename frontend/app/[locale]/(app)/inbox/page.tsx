@@ -65,9 +65,11 @@ export default function InboxPage() {
       {/* Need Review */}
       <section className="mt-10">
         <BlurReveal>
-          <h2 className="text-section-title font-semibold tracking-[-0.01em] text-text-1">
+          <h2 className="flex items-center gap-3 text-meta uppercase tracking-[0.18em] text-text-3">
             {t("sectionReview")}
-            <span className="ml-2 text-sm font-normal text-text-3 tnum">{items.length}</span>
+            <span className="rounded-pill border border-line bg-bg-1 px-2 py-0.5 font-mono text-[11px] tracking-normal text-text-2 tnum">
+              {items.length}
+            </span>
           </h2>
         </BlurReveal>
 
@@ -117,9 +119,9 @@ export default function InboxPage() {
       {/* AI Filtered */}
       <section className="mt-12">
         <BlurReveal>
-          <h2 className="text-section-title font-semibold tracking-[-0.01em] text-text-1">
+          <h2 className="flex items-center gap-3 text-meta uppercase tracking-[0.18em] text-text-3">
             {t("sectionFiltered")}
-            <span className="ml-2 text-sm font-normal text-text-3 tnum">
+            <span className="rounded-pill border border-line bg-bg-1 px-2 py-0.5 font-mono text-[11px] tracking-normal text-text-2 tnum">
               {t("filteredCount", { count: 0 })}
             </span>
           </h2>
@@ -132,9 +134,9 @@ export default function InboxPage() {
       {/* Signals Generated */}
       <section className="mt-12">
         <BlurReveal>
-          <h2 className="text-section-title font-semibold tracking-[-0.01em] text-text-1">
+          <h2 className="flex items-center gap-3 text-meta uppercase tracking-[0.18em] text-text-3">
             {t("sectionSignals")}
-            <span className="ml-2 text-sm font-normal text-text-3 tnum">
+            <span className="rounded-pill border border-line bg-bg-1 px-2 py-0.5 font-mono text-[11px] tracking-normal text-text-2 tnum">
               {today.data?.signalCount ?? 0}
             </span>
           </h2>

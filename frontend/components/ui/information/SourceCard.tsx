@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  ArrowClockwise,
   Envelope,
   Globe,
   GithubLogo,
@@ -44,22 +45,29 @@ function relativeTime(iso?: string): string {
   return `${Math.round(h / 24)}d ago`;
 }
 
-function StatusDot({ status, syncing }: { status: string; syncing: boolean }) {
+function StatusBadge({ status, syncing }: { status: string; syncing: boolean }) {
+  const t = useTranslations("SourceCard");
+  const ok = status === "CONNECTED" || status === "ACTIVE" || status === "active";
+
   if (syncing) {
     return (
-      <span className="relative inline-flex h-2 w-2">
-        <motion.span
-          className="absolute inset-0 rounded-full bg-warning"
-          animate={{ opacity: [0.5, 0], scale: [1, 2.2] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
-        />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-warning" />
+      <span className="inline-flex items-center gap-1.5 rounded-pill border border-warning/40 bg-warning/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider text-warning">
+        <ArrowClockwise size={12} className="animate-spin" />
+        {t("syncing")}
       </span>
     );
   }
-  const ok = status === "CONNECTED" || status === "ACTIVE" || status === "active";
   return (
-    <span className={`inline-flex h-2 w-2 rounded-full ${ok ? "bg-success" : "bg-text-3"}`} />
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 font-mono text-[11px] uppercase tracking-wider ${
+        ok
+          ? "border-success/40 bg-success/10 text-success"
+          : "border-danger/40 bg-danger/10 text-danger"
+      }`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {ok ? t("connected") : t("statusFailed")}
+    </span>
   );
 }
 
@@ -70,40 +78,74 @@ function StatusDot({ status, syncing }: { status: string; syncing: boolean }) {
 export function SourceCard({
   source,
   syncing = false,
+  featured = false,
   onSync,
 }: {
   source: Source;
   syncing?: boolean;
+  featured?: boolean;
   onSync?: () => void;
 }) {
   const t = useTranslations("SourceCard");
 
   return (
-    <div className="rounded-card border border-line bg-bg-1 p-4 transition-colors hover:border-line-strong">
+    <div
+      className={`group relative rounded-card border transition-colors hover:border-line-strong ${
+        featured ? "border-line-strong bg-bg-1 p-5 shadow-card" : "border-line bg-bg-1 p-4"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-button bg-bg-2 text-text-2">
-            <SourceIcon type={source.type} />
+          <span
+            className={`flex shrink-0 items-center justify-center rounded-button ${
+              featured
+                ? "h-12 w-12 bg-signal-dim text-signal"
+                : "h-9 w-9 bg-bg-2 text-text-2"
+            }`}
+          >
+            <SourceIcon type={source.type} className={featured ? "scale-125" : undefined} />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-text-1">{source.name}</p>
-            <p className="mt-0.5 flex items-center gap-1.5 text-xs text-text-3">
-              <StatusDot status={source.status} syncing={syncing} />
-              {syncing ? t("syncing") : t("connected")}
-              <span className="text-text-3/60">·</span>
-              {t("lastSync")} {relativeTime(source.lastSyncedAt)}
+            <p
+              className={`truncate font-medium text-text-1 ${
+                featured ? "text-card-title" : "text-sm"
+              }`}
+            >
+              {source.name}
             </p>
+            <div className="mt-1.5">
+              <StatusBadge status={source.status} syncing={syncing} />
+            </div>
           </div>
         </div>
         <button
           type="button"
           onClick={onSync}
           disabled={syncing}
-          className="shrink-0 rounded-button border border-line px-3 py-1.5 text-xs text-text-2 transition-colors hover:border-signal/60 hover:text-signal disabled:opacity-50"
+          className={
+            featured
+              ? "shrink-0 rounded-button bg-signal px-3.5 py-2 text-xs font-medium text-white transition-all hover:brightness-110 hover:shadow-[0_0_16px_-4px_var(--glow)] disabled:opacity-50"
+              : "shrink-0 rounded-button border border-line px-3 py-1.5 text-xs text-text-2 transition-colors hover:border-signal/60 hover:text-signal disabled:opacity-50"
+          }
         >
           {t("sync")}
         </button>
       </div>
+
+      {featured ? (
+        <p className="mt-4 flex items-baseline gap-2 border-t border-line pt-3.5">
+          <span className="text-meta uppercase tracking-[0.18em] text-text-3">
+            {t("lastSync")}
+          </span>
+          <span className="font-mono text-card-title text-text-1 tnum">
+            {relativeTime(source.lastSyncedAt)}
+          </span>
+        </p>
+      ) : (
+        <p className="mt-2 font-mono text-[11px] text-text-3 tnum">
+          {t("lastSync")} {relativeTime(source.lastSyncedAt)}
+        </p>
+      )}
 
       {syncing && (
         <motion.div

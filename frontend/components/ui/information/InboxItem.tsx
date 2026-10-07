@@ -6,6 +6,15 @@ import type { InformationItem } from "@/lib/api/client";
 
 export type InboxAction = "keep" | "ignore" | "signal";
 
+/** Freshness dot color by item age: green ≤24h, amber ≤7d, neutral beyond. */
+function freshnessClass(iso?: string): string {
+  if (!iso) return "bg-text-3";
+  const ageH = (Date.now() - new Date(iso).getTime()) / 3_600_000;
+  if (ageH <= 24) return "bg-success";
+  if (ageH <= 168) return "bg-warning";
+  return "bg-text-3";
+}
+
 /**
  * InboxItem — an item in the information sorting center.
  * Drag left to ignore, drag right to keep (mail-style), or use the explicit actions.
@@ -24,9 +33,11 @@ export function InboxItem({
   busy?: boolean;
 }) {
   const t = useTranslations("InboxItem");
+  const freshness = freshnessClass(item.publishedAt);
+  const excerpt = item.excerpt || item.content;
 
   return (
-    <div className="relative overflow-hidden rounded-card border border-line bg-bg-1">
+    <div className="group relative overflow-hidden rounded-card border border-line bg-bg-1 transition-colors hover:border-line-strong">
       {/* drag affordance layers */}
       <div className="absolute inset-0 flex items-center justify-start bg-success/10 pl-5 text-xs font-medium text-success">
         {t("keepHint")}
@@ -43,15 +54,27 @@ export function InboxItem({
           if (info.offset.x < -90) onAction?.("ignore");
           else if (info.offset.x > 90) onAction?.("keep");
         }}
-        className="relative cursor-grab border-l-2 border-transparent bg-bg-1 p-4 active:cursor-grabbing"
+        className="relative cursor-grab border-l-2 border-transparent bg-bg-1 p-4 transition-colors group-hover:bg-bg-2/50 active:cursor-grabbing"
         style={{ touchAction: "pan-y" }}
       >
         <div className="flex items-start gap-3">
+          <span
+            className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${freshness}`}
+            aria-hidden="true"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-text-1">{item.title}</p>
-            <p className="mt-1 text-xs text-text-3">
-              {item.type}
-              {item.publishedAt ? ` · ${new Date(item.publishedAt).toLocaleDateString()}` : ""}
+            {excerpt && (
+              <p className="mt-1 truncate text-xs text-text-3">{excerpt}</p>
+            )}
+            <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-text-3 tnum">
+              <span className="uppercase tracking-wider text-text-3/80">{item.type}</span>
+              {item.publishedAt && (
+                <>
+                  <span className="text-text-3/50">·</span>
+                  {new Date(item.publishedAt).toLocaleDateString()}
+                </>
+              )}
             </p>
           </div>
           {classification && (

@@ -30,7 +30,8 @@
     "activity": "动态",
     "sources": "信息源",
     "settings": "设置",
-    "me": "我的"
+    "me": "我的",
+    "live": "在线"
   },
   "SignalCard": {
     "highImpact": "🔥 高影响",
@@ -56,7 +57,8 @@
     "syncing": "同步中",
     "lastSync": "上次同步",
     "sync": "同步",
-    "itemsCollected": "已收集"
+    "itemsCollected": "已收集",
+    "statusFailed": "需关注"
   },
   "InboxItem": {
     "keepHint": "向右拖动保留",
@@ -135,7 +137,10 @@
     "done": "你的信号已就绪。",
     "skip": "跳过",
     "submitting": "保存中…",
-    "errSubmit": "部分信息未能保存，可稍后在设置中补充。"
+    "errSubmit": "部分信息未能保存，可稍后在设置中补充。",
+    "stepProgress": "步骤 {current} / {total}",
+    "next": "下一步",
+    "back": "上一步"
   },
   "Today": {
     "greeting": "早上好。",
@@ -279,7 +284,9 @@
     "save": "保存",
     "saved": "已保存。",
     "saving": "保存中…",
-    "errSave": "保存失败"
+    "errSave": "保存失败",
+    "groupAccount": "账户",
+    "groupPreferences": "偏好"
   },
   "Security": {
     "title": "安全",
@@ -288,7 +295,8 @@
     "logout": "退出登录",
     "confirmLogout": "确认退出",
     "loggingOut": "退出中…",
-    "cancel": "取消"
+    "cancel": "取消",
+    "groupSession": "会话"
   },
   "Intro": {
     "title": "互联网从不停歇。",

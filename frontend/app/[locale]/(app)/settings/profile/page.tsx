@@ -66,66 +66,88 @@ export default function SettingsProfile() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-20">
+    <div className="max-w-2xl">
       <BlurReveal>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <form onSubmit={save} className="mt-8 flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs uppercase tracking-wider text-text-3">
-              {t("displayName")}
-            </span>
-            <Input
-              value={form.displayName}
-              onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-            />
-          </label>
+        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
+          {t("title")}
+        </h1>
+        <form onSubmit={save} className="mt-6 flex flex-col gap-4">
+          <section className="rounded-card border border-line bg-bg-1 p-5 shadow-card">
+            <h2 className="text-meta uppercase tracking-[0.18em] text-text-3">
+              {t("groupAccount")}
+            </h2>
+            <div className="mt-4 flex flex-col gap-4">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-meta uppercase tracking-[0.18em] text-text-3">
+                  {t("displayName")}
+                </span>
+                <Input
+                  value={form.displayName}
+                  onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+                />
+              </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs uppercase tracking-wider text-text-3">{t("bio")}</span>
-            <textarea
-              value={form.bio}
-              onChange={(e) => setForm({ ...form, bio: e.target.value })}
-              rows={3}
-              className={TEXTAREA_CLS}
-            />
-          </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-meta uppercase tracking-[0.18em] text-text-3">
+                  {t("bio")}
+                </span>
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                  rows={3}
+                  className={TEXTAREA_CLS}
+                />
+              </label>
+            </div>
+          </section>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs uppercase tracking-wider text-text-3">{t("language")}</span>
-            <Select
-              value={form.language}
-              onChange={(e) => changeLanguage(e.target.value)}
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>{l.label}</option>
-              ))}
-            </Select>
-          </label>
+          <section className="rounded-card border border-line bg-bg-1 p-5 shadow-card">
+            <h2 className="text-meta uppercase tracking-[0.18em] text-text-3">
+              {t("groupPreferences")}
+            </h2>
+            <div className="mt-4 flex flex-col gap-4">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-meta uppercase tracking-[0.18em] text-text-3">
+                  {t("language")}
+                </span>
+                <Select
+                  value={form.language}
+                  onChange={(e) => changeLanguage(e.target.value)}
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.value} value={l.value}>{l.label}</option>
+                  ))}
+                </Select>
+              </label>
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs uppercase tracking-wider text-text-3">{t("timezone")}</span>
-            <Select
-              value={form.timezone}
-              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
-            </Select>
-          </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-meta uppercase tracking-[0.18em] text-text-3">
+                  {t("timezone")}
+                </span>
+                <Select
+                  value={form.timezone}
+                  onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+                >
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz} value={tz}>{tz}</option>
+                  ))}
+                </Select>
+              </label>
+            </div>
+          </section>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center justify-center gap-2 rounded-md bg-signal px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-button bg-signal px-4 py-2.5 text-sm font-medium text-white transition-all hover:brightness-110 hover:shadow-[0_0_18px_-4px_var(--glow)] disabled:opacity-50"
           >
             {saving && <Spinner className="h-3.5 w-3.5" />}
             {saved ? t("saved") : saving ? t("saving") : t("save")}
           </button>
         </form>
       </BlurReveal>
-    </main>
+    </div>
   );
 }

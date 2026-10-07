@@ -33,9 +33,16 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <Link
         href="/today"
         onClick={onNavigate}
-        className="flex h-16 items-center gap-2 border-b border-line px-5 text-xs uppercase tracking-[0.3em] text-text-1 transition-colors hover:text-signal"
+        className="flex h-16 items-center gap-2.5 border-b border-line px-5 transition-colors"
       >
-        SIGNAL
+        <span className="font-display text-sm font-semibold uppercase tracking-[0.3em] bg-gradient-to-r from-signal to-signal-2 bg-clip-text text-transparent">
+          SIGNAL
+        </span>
+        <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+          <span className="absolute inset-0 rounded-full bg-success animate-signal-pulse" />
+          <span className="relative h-1.5 w-1.5 rounded-full bg-success" />
+        </span>
+        <span className="sr-only">{t("live")}</span>
       </Link>
 
       <nav aria-label={t("label")} className="flex flex-1 flex-col gap-1 p-3">
@@ -49,7 +56,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               aria-current={active ? "page" : undefined}
               className={`flex items-center gap-3 rounded-button px-3 py-2 text-sm transition-colors ${
                 active
-                  ? "bg-signal-dim text-signal"
+                  ? "bg-signal-dim text-signal animate-signal-pulse"
                   : "text-text-2 hover:bg-bg-2 hover:text-text-1"
               }`}
             >
@@ -66,7 +73,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             aria-current={isActive(pathname, "/settings") ? "page" : undefined}
             className={`flex items-center gap-3 rounded-button px-3 py-2 text-sm transition-colors ${
               isActive(pathname, "/settings")
-                ? "bg-signal-dim text-signal"
+                ? "bg-signal-dim text-signal animate-signal-pulse"
                 : "text-text-2 hover:bg-bg-2 hover:text-text-1"
             }`}
           >

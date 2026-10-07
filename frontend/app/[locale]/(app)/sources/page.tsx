@@ -86,6 +86,50 @@ export default function SourcesPage() {
     });
   };
 
+  const sorted = [...(sources ?? [])].sort((a, b) =>
+    (b.lastSyncedAt ?? b.createdAt ?? "").localeCompare(
+      a.lastSyncedAt ?? a.createdAt ?? "",
+    ),
+  );
+  const [hero, ...rest] = sorted;
+
+  const renderCard = (s: (typeof sorted)[number], featured: boolean) => (
+    <div key={s.id} className="group relative">
+      <SourceCard
+        source={s}
+        syncing={syncingId === s.id}
+        featured={featured}
+        onSync={() => sync(s.id)}
+      />
+      {confirmingId === s.id ? (
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-button border border-line bg-bg-2 p-1">
+          <button
+            type="button"
+            onClick={() => remove(s.id)}
+            className="rounded-button bg-danger px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
+          >
+            {t("confirmDelete")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmingId(null)}
+            className="rounded-button border border-line px-2.5 py-1 text-xs text-text-2"
+          >
+            {t("cancel")}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirmingId(s.id)}
+          className="absolute right-3 top-3 z-10 rounded-button border border-line bg-bg-2/90 px-2.5 py-1 text-xs text-danger opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
+        >
+          {t("delete")}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-10">
       <BlurReveal>
@@ -140,37 +184,12 @@ export default function SourcesPage() {
         {!isLoading && (!sources || sources.length === 0) && (
           <EmptyState title={t("emptyTitle")} body={t("emptyBody")} />
         )}
-        {(sources ?? []).map((s) => (
-          <div key={s.id} className="relative">
-            <SourceCard source={s} syncing={syncingId === s.id} onSync={() => sync(s.id)} />
-            {confirmingId === s.id ? (
-              <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-button border border-line bg-bg-2 p-1">
-                <button
-                  type="button"
-                  onClick={() => remove(s.id)}
-                  className="rounded-button bg-danger px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
-                >
-                  {t("confirmDelete")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingId(null)}
-                  className="rounded-button border border-line px-2.5 py-1 text-xs text-text-2"
-                >
-                  {t("cancel")}
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmingId(s.id)}
-                className="absolute right-3 top-3 z-10 rounded-button border border-line bg-bg-2/90 px-2.5 py-1 text-xs text-danger opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
-              >
-                {t("delete")}
-              </button>
-            )}
+        {hero && renderCard(hero, true)}
+        {rest.length > 0 && (
+          <div className="grid gap-3 md:grid-cols-2">
+            {rest.map((s) => renderCard(s, false))}
           </div>
-        ))}
+        )}
       </div>
     </main>
   );

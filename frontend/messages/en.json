@@ -85,6 +85,18 @@
     "retry": "Retry",
     "backHome": "Back to Today"
   },
+  "Brand": {
+    "h1a": "Fold the internet's",
+    "h1b": "noise into signals",
+    "sub": "Of the 41,000 items published daily, only 9 deserve your attention. SIGNAL handles the rest.",
+    "stat1v": "41k",
+    "stat1l": "items online daily",
+    "stat2v": "≤9",
+    "stat2l": "daily signal budget",
+    "stat3v": "Local",
+    "stat3l": "data stays yours",
+    "live": "Ingest · Understand · Score · Deliver — all online"
+  },
   "Login": {
     "title": "Welcome back.",
     "subtitle": "Your information has been filtered.",
@@ -134,6 +146,8 @@
     "statNew": "New information",
     "statSignals": "Signals",
     "statAction": "Action required",
+    "statRatio": "Signal share",
+    "actionNeed": "Needs your attention",
     "emptyTitle": "No signals yet.",
     "emptyBody": "Connect sources and let SIGNAL filter the noise.",
     "navSources": "Sources",

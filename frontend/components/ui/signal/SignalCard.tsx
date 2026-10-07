@@ -31,17 +31,29 @@ export function SignalCard({
   const t = useTranslations("SignalCard");
   const score = signal.signalScore ?? 60;
   const impact = score >= 80;
+  const primary = index === 0;
 
   return (
     <BlurReveal delay={index * 0.04} className="w-full">
-      <article className="group rounded-card border border-line bg-bg-1 p-5 transition-colors hover:border-line-strong">
+      <article
+        className={`group relative rounded-card border p-5 transition-all ${
+          primary
+            ? "border-signal/35 bg-[linear-gradient(180deg,#262D3A,#232A35)] shadow-[0_0_0_1px_rgba(139,133,255,0.12),0_14px_40px_-18px_var(--glow)]"
+            : "border-line bg-bg-2/60 hover:border-line-strong"
+        }`}
+      >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            {impact && (
-              <span className="inline-flex items-center gap-1 rounded-pill border border-signal/30 bg-signal-dim px-2 py-0.5 text-[11px] font-medium text-signal">
-                {t("highImpact")}
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] text-text-3 tnum">
+                {(index + 1).toString().padStart(2, "0")}
               </span>
-            )}
+              {impact && (
+                <span className="inline-flex items-center gap-1 rounded-pill border border-signal/30 bg-signal-dim px-2 py-0.5 text-[11px] font-medium text-signal">
+                  {t("highImpact")}
+                </span>
+              )}
+            </div>
             <h3 className="mt-2 text-card-title font-medium leading-snug text-text-1">
               {signal.title}
             </h3>

@@ -85,6 +85,18 @@
     "retry": "重试",
     "backHome": "回到今日"
   },
+  "Brand": {
+    "h1a": "把互联网的噪声",
+    "h1b": "折叠成你的信号",
+    "sub": "每天 41,000 条新信息里，只有 9 条值得进入你的注意力。SIGNAL 负责其余部分。",
+    "stat1v": "41k",
+    "stat1l": "日均新信息",
+    "stat2v": "≤9",
+    "stat2l": "每日信号预算",
+    "stat3v": "Local",
+    "stat3l": "数据不出设备",
+    "live": "抓取 · 理解 · 评分 · 投递 全部在线"
+  },
   "Login": {
     "title": "欢迎回来。",
     "subtitle": "你的信息已被过滤。",
@@ -134,6 +146,8 @@
     "statNew": "新增信息",
     "statSignals": "信号",
     "statAction": "需要行动",
+    "statRatio": "信号占比",
+    "actionNeed": "需要你的注意力",
     "emptyTitle": "暂时还没有信号。",
     "emptyBody": "连接信息源，让 SIGNAL 为你过滤噪音。",
     "navSources": "信息源",

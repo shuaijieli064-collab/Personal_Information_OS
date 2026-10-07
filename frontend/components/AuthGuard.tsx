@@ -28,7 +28,10 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const authed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
-    if (!authed) router.replace("/login");
+    // localStorage is the source of truth: during full-page hydration the
+    // server snapshot is transiently false even when a session exists, so
+    // only redirect once the token is genuinely gone.
+    if (!authed && !tokens.access) router.replace("/login");
   }, [authed, router]);
 
   // The server can never see the localStorage token, so the first paint is a

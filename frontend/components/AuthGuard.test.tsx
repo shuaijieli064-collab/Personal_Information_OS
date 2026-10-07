@@ -1,23 +1,34 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { AuthGuard } from "./AuthGuard";
 
+const { replace, push } = vi.hoisted(() => ({
+  replace: vi.fn(),
+  push: vi.fn(),
+}));
+
 vi.mock("@/i18n/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({ replace, push }),
 }));
 
 describe("AuthGuard", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    replace.mockClear();
+    push.mockClear();
+  });
 
   it("renders children when an access token exists", () => {
     localStorage.setItem("signal.access", "tok");
     render(<AuthGuard><p>protected</p></AuthGuard>);
     expect(screen.getByText("protected")).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
   });
 
-  it("renders nothing for anonymous visitors", () => {
+  it("renders nothing for anonymous visitors", async () => {
     render(<AuthGuard><p>protected</p></AuthGuard>);
     expect(screen.queryByText("protected")).not.toBeInTheDocument();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
   });
 
   it("hides content when the API client broadcasts unauthorized", async () => {
@@ -31,5 +42,6 @@ describe("AuthGuard", () => {
     });
 
     expect(screen.queryByText("protected")).not.toBeInTheDocument();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
   });
 });

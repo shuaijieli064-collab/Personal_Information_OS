@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
 import { api, tokens, ApiError } from "@/lib/api/client";
+import { Warning } from "@phosphor-icons/react";
 import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -38,16 +39,18 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-24">
-      <BlurReveal className="relative z-10 w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/10 text-signal ring-1 ring-signal/20">
+    <main className="flex flex-1 items-center justify-center">
+      <BlurReveal className="w-full rounded-shell border border-line-strong bg-bg-2/70 p-9 shadow-float backdrop-blur-xl">
+        <div className="mb-7 flex flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/10 text-signal ring-1 ring-signal/20 lg:hidden">
             <span className="text-lg font-bold">S</span>
           </div>
-          <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-3">SIGNAL</p>
+          <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-3 lg:mt-0">
+            SIGNAL
+          </p>
         </div>
 
-        <h1 className="text-center text-2xl font-semibold tracking-[-0.02em] text-text-1">
+        <h1 className="text-center font-display text-2xl font-semibold tracking-[-0.02em] text-text-1">
           {t("title")}
         </h1>
         <p className="mt-2 text-center text-sm text-text-2">{t("subtitle")}</p>
@@ -63,6 +66,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              className="bg-bg-0"
             />
           </label>
           <label className="flex flex-col gap-1.5">
@@ -76,6 +80,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              className="bg-bg-0"
             />
           </label>
           <label className="flex flex-col gap-1.5">
@@ -88,10 +93,15 @@ export default function RegisterPage() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="••••••••"
+              className="bg-bg-0"
             />
           </label>
           {error && (
-            <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
+            <p
+              role="alert"
+              className="flex items-start gap-2 rounded-control border border-danger/40 bg-danger/10 px-3 py-2.5 text-sm text-danger"
+            >
+              <Warning size={15} className="mt-0.5 shrink-0" />
               {error}
             </p>
           )}

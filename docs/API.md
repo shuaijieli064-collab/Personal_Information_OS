@@ -36,7 +36,7 @@ Errors: 400 validation · 401 unauthenticated · 403 forbidden · 404 · 409 con
 | POST | `/signals/{id}/save` | ✅ | shortcut → status `SAVED` |
 | POST | `/signals/{id}/important` | ✅ | shortcut → status `IMPORTANT` |
 | POST | `/signals/{id}/ignore` | ✅ | shortcut → status `ARCHIVED` |
-| POST/GET | `/signals/{id}/feedback` | ✅ | `{vote: useful\|not_useful\|save\|ignore, reason?}` / list feedback |
+| POST/GET | `/signals/{id}/feedback` | ✅ | `{type: USEFUL\|NOT_USEFUL\|SAVE\|IGNORE\|IMPORTANT, reason?}` / list feedback |
 | GET | `/inbox/sources` | ⏳ | per-source unread counts (planned) |
 
 ## Sources

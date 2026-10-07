@@ -97,4 +97,25 @@ describe("token refresh lifecycle", () => {
     expect(listener).toHaveBeenCalledTimes(1);
     off();
   });
+
+  it("clears and broadcasts when the replayed request is still 401", async () => {
+    tokens.set("expired", "refresh-token");
+    fetchMock
+      .mockResolvedValueOnce(res(401, null)) // initial attempt
+      .mockResolvedValueOnce(res(200, {
+        success: true,
+        data: { accessToken: "fresh", refreshToken: "rotated" },
+      }))
+      .mockResolvedValueOnce(res(401, null)); // replay rejected — session dead
+
+    const listener = vi.fn();
+    const off = onUnauthorized(listener);
+
+    await expect(api.get("/api/v1/today")).rejects.toBeInstanceOf(ApiError);
+
+    expect(tokens.access).toBeNull();
+    expect(tokens.refresh).toBeNull();
+    expect(listener).toHaveBeenCalledTimes(1);
+    off();
+  });
 });

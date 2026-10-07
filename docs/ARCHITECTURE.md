@@ -1,7 +1,7 @@
 # SIGNAL — Architecture
 
-> Phase 1 design document. This describes the **target** architecture and the decisions
-> behind it. Components marked `[deferred]` are intentionally not built yet.
+> Living design document (status: Phases 1–5 implemented; see `docs/ROADMAP.md`).
+> Components marked `[deferred]` land in Phase 6–8.
 
 ---
 
@@ -140,7 +140,7 @@ so the system degrades gracefully when the LLM is unavailable.
 | Decision | Choice | Rationale |
 |---|---|---|
 | Frontend framework | Next.js App Router | SSR for fast first paint, file routing, one deployable |
-| Backend | Spring Boot 3 / Java 21 | Spec-mandated; portfolio value; strong JPA/security ecosystem |
+| Backend | Spring Boot 4.1.1 / Java 21 | Spec-mandated; portfolio value; strong JPA/security ecosystem |
 | Primary store | PostgreSQL (+ pgvector when RAG arrives) | One operational store; avoids a separate vector DB in Phase 1 |
 | Cache | Redis | Sessions, rate limits, hot signals, AI response cache |
 | Queue | In-process scheduler now → RabbitMQ later | Show async architecture when pipeline volume exists, not before |

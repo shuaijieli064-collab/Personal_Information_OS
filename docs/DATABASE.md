@@ -1,7 +1,14 @@
 # SIGNAL — Database Design
 
 PostgreSQL 16. Naming: snake_case, plural tables, `timestamptz` everywhere, UUID primary keys.
-`pgvector` extension is **not** enabled in Phase 1 — it lands with Knowledge/RAG (Phase 6).
+`pgvector` extension is enabled by `V7__semantic_dedup.sql` (`vector(384)` columns); semantic
+search queries land with Knowledge/RAG (Phase 6).
+
+**Migration authority**: `backend/src/main/resources/db/migration/` only (V1–V12).
+The legacy root-level `db/migrations/` draft was deleted in P0 Hardening H1 — never
+recreate it. An empty database rebuilt through V1–V12 passes Hibernate
+`ddl-auto=validate` (V12 aligns migration DDL with the frozen JPA entities;
+verified 2026-10-07, see `docs/RUNTIME_VERIFICATION.md`).
 
 ## Entity overview
 

@@ -65,13 +65,18 @@ public class SignalGenerationService {
         return score(info, relevance);
     }
 
-    /** Score + persist a Signal when the score clears the threshold; null otherwise. */
+    /** Score + persist a Signal when the score clears the threshold; null otherwise.
+     *  Idempotent: re-running the pipeline for an item that already produced a Signal
+     *  (ingestion auto-understands, then a user can trigger understanding again) is a
+     *  no-op instead of an error. */
     @Transactional
     public Signal generate(UUID userId, UUID informationId, Relevance relevance) {
         Information info = infoRepo.findByIdAndUserId(informationId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Information not found"));
-        if (signalRepo.existsByInformationId(informationId))
-            throw new IllegalStateException("Signal already exists for this information");
+        if (signalRepo.existsByInformationId(informationId)) {
+            log.debug("Signal already exists for information={} — idempotent skip", informationId);
+            return null;
+        }
 
         Scored scored = score(info, relevance);
         recordScore(informationId, scored);

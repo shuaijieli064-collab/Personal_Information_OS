@@ -90,6 +90,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const fresh = await refreshAccessToken();
     if (fresh) {
       res = await doFetch(fresh);
+      if (res.status === 401) {
+        // The freshly-minted token was rejected too (revoked/rotated elsewhere):
+        // the session is unrecoverable — clear it and let guards redirect,
+        // instead of leaving a zombie session behind.
+        tokens.clear();
+        emitUnauthorized();
+      }
     } else {
       // Session is unrecoverable (no refresh token, or refresh itself rejected).
       tokens.clear();

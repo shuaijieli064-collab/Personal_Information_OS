@@ -68,12 +68,14 @@ class SignalGenerationServiceTest {
         assertEquals(i.getId(), s.getInformationId());
     }
 
-    @Test void duplicateRejected() {
+    /** Re-running the pipeline for an item that already has a Signal is a no-op. */
+    @Test void duplicateIsIdempotentNoOp() {
         Information i = info();
         when(infoRepo.findByIdAndUserId(any(), any())).thenReturn(Optional.of(i));
         when(signalRepo.existsByInformationId(any())).thenReturn(true);
-        assertThrows(IllegalStateException.class,
-                () -> svc.generate(UUID.randomUUID(), i.getId(), rel(95, true, 1)));
+
+        assertNull(svc.generate(UUID.randomUUID(), i.getId(), rel(95, true, 1)));
+        verify(signalRepo, never()).save(any());
     }
 
     /** Score is always recorded on the understanding row, Signal or not. */

@@ -1,65 +1,51 @@
-# SIGNAL — Roadmap, Risks & Next Steps
+# SIGNAL — Roadmap
 
-## First Milestone (this deliverable)
+> Phase structure follows the project documentation suite (01 总计划书 / 06 开发实施计划与验收手册).
+> Frozen phases are **bugfix-only**; no feature additions to frozen scope.
 
-**Scope frozen: Architecture + Design System + Database Design + Project Scaffold + UI Prototype.**
-Nothing beyond this is built in Phase 1.
+## Phase status
 
-| # | Deliverable | Location | Status |
+| Phase | Name | Scope | Status |
 |---|---|---|---|
-| 1 | Product & technical architecture | `docs/ARCHITECTURE.md` | done |
-| 2 | PostgreSQL schema (entities + DDL draft) | `docs/DATABASE.md`, `db/migrations/V1__init.sql` | done (draft) |
-| 3 | REST API v1 contract | `docs/API.md` | done |
-| 4 | Route & page structure | `docs/DESIGN_SYSTEM.md §1` | done |
-| 5 | Design tokens (color/type/spacing) | `frontend/design-tokens/tokens.css` | done |
-| 6 | Motion system | `docs/DESIGN_SYSTEM.md §6` | done |
-| 7 | Project scaffold (frontend/backend/docs tree) | repo root | done |
-| 8 | Static UI prototype (visual direction) | `prototype/index.html` | done |
+| 1 | Foundation | 边界、架构、技术栈、工程初始化 | ✅ Frozen |
+| 2 | Experience Foundation | Next.js/Spring Boot 骨架、Motion、Intro、API ping | ✅ Frozen |
+| 3 | Identity & Personalization | Auth、Profile、Goal、Interest、Skill、IDOR 测试 | ✅ Frozen |
+| 4 | Information Ingestion | RSS/GitHub/URL/File、标准化、Exact Dedup、Inbox、SSRF | ✅ Frozen |
+| 5 | Intelligence & Signals | Understanding、Embedding、Semantic Dedup、Relevance、Signal Score、Today、Feedback | ✅ Frozen |
+| **P0** | **Engineering Hardening** | H1–H6（下表） | **▶ 当前** |
+| 5.5 | Frontend Experience | Today 2.0、Signal Card 2.0、Information Detail、Command Center UI、Motion、Responsive、全状态、Browser QA（设计方向 A 信号控制台） | ⏭ 下一步 |
+| 6 | Knowledge & Retrieval | Chunk、Embedding、Vector Retrieval、Hybrid Search、Rerank、RAG、Citation | 📋 规划 |
+| 7 | Agent & Tools | Tool Registry、Permission、Planner/Executor、Audit、Confirmation | 📋 规划 |
+| 8 | Automation | Scheduled Sync、Daily Brief、Notification、Feedback Loop、监控/重试 | 📋 规划 |
 
-**Explicitly NOT done this phase:** auth implementation, source fetching, AI calls,
-real DB running, Next.js/Spring tooling install. Waiting for sign-off.
+**硬性顺序**：先 Hardening，再 5.5，再 6 → 7 → 8。不在不稳定基础上堆功能。
 
-## Phase 2 status — Foundation tooling (done)
+## P0 Hardening queue (H1–H6)
 
-Next.js 16 scaffold + Tailwind v4 + framer-motion · Spring Boot 3 scaffold (Java 21,
-Web/Security/JPA/Postgres/Redis/Flyway/Actuator, Maven wrapper) · CORS + stateless
-security baseline · Flyway V1 migration in place · docker-compose (PG16+Redis7) ·
-`.env.example` · CI workflow · Motion layer (`components/motion/`) · live `/motion-demo`.
-Verified: `next build` green (TS clean), `mvnw compile` green.
-Local Docker not installed yet → containers unrun on this machine.
-
-## Phases (from spec, re-ordered by dependency)
-
-- **Phase 1** Foundation — ← current
-- **Phase 2** Information Engine: RSS collector + parser + normalizer
-- **Phase 3** Signal Engine: classify → dedupe → score → rank
-- **Phase 4** Today page live + Signal Card + Daily Brief
-- **Phase 5** AI Command Center + tool calling
-- Phase 6 Knowledge / RAG (pgvector) · Phase 7 Personal Intelligence ·
-  Phase 8 More sources · Phase 9 Signal Universe (3D/graph) · Phase 10 Production hardening
-
-Strictly P0 before P1 before P2. No P2/P3 work while P0 is open.
+| # | Task | Acceptance | Status |
+|---|---|---|---|
+| H1 | Migration Consolidation | 唯一权威 `backend/src/main/resources/db/migration/`；空库 V1–V12 顺序执行并 `ddl-auto=validate` 通过 | ✅ 2026-10-07（根目录重复 `db/migrations/` 已删除；新增 V12 对齐 JPA 实体） |
+| H2 | Docs Sync | README/ROADMAP/docs 与实际阶段一致，无过期描述 | ✅ 2026-10-07 |
+| H3 | Git Consolidation | 单仓、业务代码全入库、无密钥入库 | ✅ 2026-10-07（`frontend/.git` 不存在；`resources/.env` 已移除防打包泄漏） |
+| H4 | Auth Hardening | Route Guard 全覆盖；401 refresh 单飞；重放仍 401 → clear+broadcast（不吞错） | ✅ 2026-10-07（client.ts 重放边界修复 + 回归测试，Vitest 11/11） |
+| H5 | Runtime QA | 真实 PG/Redis/Flyway/Spring 启动 + 全链路 API 走查 + 浏览器走查，结果记入 `docs/RUNTIME_VERIFICATION.md` | ▶ API 走查 ✅（`scripts/e2e-smoke.ps1` 29/29，含 IDOR/登出吊销/RSS sync）；浏览器走查并入 Phase 5.5 S5 |
+| H6 | Dead Code | 清理空目录/死 hook/死状态/无引用依赖；无误删核心能力 | ⬜ 待办 |
 
 ## Risks
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Scope creep (spec = 10 phases) | Low delivery velocity, half-built features | Milestone gates; sign-off before each phase; P0 discipline |
-| LLM hallucination in summaries/"Why this matters" | Trust erosion | Factual summary templates, score computed by rules first, AI explains only, eval suite (§AI tests) |
-| Prompt injection via fetched web content | Agent executes hostile instructions | SYSTEM / USER_DATA / UNTRUSTED_CONTENT separation; external text quoted & sandboxed; tool allow-list |
-| LLM cost & latency | Slow UI, runaway spend | Rule-based scoring default; Redis cache for AI responses; async pipeline; model swap via AIProvider |
-| Dedupe quality (same event ×5 sources) | Noise returns | 3-stage: URL hash → title sim → embedding cluster (Phase 3); cluster tuning |
-| Third-party ToS / private data | Account/legal risk | Only RSS, public APIs, user-imported text; no scraping; SSRF guard; explicit consent per source |
-| Cinematic motion hurts low-end devices | Jank, accessibility | reduced-motion support, transform/opacity-only, lazy 3D, device degradation |
-| Monorepo tooling sprawl | Setup friction | Next.js + Spring only; MQ/vector DB deferred until volume justifies |
+| Risk | Mitigation |
+|---|---|
+| LLM 幻觉污染 summary / why | 事实型模板 + 规则评分优先 + 引用原文 |
+| Prompt injection via 外部内容 | SYSTEM / USER_PROFILE / UNTRUSTED_CONTENT 隔离（PromptBoundary，有单测） |
+| 去重质量回退 | URL hash → title 相似 → pgvector 语义三级，阈值可配置 |
+| 第三方 ToS / 私有数据 | 仅 RSS、公开 API、用户主动导入；SSRF 防护 |
+| 假验证 | 所有"完成"必须附运行证据；未验证项显式标 NOT VERIFIED |
+| 密钥泄漏 | `.env` gitignore + 不入 jar + CI 扫描 |
 
-## Next steps (awaiting approval)
+## Future (Phase 6–8 详细任务拆解)
 
-1. Tooling scaffold: `create-next-app` in `frontend/` (TS, Tailwind, App Router) +
-   Spring Initializr in `backend/` (Web, Security, JPA, Validation).
-2. Run PostgreSQL locally / Docker; apply `V1__init.sql`.
-3. Task 06: Authentication (register/login/JWT) with tests.
-4. Task 12: first RSS source adapter → Postgres.
-5. Task 14–15: rule-based Signal Score → wire RSS → DB → static Today.
+- **Phase 6**: Document/Information Chunking → Embedding Pipeline → Vector Index → Hybrid Retrieval → Reranker → Context Builder → RAG API → Citation UI → Knowledge Page（另含 `/api/v1/discover` 后端、Information 归档动作等 5.5 遗留 backlog）
+- **Phase 7**: Tool Registry/Schema → Permission Model → Planner → Executor → Observation → Audit Log → Confirmation UI → Failure Recovery
+- **Phase 8**: Scheduler → Scheduled Source Sync → Daily Brief → Important Signal Notification → Automated Feedback Loop → Job Monitoring → Retry/Dead Letter
 
-Stop here until the next instruction.
+每阶段交付必须附：验收模板（Scope/变更/测试结果/运行验证/已知问题/未验证项/冻结结论）→ `docs/PHASE_X_FINAL_QA.md`。

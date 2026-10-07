@@ -9,7 +9,7 @@ actions.
 - Next.js 16 (App Router, Turbopack) · React 19
 - next-intl 4 — locales `zh-CN` (default) and `en`
 - Tailwind CSS v4 · framer-motion 14
-- SWR — data fetching (today, sources)
+- TanStack Query — data fetching (today, inbox, sources)
 - Vitest + Testing Library — unit tests
 
 ## Getting started

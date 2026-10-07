@@ -1,8 +1,8 @@
 # SIGNAL — API Design (v1)
 
 Base URL: `/api/v1`. JSON in/out. Auth: `Authorization: Bearer <jwt>` (access token,
-15 min) with refresh endpoint. All list endpoints are paginated:
-`?cursor=&limit=` → `{ items, next_cursor }`.
+15 min) with refresh endpoint. Paginated lists use `?page=&size=` → `{ items, total }`
+(`size` ≤ 100).
 
 Error envelope:
 ```json
@@ -10,93 +10,95 @@ Error envelope:
 ```
 Errors: 400 validation · 401 unauthenticated · 403 forbidden · 404 · 409 conflict · 429 rate-limited · 5xx.
 
+> 状态标注：✅ 已实现（与 `backend/` controller 一致）· ⏳ planned（设计契约，尚未实现）
+> 前端 `frontend/lib/api/client.ts` 以 ✅ 项为准。
+
 ## Auth
-| Method | Path | Description |
-|---|---|---|
-| POST | `/auth/register` | `{email, password, display_name}` |
-| POST | `/auth/login` | `{email, password}` → access + refresh |
-| POST | `/auth/refresh` | rotate tokens |
-| POST | `/auth/logout` | invalidate refresh |
+| Method | Path | Status | Description |
+|---|---|---|---|
+| POST | `/auth/register` | ✅ | `{email, password, displayName?}` → `{accessToken, refreshToken, user}` |
+| POST | `/auth/login` | ✅ | `{email, password}` → tokens, updates last_login |
+| POST | `/auth/refresh` | ✅ | `{refreshToken}` → rotated pair |
+| POST | `/auth/logout` | ✅ | revokes presented refresh |
+| GET | `/auth/me` | ✅ | current user `{id, email, profile:{displayName}}` |
 
 ## Today (home)
-| Method | Path | Description |
-|---|---|---|
-| GET | `/today` | `{ greeting, stats:{raw, signals, action_needed}, needs_attention:[SignalCard], for_you:[SignalCard], discover:[SignalCard], ai_brief }` |
+| Method | Path | Status | Description |
+|---|---|---|---|
+| GET | `/today` | ✅ | `{ informationCount, signalCount, actionRequired, signals:[Signal] }` |
 
-## Signals / Inbox
-| Method | Path | Description |
-|---|---|---|
-| GET | `/signals?status=&source=&category=&cursor=` | feed list |
-| GET | `/signals/{id}` | detail incl. `covered_by:[sources]` |
-| PATCH | `/signals/{id}` | update `status` (read/save/important/archive) |
-| POST | `/signals/{id}/feedback` | `{vote: useful\|not_useful\|save\|ignore, reason?}` |
-| GET | `/inbox/sources` | per-source unread counts |
+## Signals
+| Method | Path | Status | Description |
+|---|---|---|---|
+| GET | `/signals?page=&size=` | ✅ | feed, score DESC then recency; `{items, total}` |
+| GET | `/signals/{id}` | ✅ | detail (user-scoped, IDOR → 404) |
+| PATCH | `/signals/{id}` | ✅ | `{status}` partial update |
+| POST | `/signals/{id}/save` | ✅ | shortcut → status `SAVED` |
+| POST | `/signals/{id}/important` | ✅ | shortcut → status `IMPORTANT` |
+| POST | `/signals/{id}/ignore` | ✅ | shortcut → status `ARCHIVED` |
+| POST/GET | `/signals/{id}/feedback` | ✅ | `{vote: useful\|not_useful\|save\|ignore, reason?}` / list feedback |
+| GET | `/inbox/sources` | ⏳ | per-source unread counts (planned) |
 
 ## Sources
-| Method | Path | Description |
-|---|---|---|
-| GET/POST | `/sources` | list / create `{type, name, url, config}` |
-| PATCH/DELETE | `/sources/{id}` | edit / disable |
-| POST | `/sources/{id}/refresh` | trigger collect (async) |
-
-## Discover / Knowledge
-| Method | Path | Description |
-|---|---|---|
-| GET | `/discover?path=` | interest-driven items with match % |
-| GET | `/knowledge` | saved entries |
-| POST | `/knowledge` | `{signal_id}` → AI extracts concepts |
-
-## AI
-| Method | Path | Description |
-|---|---|---|
-| POST | `/ai/command` | `{input}` → command center (may call tools) |
-| POST | `/ai/conversations/{id}/messages` | chat turn with tool calling |
-| GET | `/ai/brief/today` | latest daily brief |
-
-## User
-| Method | Path | Description |
-|---|---|---|
-| GET/PUT | `/me` | profile |
-| GET/POST/DELETE | `/me/goals`, `/me/interests` | personal intelligence |
-| GET | `/me/tasks?status=` | action items |
-| PATCH | `/me/tasks/{id}` | `{status: done}` |
-
-## Auth + Identity (Phase 3)
-
-| Method | Path | Auth | Description |
+| Method | Path | Status | Description |
 |---|---|---|---|
-| POST | `/auth/register` | anon | `{email,password,displayName?}` → tokens |
-| POST | `/auth/login` | anon | `{email,password}` → tokens, updates last_login |
-| POST | `/auth/refresh` | anon | `{refreshToken}` → rotated pair |
-| POST | `/auth/logout` | anon | revokes presented refresh |
-| GET | `/auth/me` | ✓ | current user |
-| GET/PATCH | `/profile` | ✓ | partial update |
-| GET/POST | `/goals`, PATCH/DELETE `/goals/{id}` | ✓ | user-scoped |
-| GET/POST | `/interests`, PATCH/DELETE `/interests/{id}` | ✓ | normalized-name unique |
-| GET/POST | `/skills`, PATCH/DELETE `/skills/{id}` | ✓ | level enum, normalized unique |
+| GET/POST | `/sources` | ✅ | list / create `{type, name, url, config}` (RSS/GITHUB/URL/FILE) |
+| GET/PATCH/DELETE | `/sources/{id}` | ✅ | user-scoped (IDOR → 404) |
+| POST | `/sources/{id}/sync` | ✅ | run collector; returns `{fetched, created, updated, duplicates, failed}` |
+
+## Information (inbox)
+| Method | Path | Status | Description |
+|---|---|---|---|
+| GET | `/information?page=&size=` | ✅ | paged (size≤100), published_at DESC; `{items, total}` |
+| GET | `/information/{id}` | ✅ | user-scoped detail |
+| POST | `/information/{id}/summarize` | ✅ | AI summary |
+| POST | `/information/{id}/extract-topics` | ✅ | topic extraction |
+| POST | `/information/{id}/classify` | ✅ | classification |
+| POST | `/information/classify-batch` | ✅ | batch classify |
+| GET/POST | `/information/{id}/understanding` | ✅ | understanding row (see DTO below) |
+| POST | `/import/url` | ✅ | SSRF-guarded HTML import |
+| POST | `/import/file` | ✅ | multipart txt/md/pdf ≤10MB |
+
+## User / Profile
+| Method | Path | Status | Description |
+|---|---|---|---|
+| GET/PATCH | `/profile` | ✅ | partial update `{displayName, bio, language, timezone}` |
+| GET/GET{id}/POST/PATCH/DELETE | `/goals` | ✅ | user-scoped |
+| GET/POST/PATCH/DELETE | `/interests` | ✅ | normalized-name unique |
+| GET/POST/PATCH/DELETE | `/skills` | ✅ | level enum, normalized unique |
+| GET | `/me/tasks?status=` | ⏳ | action items (planned) |
 
 Authorization: every resource query uses `findByIdAndUserId(...)` — accessing another
 user's resource returns 404 (IDOR protected).
 
-## Ingestion (Phase 4)
+## Discover / Knowledge / AI (planned — 无 controller)
+| Method | Path | Status |
+|---|---|---|
+| GET | `/discover?path=` | ⏳ |
+| GET/POST | `/knowledge` | ⏳ |
+| POST | `/ai/command` | ⏳ |
+| POST | `/ai/conversations/{id}/messages` | ⏳ |
+| GET | `/ai/brief/today` | ⏳ |
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET/POST | `/sources` | ✓ | list / create source (RSS/GITHUB/URL/FILE) |
-| GET/PATCH/DELETE | `/sources/{id}` | ✓ | user-scoped (IDOR → 404) |
-| POST | `/sources/{id}/sync` | ✓ | run collector; returns fetched/created/updated/duplicates/failed |
-| GET | `/information?page=&size=` | ✓ | paged (size≤100), published_at DESC |
-| GET | `/information/{id}` | ✓ | user-scoped detail |
-| POST | `/import/url` | ✓ | SSRF-guarded HTML import |
-| POST | `/import/file` | ✓ | multipart txt/md/pdf ≤10MB |
-
-## SignalCard DTO (shared)
+## Signal DTO（实际实现）
 ```json
 {
-  "id": "…", "source": "GitHub", "title": "Java Virtual Threads",
-  "url": "…", "summary": "…", "ai_reason": "You are learning: Java Backend. Matches 3 interests.",
-  "signal_score": 94, "score_breakdown": {"relevance": 25, "goal_alignment": 20, "quality": 15, "urgency": 15, "novelty": 10, "interest": 10, "reliability": 5},
-  "tags": ["Agent","MCP"], "status": "unread",
-  "read_time_min": 27, "published_at": "…", "covered_by": 3
+  "id": "…", "clusterId": "…", "informationId": "…",
+  "title": "…", "summary": "…", "whyItMatters": "…",
+  "signalScore": 94.0, "urgency": "…", "status": "ACTIVE",
+  "createdAt": "…", "updatedAt": "…"
+}
+```
+`status` 枚举：`ACTIVE` / `SAVED` / `IMPORTANT` / `ARCHIVED`。
+
+## Understanding DTO（实际实现）
+```json
+{
+  "id": "…", "informationId": "…", "language": "zh-CN", "contentType": "…",
+  "classification": "TECHNOLOGY", "confidence": 0.87, "relevanceScore": 0.9,
+  "whyRelevant": "…", "signalScore": 72.0, "scoreFactors": "…",
+  "topics": ["Java"], "entities": ["Spring"], "summary": "…", "keyPoints": ["…"],
+  "status": "COMPLETED", "model": "…", "modelVersion": "…",
+  "processedAt": "…", "createdAt": "…", "updatedAt": "…"
 }
 ```

@@ -8,10 +8,12 @@
 # Logs
 *.log
 *.log.*
+*.err
 logs/
 
 # Local tooling state
 .gstack/
+ui-design-runs/
 
 # Build output
 **/target/

@@ -47,6 +47,9 @@ public class Information {
     @Column(columnDefinition = "text")
     private String metadata = "{}";
 
+    @Column(nullable = false)
+    private String status = "ACTIVE"; // ACTIVE / ARCHIVED (V15)
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -81,6 +84,8 @@ public class Information {
     public void setLanguage(String v) { this.language = v; }
     public String getMetadata() { return metadata; }
     public void setMetadata(String v) { this.metadata = v; }
+    public String getStatus() { return status; }
+    public void setStatus(String v) { this.status = v; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant v) { this.updatedAt = v; }

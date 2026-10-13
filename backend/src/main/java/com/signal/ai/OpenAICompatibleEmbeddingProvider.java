@@ -17,18 +17,20 @@ import java.util.Map;
 
 /**
  * OpenAI-compatible embeddings adapter ({@code POST /embeddings}).
- * Active ONLY when ai.api-key is set — mutual exclusion with MockEmbeddingProvider
- * via the same condition as OpenAICompatibleProvider (never @Primary).
- * Requests {@code dimensions=384} (text-embedding-3* models) to honor the
- * schema contract vector(384). Bounded timeout + max 2 retries. Never logs keys.
+ * Active when EITHER {@code ai.api-key} or {@code ai.embedding-api-key} is set —
+ * mutual exclusion with MockEmbeddingProvider (never @Primary).
+ *
+ * <p>May target a different provider than chat: base URL, key and model come from the
+ * {@code ai.embedding-*} coordinates (which fall back to the chat ones). The requested
+ * {@code dimensions} come from {@code ai.embedding-dimensions} and MUST match the
+ * {@code vector(…)} schema (V17 = 1024); a mismatch is a hard error.
+ * Bounded timeout + max 2 retries. Never logs keys.
  */
 @Component
-@ConditionalOnExpression("'${ai.api-key:}' != ''")
+@ConditionalOnExpression("'${ai.api-key:}' != '' || '${ai.embedding-api-key:}' != ''")
 public class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAICompatibleEmbeddingProvider.class);
-
-    static final int DIMENSIONS = 384;
 
     private final AIProperties props;
     private final HttpClient client;
@@ -45,17 +47,18 @@ public class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
 
     @Override
     public List<Double> embed(String text) {
+        int dimensions = props.embeddingDimensions();
         Map<String, Object> body = Map.of(
                 "model", props.embeddingModel(),
                 "input", text == null ? "" : text,
-                "dimensions", DIMENSIONS);
+                "dimensions", dimensions);
 
         RuntimeException last = null;
         for (int attempt = 0; attempt <= Math.min(props.maxRetries(), 2); attempt++) {
             try {
-                HttpRequest http = HttpRequest.newBuilder(URI.create(props.baseUrl() + "/embeddings"))
+                HttpRequest http = HttpRequest.newBuilder(URI.create(props.embeddingBaseUrl() + "/embeddings"))
                         .timeout(Duration.ofMillis(props.timeoutMs()))
-                        .header("Authorization", "Bearer " + props.apiKey())
+                        .header("Authorization", "Bearer " + props.embeddingApiKey())
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body)))
                         .build();
@@ -67,7 +70,7 @@ public class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
                 if (res.statusCode() >= 400) {
                     throw new OpenAICompatibleProvider.AIException("Embedding request failed: " + res.statusCode());
                 }
-                return parseEmbedding(res.body());
+                return parseEmbedding(res.body(), dimensions);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 last = new OpenAICompatibleProvider.AIException("Embedding call interrupted");
@@ -81,8 +84,8 @@ public class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
                 + (last == null ? "unknown" : last.getMessage()));
     }
 
-    /** Parses {@code {"data":[{"embedding":[...]}]}}; visible for unit tests. */
-    static List<Double> parseEmbedding(byte[] body) {
+    /** Parses {@code {"data":[{"embedding":[...]}]}} and enforces the configured dimension. */
+    static List<Double> parseEmbedding(byte[] body, int expectedDimensions) {
         JsonNode root = new ObjectMapper().readTree(body);
         JsonNode arr = root.path("data").path(0).path("embedding");
         if (!arr.isArray() || arr.isEmpty()) {
@@ -90,9 +93,9 @@ public class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
         }
         List<Double> out = new java.util.ArrayList<>(arr.size());
         for (JsonNode x : arr) out.add(x.asDouble());
-        if (out.size() != DIMENSIONS) {
+        if (out.size() != expectedDimensions) {
             throw new OpenAICompatibleProvider.AIException(
-                    "Embedding dim mismatch: expected " + DIMENSIONS + " got " + out.size());
+                    "Embedding dim mismatch: expected " + expectedDimensions + " got " + out.size());
         }
         return out;
     }

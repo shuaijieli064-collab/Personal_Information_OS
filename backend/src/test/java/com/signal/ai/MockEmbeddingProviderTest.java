@@ -8,10 +8,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MockEmbeddingProviderTest {
 
+    private static final int DIMENSIONS = AIProperties.DEFAULT_EMBEDDING_DIMENSIONS;
+
     private final MockEmbeddingProvider provider = new MockEmbeddingProvider();
 
-    @Test void emits384Dimensions() {
-        assertEquals(384, provider.embed("Spring Boot 3.4 release").size());
+    @Test void emitsConfiguredDimensions() {
+        assertEquals(DIMENSIONS, provider.embed("Spring Boot 3.4 release").size());
     }
 
     @Test void unitLength() {
@@ -36,19 +38,19 @@ class MockEmbeddingProviderTest {
 
     @Test void emptyInputYieldsValidUnitVector() {
         List<Double> v = provider.embed("");
-        assertEquals(384, v.size());
+        assertEquals(DIMENSIONS, v.size());
         double norm = Math.sqrt(v.stream().mapToDouble(x -> x * x).sum());
         assertEquals(1.0, norm, 1e-6);
     }
 
     @Test void nullInputYieldsValidUnitVector() {
         List<Double> v = provider.embed(null);
-        assertEquals(384, v.size());
+        assertEquals(DIMENSIONS, v.size());
         assertFalse(v.stream().allMatch(x -> x == 0.0));
     }
 
     @Test void modelLabelSignalsMock() {
-        assertEquals("mock-embed-384", provider.model());
+        assertEquals("mock-embed-" + DIMENSIONS, provider.model());
     }
 
     private static double cosine(List<Double> a, List<Double> b) {

@@ -14,7 +14,7 @@
 | 5 | Intelligence & Signals | Understanding、Embedding、Semantic Dedup、Relevance、Signal Score、Today、Feedback | ✅ Frozen |
 | **P0** | **Engineering Hardening** | H1–H6（下表） | **✅ 完成 2026-10-07** |
 | **5.5** | **Frontend Experience** | Today 2.0、Signal Card 2.0、Information Detail、Command Center UI、Motion、Responsive、全状态、Browser QA（设计方向 A 信号控制台） | **✅ 完成 2026-10-07（S0–S5 全部）** |
-| 6 | Knowledge & Retrieval | Chunk、Embedding、Vector Retrieval、Hybrid Search、Rerank、RAG、Citation | 📋 规划 |
+| 6 | Knowledge & Retrieval | Chunk、Embedding、Vector Retrieval、Hybrid Search、Rerank、RAG、Citation | 🚧 进行中（K1 地基 + K2 分块/嵌入 + K3 `POST /knowledge/search`（**混合检索：向量 HNSW + 全文 GIN，RRF 融合，`mode=HYBRID/VECTOR/KEYWORD`**）+ K4 `POST /knowledge/ask`（RAG：检索 + 带 `[n]` 引用作答）均已实现并实测；Rerank / Citation UI 待做） |
 | 7 | Agent & Tools | Tool Registry、Permission、Planner/Executor、Audit、Confirmation | 📋 规划 |
 | 8 | Automation | Scheduled Sync、Daily Brief、Notification、Feedback Loop、监控/重试 | 📋 规划 |
 
@@ -57,7 +57,7 @@
 
 ## Future (Phase 6–8 详细任务拆解)
 
-- **Phase 6**: Document/Information Chunking → Embedding Pipeline → Vector Index → Hybrid Retrieval → Reranker → Context Builder → RAG API → Citation UI → Knowledge Page（另含 `/api/v1/discover` 后端、Information 归档动作等 5.5 遗留 backlog）
+- **Phase 6**: Document/Information Chunking → Embedding Pipeline → Vector Index → ~~Vector Retrieval (K3 ✅)~~ → ~~RAG API (K4 ✅)~~ → ~~Hybrid Retrieval (✅ RRF, `mode=HYBRID/VECTOR/KEYWORD`)~~ → Reranker → Context Builder → Citation UI → Knowledge Page（另含 `/api/v1/discover` 后端、Information 归档动作等 5.5 遗留 backlog）
 - **Phase 7**: Tool Registry/Schema → Permission Model → Planner → Executor → Observation → Audit Log → Confirmation UI → Failure Recovery
 - **Phase 8**: Scheduler → Scheduled Source Sync → Daily Brief → Important Signal Notification → Automated Feedback Loop → Job Monitoring → Retry/Dead Letter
 

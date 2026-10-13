@@ -15,18 +15,19 @@ Information → Collect → Normalize → Understand → Deduplicate
 
 ## Status
 
-**Phases 1–5 complete and frozen · P0 Hardening in progress · Phase 5.5 next.**
+**Phases 1–5 complete and frozen · P0 Hardening ✅ · Phase 5.5 ✅ · Phase 6 Knowledge (K1–K4 + hybrid retrieval) in progress.**
 
 | Area | State |
 |---|---|
-| Backend | Spring Boot 4.1.1 + Java 21 · Auth (JWT + refresh rotation) · Profile/Goals/Interests/Skills · Ingestion (RSS/GitHub/URL/File) · Exact + semantic dedup · Understanding (classify/summary/topics/entities) · Relevance · Signal Score/Generation · Today · Feedback · Flyway V1–V12 |
-| Frontend | Next.js 16 + React 19 + Tailwind v4 + Framer Motion 14 · TanStack Query · route groups `(app)`/`(auth)` · AuthGuard + single-flight 401 refresh · AppShell · 18 routes · Vitest (10 tests) |
-| Database | PostgreSQL + pgvector (Docker `pgvector/pgvector:pg16`); migrations live **only** in `backend/src/main/resources/db/migration/` (V1–V12, empty-DB rebuild verified) |
-| AI | `AIProvider`/`EmbeddingProvider` abstractions · `OpenAICompatibleProvider` (key from env) mutually exclusive with `MockAIProvider` · PromptBoundary (SYSTEM / USER_PROFILE / UNTRUSTED_CONTENT) |
-| Tests | Backend 55 tests green · Frontend lint/tsc/Vitest/build green |
-| Not verified | Live AI provider quality · Browser E2E at all breakpoints · pgvector similarity at runtime |
+| Backend | Spring Boot 4.1.1 + Java 21 · Auth (JWT + refresh rotation) · Profile/Goals/Interests/Skills · Ingestion (RSS/GitHub/URL/File) · Exact + semantic dedup · Understanding (classify/summary/topics/entities) · Relevance · Signal Score/Generation · Today · Feedback · Knowledge chunking/embedding/**hybrid** retrieval (vector + keyword, RRF-fused, `mode=HYBRID/VECTOR/KEYWORD`) /RAG (K1–K4) · Flyway V1–V19 |
+| Frontend | Next.js 16 + React 19 + Tailwind v4 + Framer Motion 14 · TanStack Query · route groups `(app)`/`(auth)` · AuthGuard + single-flight 401 refresh · AppShell · 18 routes · Vitest (16 tests) |
+| Database | PostgreSQL + pgvector (Docker `pgvector/pgvector:pg16`); migrations live **only** in `backend/src/main/resources/db/migration/` (V1–V18, empty-DB rebuild verified) |
+| AI | `AIProvider`/`EmbeddingProvider` abstractions · `OpenAICompatibleProvider` (key from env) mutually exclusive with `MockAIProvider` · chat and embeddings may use **different** providers (`ai.*` vs `ai.embedding-*`) · 1024-dim embeddings · PromptBoundary (SYSTEM / UNTRUSTED_CONTENT / QUESTION channels) |
+| Tests | Backend 131 tests green · Frontend lint/tsc/Vitest/build green |
+| Verified live | Real LLM understanding + 1024-dim embeddings (Alibaba DashScope) + `POST /knowledge/search` (**HYBRID** vector+keyword RRF; lexical matches survive a semantic floor) + `POST /knowledge/ask` (RAG with `[n]` citations, declines instead of hallucinating, injection-resistant), end-to-end |
+| Not verified | Browser E2E at all breakpoints · rerank · citation UI |
 
-Next milestone: **P0 Hardening (H1–H6)** → **Phase 5.5 Frontend Experience** → Phase 6 Knowledge/RAG → Phase 7 Agent → Phase 8 Automation. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Next milestone: **Phase 6 Knowledge/RAG (K4 RAG ✅ → rerank → citation UI)** → Phase 7 Agent → Phase 8 Automation. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Repository Layout
 

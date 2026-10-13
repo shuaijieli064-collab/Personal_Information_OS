@@ -14,6 +14,7 @@ logs/
 # Local tooling state
 .gstack/
 ui-design-runs/
+.workbuddy-ai/
 
 # Build output
 **/target/
@@ -22,6 +23,9 @@ ui-design-runs/
 **/out/
 **/build/
 **/dist/
+
+# Runtime artifacts
+*.pid
 
 # Coverage / tooling
 **/coverage/

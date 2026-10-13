@@ -6,12 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 @RestControllerAdvice
@@ -25,6 +27,29 @@ public class GlobalExceptionHandler {
                 .map(f -> f.getField() + " " + f.getDefaultMessage())
                 .findFirst().orElse("Invalid request");
         return body(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", msg);
+    }
+
+    /**
+     * Malformed / unreadable request body (bad JSON, wrong content-type, empty body
+     * where one is required). Without this it falls through to the catch-all and is
+     * reported as a 500 — a client input error masquerading as a server fault.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        return body(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Malformed or unreadable request body");
+    }
+
+    /**
+     * Path/query parameter that cannot be bound (e.g. a non-UUID id in a UUID path
+     * variable). This is a client error, not a server fault, so it must not 500.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String name = ex.getName();
+        Class<?> required = ex.getRequiredType();
+        String message = "Invalid value for '" + name + "'"
+                + (required != null ? " (expected " + required.getSimpleName() + ")" : "");
+        return body(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -75,6 +100,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(com.signal.ingestion.service.IngestionService.SourceSyncException.class)
     public ResponseEntity<ApiResponse<Void>> handleSync(Exception ex) {
         return body(HttpStatus.BAD_GATEWAY, "SOURCE_SYNC_FAILED", ex.getMessage());
+    }
+
+    /**
+     * Knowledge search depends on an external embedding provider. When it is down the
+     * client must see a distinguishable failure, never an empty result that reads as
+     * "nothing matched".
+     */
+    @ExceptionHandler(com.signal.knowledge.KnowledgeSearchService.SearchUnavailableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSearchUnavailable(Exception ex) {
+        return body(HttpStatus.BAD_GATEWAY, "SEARCH_UNAVAILABLE", ex.getMessage());
     }
 
     @ExceptionHandler(com.signal.ingestion.controller.ImportController.FileRejectedException.class)

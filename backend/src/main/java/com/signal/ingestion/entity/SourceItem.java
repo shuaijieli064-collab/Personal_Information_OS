@@ -18,17 +18,18 @@ public class SourceItem {
     @Column(name = "external_id")
     private String externalId;
 
+    @Column(columnDefinition = "text")
     private String url;
 
     @Column(name = "url_hash", nullable = false)
     private String urlHash;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "text")
     private String title;
 
     private String author;
 
-    @Column(name = "content_text")
+    @Column(name = "content_text", columnDefinition = "text")
     private String contentText;
 
     @Column(name = "content_hash", nullable = false)

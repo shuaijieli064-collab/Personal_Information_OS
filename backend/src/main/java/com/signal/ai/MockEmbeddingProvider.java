@@ -8,15 +8,15 @@ import java.util.List;
 
 /**
  * Deterministic stand-in for tests / no-key mode. Not a real embedding model.
- * Emits 384-dim vectors (unigram + bigram hashing) so the schema contract
- * vector(384) holds in Mock mode; mutual exclusion with the real provider via
- * ai.api-key (never @Primary).
+ * Emits {@value #DIMENSIONS}-dim vectors (unigram + bigram hashing) so the schema
+ * contract {@code vector(1024)} (V17) holds in Mock mode; mutual exclusion with the
+ * real provider via the api-key conditions (never @Primary).
  */
 @Component
-@ConditionalOnExpression("'${ai.api-key:}' == ''")
+@ConditionalOnExpression("'${ai.api-key:}' == '' && '${ai.embedding-api-key:}' == ''")
 public class MockEmbeddingProvider implements EmbeddingProvider {
 
-    static final int DIMENSIONS = 384;
+    static final int DIMENSIONS = AIProperties.DEFAULT_EMBEDDING_DIMENSIONS;
 
     @Override
     public List<Double> embed(String text) {
@@ -41,5 +41,5 @@ public class MockEmbeddingProvider implements EmbeddingProvider {
         return out;
     }
 
-    @Override public String model() { return "mock-embed-384"; }
+    @Override public String model() { return "mock-embed-" + DIMENSIONS; }
 }

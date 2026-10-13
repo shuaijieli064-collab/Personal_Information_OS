@@ -31,15 +31,18 @@ public class IngestionService {
     private final SourceRepository sources;
     private final IngestionPersister persister;
     private final InformationUnderstandingService understanding;
+    private final com.signal.knowledge.ChunkService chunks;
     private final int autoUnderstandLimit;
 
     public IngestionService(List<SourceCollector> collectors, SourceRepository sources,
                             IngestionPersister persister, InformationUnderstandingService understanding,
+                            com.signal.knowledge.ChunkService chunks,
                             @Value("${app.pipeline.auto-understand-limit:20}") int autoUnderstandLimit) {
         this.collectors = collectors;
         this.sources = sources;
         this.persister = persister;
         this.understanding = understanding;
+        this.chunks = chunks;
         this.autoUnderstandLimit = autoUnderstandLimit;
     }
 
@@ -61,6 +64,7 @@ public class IngestionService {
         IngestionService.SyncResult r = persister.persist(source, normalized);
         markSource(source, "ACTIVE");
         understandNew(userId, r.createdIds());
+        chunkNew(userId, r.createdIds());
         log.info("Source synced id={} fetched={} created={} duplicates={}",
                 sourceId, r.fetched(), r.created(), r.duplicates());
         return r;
@@ -71,6 +75,7 @@ public class IngestionService {
         IngestionService.SyncResult r = persister.persist(source, List.of(item));
         markSource(source, "ACTIVE");
         understandNew(source.getUserId(), r.createdIds());
+        chunkNew(source.getUserId(), r.createdIds());
     }
 
     /**
@@ -94,6 +99,13 @@ public class IngestionService {
             log.info("Auto-understanding capped at {} of {} new items", limit, createdIds.size());
         }
         log.info("Auto-understanding done total={} ok={} failed={}", limit, ok, limit - ok);
+    }
+
+    /** Phase 6 K2: chunk + embed freshly created rows; a chunking failure must not abort the sync. */
+    private void chunkNew(UUID userId, List<UUID> createdIds) {
+        if (createdIds.isEmpty()) return;
+        int ok = chunks.chunkIds(userId, createdIds);
+        log.info("Auto-chunking done new={} ok={}", createdIds.size(), ok);
     }
 
     private void markSource(Source source, String status) {

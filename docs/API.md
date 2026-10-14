@@ -80,19 +80,19 @@ user's resource returns 404 (IDOR protected).
 |---|---|---|
 | GET | `/discover?path=` | ⏳ |
 | POST | `/knowledge/reindex` | ✅ (rebuild caller's chunk corpus; Phase 6 K2) |
-| POST | `/knowledge/search` | ✅ (K3 semantic search over the caller's own corpus) |
-| POST | `/knowledge/ask` | ✅ (K4 RAG — retrieval + LLM answer with `[n]` citations) |
+| POST | `/knowledge/search` | ✅ (K3 retrieval over the caller's own corpus: `mode=HYBRID/VECTOR/KEYWORD`, `rerank`) |
+| POST | `/knowledge/ask` | ✅ (K4 RAG — retrieval + LLM answer with `[n]` citations; same `rerank` knob) |
 | GET/POST | `/knowledge` | ⏳ |
 | POST | `/ai/command` | ⏳ |
 | POST | `/ai/conversations/{id}/messages` | ⏳ |
 | GET | `/ai/brief/today` | ⏳ |
 
-## Knowledge Search DTO（Phase 6 K3 · 混合检索）
+## Knowledge Search DTO（Phase 6 K3 · 混合检索 + Rerank）
 Request:
 ```json
-{ "query": "How does Kubernetes autoscale pods?", "mode": "HYBRID", "limit": 10, "minScore": 0.3 }
+{ "query": "How does Kubernetes autoscale pods?", "mode": "HYBRID", "limit": 10, "minScore": 0.3, "rerank": true }
 ```
-`query` 必填（≤1000 字符）；`mode` 可选，默认 `HYBRID`；`limit` 可选（默认 10，夹取 1–50）；`minScore` 可选（余弦相似度下限，夹取 0–1）。
+`query` 必填（≤1000 字符）；`mode` 可选，默认 `HYBRID`；`limit` 可选（默认 10，夹取 1–50）；`minScore` 可选（余弦相似度下限，夹取 0–1）；`rerank` 可选，默认 `true`（交叉编码器重排，见下）。
 
 | mode | 含义 | 说明 |
 |---|---|---|
@@ -109,11 +109,13 @@ Response:
     "mode": "HYBRID",
     "model": "qwen3.7-text-embedding-flash",
     "limit": 10, "minScore": 0.3, "count": 1,
+    "reranked": true,
+    "rerankModel": "qwen3.7-text-rerank",
     "results": [
       {
         "chunkId": "…", "informationId": "…", "ordinal": 0,
         "content": "…",
-        "score": 0.0328,
+        "score": 0.9987,
         "vectorScore": 0.4412,
         "keywordScore": 0.0608,
         "title": "…", "url": "…", "type": "ARTICLE", "model": "…"
@@ -122,21 +124,23 @@ Response:
   }
 }
 ```
-- `score` 是**排序分**（越大越相关）：`HYBRID` 下为 **RRF 融合分**（`Σ 1/(60+rank)`，绝对值小、只在同一结果集内可比）；单腿模式下即该腿自身分数。
-- `vectorScore` = 余弦相似度 [0,1]；`keywordScore` = `ts_rank_cd`。**两条腿各自的原始分**，用于透明诊断；未被某条腿召回则为 `null`。
+- `score` 是**排序分**（越大越相关）：重排生效时 = **交叉编码器相关度**（0–1）；未重排时 `HYBRID` 下为 **RRF 融合分**（`Σ 1/(60+rank)`，绝对值小、只在同一结果集内可比）、单腿模式下即该腿自身分数。
+- `vectorScore` = 余弦相似度 [0,1]；`keywordScore` = `ts_rank_cd`。**两条腿各自的原始分**，用于透明诊断；未被某条腿召回则为 `null`。**重排只改 `score`，保留这两个来源分**。
+- `reranked` / `rerankModel` 回显重排是否真正生效与所用模型。
 - **`minScore` 只作用于向量腿**：关键词命中不会被语义阈值滤掉 —— 这正是加关键词腿的目的（精确标识符召回）。
 - 中文说明：PostgreSQL 无中文分词，未分词的中文句子会成为单个 token，故**关键词腿面向空格分隔文本（英文/代码/标识符）**，中文召回依赖向量腿。
 - 仅检索**当前用户**的分块（SQL 层 `user_id` 隔离）。
 - `query` 为空/全空白 → **400 `VALIDATION_ERROR`**（`@NotBlank`）；服务层对空查询另有一层防御性短路（返回 `count: 0`）。
 - 嵌入 provider 不可达 → **502 `SEARCH_UNAVAILABLE`**（不返回空结果，避免把服务故障误读为"无匹配"）。`KEYWORD` 模式不调用嵌入，不受此影响。
 - 维度与 `vector(…)` schema 不一致 → 500（配置错误，与 `/knowledge/reindex` 一致）。
+- **Rerank 是可选增强，从不报错**：未配置 rerank key、`rerank:false`、候选 ≤1 条、或重排调用失败时，一律保持检索顺序并返回 `reranked:false`（失败仅记 WARN 日志）。重排会先**过取候选池**（`rerankPool = 夹取(limit, 20–50)`，且 ≤ 两条腿的过取量）再截断到 `limit`。
 
 ## Knowledge Ask DTO（Phase 6 K4 · RAG）
 Request:
 ```json
-{ "question": "How does Kubernetes autoscale pods?", "limit": 5, "minScore": 0.0 }
+{ "question": "How does Kubernetes autoscale pods?", "limit": 5, "minScore": 0.0, "rerank": true }
 ```
-`question` 必填（≤1000 字符）；`limit` / `minScore` 同 `/search`（`limit` 同时决定进入上下文的来源条数）。检索固定使用 **`HYBRID` 模式**（语义 + 关键词融合），不提供 `mode` 参数。
+`question` 必填（≤1000 字符）；`limit` / `minScore` / `rerank` 同 `/search`（`limit` 同时决定进入上下文的来源条数）。检索固定使用 **`HYBRID` 模式**（语义 + 关键词融合），不提供 `mode` 参数。
 
 Response:
 ```json
@@ -149,9 +153,11 @@ Response:
     "model": "openai-compatible:modelscope",
     "embeddingModel": "qwen3.7-text-embedding-flash",
     "sourceCount": 3,
+    "reranked": true,
+    "rerankModel": "qwen3.7-text-rerank",
     "citations": [
       { "index": 1, "chunkId": "…", "informationId": "…",
-        "title": "…", "url": "…", "type": "ARTICLE", "score": 0.4870 }
+        "title": "…", "url": "…", "type": "ARTICLE", "score": 0.9987 }
     ]
   }
 }

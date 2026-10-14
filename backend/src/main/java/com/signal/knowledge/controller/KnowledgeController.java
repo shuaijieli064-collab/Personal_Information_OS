@@ -47,17 +47,21 @@ public class KnowledgeController {
      * K3 retrieval over the caller's own corpus.
      * {@code mode} defaults to {@code HYBRID} (vector + keyword, RRF-fused);
      * {@code limit} defaults to 10 (max 50); {@code minScore} is a cosine-similarity floor
-     * in [0, 1] and applies to the vector leg only.
+     * in [0, 1] and applies to the vector leg only. {@code rerank} defaults to true —
+     * a cross-encoder reorders the fused candidates when a re-rank provider is configured
+     * (see {@code reranked} in the response); set false to get pure retrieval order.
      */
     public record SearchRequest(
             @NotBlank @Size(max = 1000, message = "must be at most 1000 chars") String query,
             KnowledgeSearchService.Mode mode,
             Integer limit,
-            Double minScore) {}
+            Double minScore,
+            Boolean rerank) {}
 
     @PostMapping("/search")
     public ApiResponse<KnowledgeSearchService.SearchResult> search(@Valid @RequestBody SearchRequest req) {
-        return ApiResponse.ok(search.search(userId(), req.query(), req.mode(), req.limit(), req.minScore()));
+        return ApiResponse.ok(search.search(userId(), req.query(), req.mode(),
+                req.limit(), req.minScore(), req.rerank()));
     }
 
     /**
@@ -69,11 +73,12 @@ public class KnowledgeController {
     public record AskRequest(
             @NotBlank @Size(max = 1000, message = "must be at most 1000 chars") String question,
             Integer limit,
-            Double minScore) {}
+            Double minScore,
+            Boolean rerank) {}
 
     @PostMapping("/ask")
     public ApiResponse<KnowledgeAskService.AskResult> ask(@Valid @RequestBody AskRequest req) {
-        return ApiResponse.ok(ask.ask(userId(), req.question(), req.limit(), req.minScore()));
+        return ApiResponse.ok(ask.ask(userId(), req.question(), req.limit(), req.minScore(), req.rerank()));
     }
 
     private UUID userId() {

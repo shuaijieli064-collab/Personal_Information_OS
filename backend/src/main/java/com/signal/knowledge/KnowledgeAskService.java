@@ -64,16 +64,18 @@ public class KnowledgeAskService {
 
     public record AskResult(String question, Status status, String answer,
                             String model, String embeddingModel, int sourceCount,
+                            boolean reranked, String rerankModel,
                             List<Citation> citations) {}
 
-    public AskResult ask(UUID userId, String question, Integer limit, Double minScore) {
+    public AskResult ask(UUID userId, String question, Integer limit, Double minScore, Boolean rerank) {
         // Trim once and own it: the prompt must not depend on how the search layer echoes
         // its query back.
         String q = question == null ? "" : question.trim();
 
-        // 1) Retrieval — hybrid by default, same dimension guard and user isolation as K3.
+        // 1) Retrieval — hybrid by default, same dimension guard and user isolation as K3,
+        //    and the same optional cross-encoder re-rank.
         KnowledgeSearchService.SearchResult hits =
-                search.search(userId, q, KnowledgeSearchService.Mode.HYBRID, limit, minScore);
+                search.search(userId, q, KnowledgeSearchService.Mode.HYBRID, limit, minScore, rerank);
 
         List<Citation> citations = new ArrayList<>(hits.results().size());
         for (int i = 0; i < hits.results().size(); i++) {
@@ -85,7 +87,7 @@ public class KnowledgeAskService {
         if (hits.results().isEmpty()) {
             // No context → never ask the model; it could only invent an answer.
             return new AskResult(q, Status.NO_SOURCES, null,
-                    ai.name(), hits.model(), 0, List.of());
+                    ai.name(), hits.model(), 0, hits.reranked(), hits.rerankModel(), List.of());
         }
 
         // 2) Synthesis — an LLM outage degrades to "sources only", never to a 500.
@@ -98,7 +100,8 @@ public class KnowledgeAskService {
 
         Status status = (answer == null) ? Status.NO_ANSWER : Status.ANSWERED;
         return new AskResult(q, status, answer,
-                ai.name(), hits.model(), citations.size(), citations);
+                ai.name(), hits.model(), citations.size(),
+                hits.reranked(), hits.rerankModel(), citations);
     }
 
     /** One structured call: numbered sources + the question → a cited answer. */

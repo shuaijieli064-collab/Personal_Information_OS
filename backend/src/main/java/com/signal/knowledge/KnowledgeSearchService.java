@@ -1,6 +1,7 @@
 package com.signal.knowledge;
 
 import com.signal.ai.EmbeddingProvider;
+import com.signal.ai.RerankProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,11 +9,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -41,6 +44,11 @@ import java.util.UUID;
  * caller gets a {@link SearchUnavailableException} (mapped to 502) rather than an
  * empty result, so a search outage is never mistaken for "nothing matched". In
  * {@code KEYWORD} mode no embedding call is made, so this cannot happen.
+ *
+ * <p><b>Re-ranking</b> is a final precision pass: retrieval legs over-fetch a candidate
+ * pool, then a cross-encoder scores query+document together and reorders it. It is
+ * optional and degrades gracefully — a re-rank failure (or the no-op provider) keeps
+ * the retrieval order and reports {@code reranked=false}; it never fails the request.
  */
 @Service
 public class KnowledgeSearchService {
@@ -56,35 +64,51 @@ public class KnowledgeSearchService {
     /** Each leg over-fetches so fusion has room to reorder; bounded. */
     static final int LEG_POOL_MIN = 20;
     static final int LEG_POOL_MAX = 100;
+    /** Candidate pool handed to the re-ranker — wider than the result limit, still bounded. */
+    static final int RERANK_POOL_MIN = 20;
+    static final int RERANK_POOL_MAX = 50;
 
     public enum Mode { HYBRID, VECTOR, KEYWORD }
 
     private final EmbeddingProvider embeddings;
     private final ChunkStore store;
+    private final RerankProvider reranker;
     private final int embeddingDimensions;
 
     public KnowledgeSearchService(EmbeddingProvider embeddings,
                                   ChunkStore store,
+                                  RerankProvider reranker,
                                   @Value("${ai.embedding-dimensions:1024}") int embeddingDimensions) {
         this.embeddings = embeddings;
         this.store = store;
+        this.reranker = reranker;
         this.embeddingDimensions = embeddingDimensions;
     }
 
-    /** Search outcome — echoes the effective parameters so the client can reason about the result set. */
+    /**
+     * Search outcome — echoes the effective parameters so the client can reason about
+     * the result set. {@code reranked} reports whether the cross-encoder actually ran
+     * (false when disabled, when no provider is configured, or when it failed);
+     * {@code rerankModel} names the model when it did.
+     */
     public record SearchResult(String query, Mode mode, String model, int limit, double minScore,
-                               int count, List<ScoredChunk> results) {}
+                               int count, boolean reranked, String rerankModel,
+                               List<ScoredChunk> results) {}
 
-    public SearchResult search(UUID userId, String query, Mode mode, Integer limit, Double minScore) {
+    public SearchResult search(UUID userId, String query, Mode mode, Integer limit,
+                               Double minScore, Boolean rerank) {
         String q = query == null ? "" : query.trim();
         int effectiveLimit = clampLimit(limit);
         double effectiveMin = clampMinScore(minScore);
         Mode effectiveMode = mode == null ? Mode.HYBRID : mode;
+        // Re-rank only when requested AND a real provider exists — the no-op provider
+        // reports unavailable, so we skip the call entirely rather than fake an order.
+        boolean wantRerank = (rerank == null || rerank) && reranker.available();
 
         if (q.isEmpty()) {
             // Blank query is not an error — it simply matches nothing.
             return new SearchResult(q, effectiveMode, embeddings.model(), effectiveLimit,
-                    effectiveMin, 0, List.of());
+                    effectiveMin, 0, false, null, List.of());
         }
 
         List<ScoredChunk> vectorHits = List.of();
@@ -100,17 +124,65 @@ public class KnowledgeSearchService {
             }
         }
 
-        List<ScoredChunk> results = switch (effectiveMode) {
-            case VECTOR -> first(vectorHits, effectiveLimit);
-            case KEYWORD -> first(keywordHits, effectiveLimit);
-            case HYBRID -> fuse(vectorHits, keywordHits, effectiveLimit);
+        // Over-fetch when re-ranking so the cross-encoder has a real choice to make.
+        int pool = wantRerank ? rerankPool(effectiveLimit) : effectiveLimit;
+        List<ScoredChunk> candidates = switch (effectiveMode) {
+            case VECTOR -> first(vectorHits, pool);
+            case KEYWORD -> first(keywordHits, pool);
+            case HYBRID -> fuse(vectorHits, keywordHits, pool);
         };
 
-        log.debug("knowledge search user={} mode={} vector={} keyword={} returned={} limit={} minScore={}",
-                userId, effectiveMode, vectorHits.size(), keywordHits.size(),
+        List<ScoredChunk> results = candidates;
+        boolean reranked = false;
+        String rerankModel = null;
+        if (wantRerank && candidates.size() > 1) {
+            Reranked rr = applyRerank(q, candidates);
+            results = rr.results();
+            reranked = rr.applied();
+            if (reranked) rerankModel = reranker.model();
+        }
+        results = first(results, effectiveLimit);
+
+        log.debug("knowledge search user={} mode={} vector={} keyword={} reranked={} returned={} limit={} minScore={}",
+                userId, effectiveMode, vectorHits.size(), keywordHits.size(), reranked,
                 results.size(), effectiveLimit, effectiveMin);
         return new SearchResult(q, effectiveMode, embeddings.model(), effectiveLimit,
-                effectiveMin, results.size(), results);
+                effectiveMin, results.size(), reranked, rerankModel, results);
+    }
+
+    /** Re-ranked result list plus whether the cross-encoder actually applied. */
+    private record Reranked(List<ScoredChunk> results, boolean applied) {}
+
+    /**
+     * Reorders candidates with the cross-encoder, replacing {@code score} with the
+     * relevance score while keeping {@code vectorScore}/{@code keywordScore} as
+     * provenance. Never throws: any failure keeps the retrieval order.
+     *
+     * <p>Defensive: candidates the re-ranker did not return (malformed index, duplicate,
+     * or a partial response) are appended in retrieval order rather than dropped — a
+     * re-rank must reorder, never silently reduce recall.
+     */
+    private Reranked applyRerank(String query, List<ScoredChunk> candidates) {
+        try {
+            List<String> docs = candidates.stream().map(ScoredChunk::content).toList();
+            List<RerankProvider.RerankHit> hits = reranker.rerank(query, docs, candidates.size());
+            if (hits == null || hits.isEmpty()) return new Reranked(candidates, false);
+            List<ScoredChunk> out = new ArrayList<>(candidates.size());
+            Set<Integer> ranked = new HashSet<>();
+            for (RerankProvider.RerankHit h : hits) {
+                int i = h.index();
+                if (i < 0 || i >= candidates.size() || !ranked.add(i)) continue;
+                out.add(candidates.get(i).withScore(h.score()));
+            }
+            if (out.isEmpty()) return new Reranked(candidates, false);
+            for (int i = 0; i < candidates.size(); i++) {
+                if (!ranked.contains(i)) out.add(candidates.get(i));
+            }
+            return new Reranked(out, true);
+        } catch (Exception e) {
+            log.warn("Rerank failed, keeping retrieval order: {}", e.toString());
+            return new Reranked(candidates, false);
+        }
     }
 
     /** Embeds the query, enforcing the schema dimension. */
@@ -200,6 +272,14 @@ public class KnowledgeSearchService {
 
     static int legPool(int limit) {
         return Math.min(Math.max(limit * 3, LEG_POOL_MIN), LEG_POOL_MAX);
+    }
+
+    /**
+     * Candidate pool handed to the re-ranker. Must stay ≤ {@link #legPool} so the legs
+     * actually fetch enough rows for the cross-encoder to reorder.
+     */
+    static int rerankPool(int limit) {
+        return Math.min(Math.max(limit, RERANK_POOL_MIN), RERANK_POOL_MAX);
     }
 
     private static List<ScoredChunk> first(List<ScoredChunk> hits, int limit) {

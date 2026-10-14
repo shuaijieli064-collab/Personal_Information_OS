@@ -2,6 +2,7 @@ package com.signal.knowledge;
 
 import com.signal.ai.AIProperties;
 import com.signal.ai.EmbeddingProvider;
+import com.signal.ai.RerankProvider;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -35,11 +36,32 @@ class KnowledgeSearchServiceTest {
         @Override public String model() { return "fake-embed"; }
     }
 
+    /**
+     * Fake cross-encoder. Disabled by default so the pre-existing tests keep pure
+     * retrieval semantics; a re-rank test opts in via {@link #enabled} + {@link #hits}.
+     */
+    static class FakeReranker implements RerankProvider {
+        final List<String> seen = new ArrayList<>();
+        List<RerankHit> hits = List.of();
+        boolean enabled = false;
+        boolean fail = false;
+        int lastDocs = -1;
+        @Override public List<RerankHit> rerank(String query, List<String> documents, int topN) {
+            seen.add(query);
+            lastDocs = documents.size();
+            if (fail) throw new RuntimeException("rerank down");
+            return hits;
+        }
+        @Override public String model() { return "fake-rerank"; }
+        @Override public boolean available() { return enabled; }
+    }
+
     private final FakeEmbedder embedder = new FakeEmbedder();
     private final ChunkStore store = mock(ChunkStore.class);
+    private final FakeReranker reranker = new FakeReranker();
 
     private KnowledgeSearchService svc() {
-        return new KnowledgeSearchService(embedder, store, DIMENSIONS);
+        return new KnowledgeSearchService(embedder, store, reranker, DIMENSIONS);
     }
 
     private static ScoredChunk vec(UUID id, String content, double score) {
@@ -64,7 +86,7 @@ class KnowledgeSearchServiceTest {
     // ── blank / echo ───────────────────────────────────────────────────────────
 
     @Test void blankQueryEmbedsNothingAndMatchesNothing() {
-        var r = svc().search(UUID.randomUUID(), "   ", null, null, null);
+        var r = svc().search(UUID.randomUUID(), "   ", null, null, null, null);
         assertEquals(0, r.count());
         assertTrue(r.results().isEmpty());
         assertEquals(KnowledgeSearchService.Mode.HYBRID, r.mode(), "HYBRID is the default");
@@ -77,7 +99,7 @@ class KnowledgeSearchServiceTest {
         UUID user = UUID.randomUUID();
         vectorLegReturns(vec(UUID.randomUUID(), "a", 0.9));
         keywordLegReturns();
-        var r = svc().search(user, "  kubernetes autoscaling  ", null, null, null);
+        var r = svc().search(user, "  kubernetes autoscaling  ", null, null, null, null);
 
         assertEquals("kubernetes autoscaling", r.query(), "query echoed trimmed");
         assertEquals(List.of("kubernetes autoscaling"), embedder.seen);
@@ -90,13 +112,13 @@ class KnowledgeSearchServiceTest {
 
     @Test void vectorModeSkipsTheKeywordLeg() {
         vectorLegReturns(vec(UUID.randomUUID(), "a", 0.5));
-        svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR, null, null);
+        svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR, null, null, null);
         verify(store, never()).searchByKeyword(any(), any(), anyInt());
     }
 
     @Test void keywordModeSkipsEmbeddingEntirely() {
         keywordLegReturns(kw(UUID.randomUUID(), "a", 0.1));
-        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.KEYWORD, null, null);
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.KEYWORD, null, null, null);
 
         assertEquals(1, r.count());
         assertTrue(embedder.seen.isEmpty(), "KEYWORD mode must not depend on the embedding provider");
@@ -107,7 +129,7 @@ class KnowledgeSearchServiceTest {
     @Test void hybridModeRunsBothLegs() {
         vectorLegReturns(vec(UUID.randomUUID(), "a", 0.5));
         keywordLegReturns(kw(UUID.randomUUID(), "b", 0.1));
-        var r = svc().search(UUID.randomUUID(), "kubernetes autoscaler", null, null, null);
+        var r = svc().search(UUID.randomUUID(), "kubernetes autoscaler", null, null, null, null);
 
         assertEquals(2, r.count(), "results from both legs are returned");
         verify(store).searchByVector(any(), anyList(), anyInt(), anyDouble());
@@ -116,7 +138,7 @@ class KnowledgeSearchServiceTest {
 
     @Test void keywordModeToleratesAQueryWithNoUsableTerms() {
         // "??" strips to nothing → the keyword leg is skipped rather than sending an empty tsquery.
-        var r = svc().search(UUID.randomUUID(), "??", KnowledgeSearchService.Mode.KEYWORD, null, null);
+        var r = svc().search(UUID.randomUUID(), "??", KnowledgeSearchService.Mode.KEYWORD, null, null, null);
         assertEquals(0, r.count());
         verify(store, never()).searchByKeyword(any(), any(), anyInt());
     }
@@ -129,7 +151,7 @@ class KnowledgeSearchServiceTest {
         vectorLegReturns(vec(both, "shared", 0.9), vec(vectorOnly, "v-only", 0.8));
         keywordLegReturns(kw(both, "shared", 0.5), kw(keywordOnly, "k-only", 0.4));
 
-        var r = svc().search(UUID.randomUUID(), "kubernetes", null, null, null);
+        var r = svc().search(UUID.randomUUID(), "kubernetes", null, null, null, null);
 
         assertEquals(3, r.count());
         assertEquals(both, r.results().get(0).chunkId(), "found by both legs → ranked first");
@@ -142,7 +164,7 @@ class KnowledgeSearchServiceTest {
         vectorLegReturns(vec(id, "shared", 0.77));
         keywordLegReturns(kw(id, "shared", 0.33));
 
-        var r = svc().search(UUID.randomUUID(), "kubernetes", null, null, null);
+        var r = svc().search(UUID.randomUUID(), "kubernetes", null, null, null, null);
 
         assertEquals(1, r.count());
         assertEquals(0.77, r.results().get(0).vectorScore());
@@ -152,7 +174,7 @@ class KnowledgeSearchServiceTest {
     @Test void singleLegHitsCarryOnlyTheirOwnProvenance() {
         vectorLegReturns(vec(UUID.randomUUID(), "v", 0.5));
         keywordLegReturns(kw(UUID.randomUUID(), "k", 0.2));
-        var r = svc().search(UUID.randomUUID(), "kubernetes", null, null, null);
+        var r = svc().search(UUID.randomUUID(), "kubernetes", null, null, null, null);
 
         var byVector = r.results().stream().filter(c -> c.vectorScore() != null).findFirst().orElseThrow();
         assertNull(byVector.keywordScore());
@@ -164,9 +186,130 @@ class KnowledgeSearchServiceTest {
         vectorLegReturns(vec(UUID.randomUUID(), "a", 0.9), vec(UUID.randomUUID(), "b", 0.8),
                 vec(UUID.randomUUID(), "c", 0.7));
         keywordLegReturns(kw(UUID.randomUUID(), "d", 0.1));
-        var r = svc().search(UUID.randomUUID(), "kubernetes", null, 2, null);
+        var r = svc().search(UUID.randomUUID(), "kubernetes", null, 2, null, null);
         assertEquals(2, r.count());
         assertEquals(2, r.results().size());
+    }
+
+    // ── re-ranking (cross-encoder precision pass) ──────────────────────────────
+
+    @Test void rerankReordersCandidatesAndReplacesTheScore() {
+        reranker.enabled = true;
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID(), c = UUID.randomUUID();
+        vectorLegReturns(vec(a, "aaa", 0.9), vec(b, "bbb", 0.8), vec(c, "ccc", 0.7));
+        keywordLegReturns();
+        // cross-encoder says: c (best), then a, then b — the opposite of retrieval order
+        reranker.hits = List.of(new RerankProvider.RerankHit(2, 0.95),
+                new RerankProvider.RerankHit(0, 0.40),
+                new RerankProvider.RerankHit(1, 0.10));
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                null, null, null);
+
+        assertTrue(r.reranked());
+        assertEquals("fake-rerank", r.rerankModel());
+        assertEquals(List.of(c, a, b), r.results().stream().map(ScoredChunk::chunkId).toList());
+        assertEquals(0.95, r.results().get(0).score(), 1e-9, "score becomes the rerank relevance");
+        assertEquals(0.7, r.results().get(0).vectorScore(), 1e-9, "vector provenance is preserved");
+        assertEquals(List.of("kubernetes"), reranker.seen);
+    }
+
+    @Test void rerankOverFetchesAWiderCandidatePoolThanTheResultLimit() {
+        reranker.enabled = true;
+        ScoredChunk[] many = new ScoredChunk[25];
+        for (int i = 0; i < many.length; i++) many[i] = vec(UUID.randomUUID(), "chunk-" + i, 0.9 - i * 0.01);
+        vectorLegReturns(many);
+        keywordLegReturns();
+        reranker.hits = List.of(new RerankProvider.RerankHit(0, 0.9));
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                2, null, null);
+
+        assertEquals(20, reranker.lastDocs, "pool = rerankPool(2) = 20, not the result limit 2");
+        assertEquals(2, r.count(), "the final list still respects the limit");
+    }
+
+    @Test void rerankPreservesCandidatesTheProviderDidNotReturn() {
+        reranker.enabled = true;
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID();
+        vectorLegReturns(vec(a, "a", 0.9), vec(b, "b", 0.8));
+        keywordLegReturns();
+        // duplicate + out-of-range indices must be ignored, never crash; 'a' is missing
+        // from the response so it is appended rather than dropped.
+        reranker.hits = List.of(new RerankProvider.RerankHit(1, 0.9),
+                new RerankProvider.RerankHit(1, 0.8),
+                new RerankProvider.RerankHit(99, 0.7));
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                null, null, null);
+
+        assertTrue(r.reranked());
+        assertEquals(List.of(b, a), r.results().stream().map(ScoredChunk::chunkId).toList(),
+                "reordered, but no candidate is lost");
+    }
+
+    @Test void rerankFalseKeepsRetrievalOrderAndSkipsTheProvider() {
+        reranker.enabled = true;
+        vectorLegReturns(vec(UUID.randomUUID(), "a", 0.9), vec(UUID.randomUUID(), "b", 0.8));
+        keywordLegReturns();
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                null, null, false);
+
+        assertFalse(r.reranked());
+        assertNull(r.rerankModel());
+        assertTrue(reranker.seen.isEmpty(), "rerank=false must not call the provider");
+        assertEquals(0.9, r.results().get(0).score(), 1e-9, "retrieval score is untouched");
+    }
+
+    @Test void rerankFailureKeepsRetrievalOrderWithoutThrowing() {
+        reranker.enabled = true;
+        reranker.fail = true;
+        UUID a = UUID.randomUUID(), b = UUID.randomUUID();
+        vectorLegReturns(vec(a, "a", 0.9), vec(b, "b", 0.8));
+        keywordLegReturns();
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                null, null, null);
+
+        assertFalse(r.reranked(), "a rerank outage degrades, it never fails the search");
+        assertNull(r.rerankModel());
+        assertEquals(List.of(a, b), r.results().stream().map(ScoredChunk::chunkId).toList());
+        assertEquals(0.9, r.results().get(0).score(), 1e-9);
+    }
+
+    @Test void unavailableProviderSkipsRerankEntirely() {
+        // enabled stays false → available() == false, so the call is never attempted
+        vectorLegReturns(vec(UUID.randomUUID(), "a", 0.9), vec(UUID.randomUUID(), "b", 0.8));
+        keywordLegReturns();
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                null, null, null);
+
+        assertFalse(r.reranked());
+        assertTrue(reranker.seen.isEmpty());
+    }
+
+    @Test void rerankIsSkippedWhenThereIsNothingToReorder() {
+        reranker.enabled = true;
+        vectorLegReturns(vec(UUID.randomUUID(), "only", 0.5));
+        keywordLegReturns();
+
+        var r = svc().search(UUID.randomUUID(), "kubernetes", KnowledgeSearchService.Mode.VECTOR,
+                null, null, null);
+
+        assertFalse(r.reranked());
+        assertTrue(reranker.seen.isEmpty(), "a single candidate needs no cross-encoder pass");
+    }
+
+    @Test void rerankPoolIsBoundedAndNeverExceedsTheLegPool() {
+        assertEquals(20, KnowledgeSearchService.rerankPool(1));
+        assertEquals(20, KnowledgeSearchService.rerankPool(10));
+        assertEquals(50, KnowledgeSearchService.rerankPool(50));
+        for (int limit : new int[]{1, 5, 10, 20, 50}) {
+            assertTrue(KnowledgeSearchService.rerankPool(limit) <= KnowledgeSearchService.legPool(limit),
+                    "legs must fetch at least as many rows as the re-ranker is handed (limit=" + limit + ")");
+        }
     }
 
     // ── clamping ───────────────────────────────────────────────────────────────
@@ -191,7 +334,7 @@ class KnowledgeSearchServiceTest {
         keywordLegReturns();
         // A >=2-char term is required, otherwise toWebsearchQuery drops it and the keyword
         // leg is legitimately skipped — so the query here must be a real word, not "q".
-        svc().search(UUID.randomUUID(), "kubernetes", null, 999, 5.0);
+        svc().search(UUID.randomUUID(), "kubernetes", null, 999, 5.0, null);
         // limit clamped to 50 → pool = min(max(150,20),100) = 100, applied to both legs
         verify(store).searchByVector(any(), anyList(), eq(100), eq(1.0));
         verify(store).searchByKeyword(any(), any(), eq(100));
@@ -234,7 +377,7 @@ class KnowledgeSearchServiceTest {
     @Test void dimensionMismatchFailsLoudly() {
         embedder.dims = 8;
         var ex = assertThrows(IllegalStateException.class,
-                () -> svc().search(UUID.randomUUID(), "q", null, null, null));
+                () -> svc().search(UUID.randomUUID(), "q", null, null, null, null));
         assertTrue(ex.getMessage().contains("dim"), ex.getMessage());
         verify(store, never()).searchByVector(any(), anyList(), anyInt(), anyDouble());
     }
@@ -242,7 +385,7 @@ class KnowledgeSearchServiceTest {
     @Test void providerFailureSurfacesAsUnavailableNotEmptyResults() {
         embedder.fail = true;
         var ex = assertThrows(KnowledgeSearchService.SearchUnavailableException.class,
-                () -> svc().search(UUID.randomUUID(), "q", null, null, null));
+                () -> svc().search(UUID.randomUUID(), "q", null, null, null, null));
         assertEquals("provider down", ex.getMessage(), "provider detail is passed through verbatim, not re-prefixed");
         verify(store, never()).searchByVector(any(), anyList(), anyInt(), anyDouble());
     }
@@ -250,13 +393,13 @@ class KnowledgeSearchServiceTest {
     @Test void providerFailureWithNoMessageStillYieldsUsableError() {
         embedder.failSilently = true;
         var ex = assertThrows(KnowledgeSearchService.SearchUnavailableException.class,
-                () -> svc().search(UUID.randomUUID(), "q", null, null, null));
+                () -> svc().search(UUID.randomUUID(), "q", null, null, null, null));
         assertEquals("embedding provider call failed", ex.getMessage());
     }
 
     @Test void emptyVectorFromProviderSurfacesAsUnavailable() {
         embedder.empty = true;
         assertThrows(KnowledgeSearchService.SearchUnavailableException.class,
-                () -> svc().search(UUID.randomUUID(), "q", null, null, null));
+                () -> svc().search(UUID.randomUUID(), "q", null, null, null, null));
     }
 }

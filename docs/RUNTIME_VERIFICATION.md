@@ -100,12 +100,17 @@ Board: `ui-design-runs/s5-board.html` (26 screenshots, grouped Responsive / Stat
 | 58 | **Hybrid retrieval — three modes** | import a doc containing the exact identifier `ERR_AUTOSCALE_5042` → `reindex` → `POST /knowledge/search` with `mode=KEYWORD` / `VECTOR` / `HYBRID` | ✅ `KEYWORD` → `kw` set, `vec=null`; `VECTOR` → `vec` set (0.633/0.523), `kw=null`; `HYBRID` (default) → RRF score 0.0325 with **both** provenance scores populated. `mode` omitted → `HYBRID` |
 | 59 | **Lexical matches survive a semantic floor** | same corpus, `mode=VECTOR&minScore=0.9` vs `mode=HYBRID&minScore=0.9` | ✅ `VECTOR` → **count 0** (best cosine 0.633 < 0.9); `HYBRID` → **count 2** with `vec=null`, `kw` set — the keyword leg surfaces the exact identifier despite nothing meeting the semantic threshold. RRF = `1/61=0.01639`, `1/62=0.01613` (= `1/(60+rank)`) |
 | 60 | Regression after hybrid | `./mvnw -o test` (2026-10-13) | ✅ **131 run, 0 failures** (+13 hybrid tests; one pre-existing test bug fixed — it queried a 1-char term, which `toWebsearchQuery` correctly drops, so the keyword leg was legitimately skipped) |
+| 61 | **Rerank provider reachable** | `POST https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank` with `qwen3.7-text-rerank`, 1 relevant + 2 distractor docs | ✅ HTTP **200**; relevance `0.9995` (correct) vs `0.0069` / `0.0006` (distractors). The OpenAI-compatible `/compatible-mode/v1/rerank` path returns **404** — the native path is required. ModelScope exposes **no** rerank model, so rerank rides the DashScope key |
+| 62 | **Rerank reorders fused results** | 5-chunk ops-runbook corpus; same query, `rerank:false` vs `rerank:true` | ✅ `false` → fused RRF order `[ord 2,1,3,0,4]`, `reranked:false`, `rerankModel:null`. `true` → `reranked:true`, `rerankModel:qwen3.7-text-rerank`, order `[ord 2,0,1,3,4]` — chunk `ord 0` **promoted #4 → #2**; `score` becomes cross-encoder relevance (1.00000 / 0.52774 / 0.20492 / 0.05440 / 0.03130) while `vectorScore`/`keywordScore` remain as provenance |
+| 63 | **Rerank default-on** | `POST /knowledge/search` with **no** `rerank` field | ✅ `reranked:true`, `rerankModel:qwen3.7-text-rerank` — rerank is on unless explicitly disabled |
+| 64 | **`/ask` inherits rerank** | `POST /knowledge/ask` with `rerank:true` then `rerank:false` | ✅ `true` → `status:ANSWERED`, `reranked:true`, `rerankModel` echoed, answer grounded (*"…starts at 02:30 UTC… on-call data engineer is paged immediately…"*) with 3 citations scored by rerank; `false` → `reranked:false`, `rerankModel:null`, sources unchanged |
+| 65 | Regression after rerank | `./mvnw -o test` (2026-10-14) | ✅ **151 run, 0 failures** (+20 rerank tests: provider parsing/error handling, reorder/truncate/flags, disable, provider-failure degradation) |
 
 ## NOT VERIFIED yet
 
 - Cross-browser (Firefox/WebKit) and screen-reader pass
 - Live AI quality at scale (single-item smoke only; no batch/latency benchmark)
-- Rerank / cross-encoder re-scoring (Phase 6 backlog; hybrid retrieval is now done — rows 57–59)
+- Rerank **failure** degradation is covered by unit tests (`rerankProviderFailureDegradesToFusedOrder`), not by a live provider outage
 - Citation UI on the frontend (`/knowledge` page still has no controller consumer)
 - Scheduled sync / notifications (Phase 8 scope)
 

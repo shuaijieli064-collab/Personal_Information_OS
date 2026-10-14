@@ -49,9 +49,9 @@ class KnowledgeControllerTest {
     @Test
     void searchReturnsEnvelopeWithResults() throws Exception {
         authenticate();
-        when(search.search(eq(userId), eq("kubernetes"), eq(KnowledgeSearchService.Mode.VECTOR), eq(3), eq(0.25)))
+        when(search.search(eq(userId), eq("kubernetes"), eq(KnowledgeSearchService.Mode.VECTOR), eq(3), eq(0.25), isNull()))
                 .thenReturn(new KnowledgeSearchService.SearchResult(
-                        "kubernetes", KnowledgeSearchService.Mode.VECTOR, "fake-embed", 3, 0.25, 1,
+                        "kubernetes", KnowledgeSearchService.Mode.VECTOR, "fake-embed", 3, 0.25, 1, false, null,
                         List.of(new ScoredChunk(UUID.randomUUID(), UUID.randomUUID(), 0,
                                 "body", 0.42, 0.42, null, "Title", "https://example.com", "ARTICLE", "fake-embed"))));
 
@@ -68,15 +68,15 @@ class KnowledgeControllerTest {
                 .andExpect(jsonPath("$.data.results[0].vectorScore").value(0.42));
 
         // the authenticated principal (not a request field) drives user scoping
-        verify(search).search(eq(userId), eq("kubernetes"), eq(KnowledgeSearchService.Mode.VECTOR), eq(3), eq(0.25));
+        verify(search).search(eq(userId), eq("kubernetes"), eq(KnowledgeSearchService.Mode.VECTOR), eq(3), eq(0.25), isNull());
     }
 
     @Test
     void searchDefaultsToHybridModeWhenModeOmitted() throws Exception {
         authenticate();
-        when(search.search(any(), any(), isNull(), any(), any()))
+        when(search.search(any(), any(), isNull(), any(), any(), any()))
                 .thenReturn(new KnowledgeSearchService.SearchResult(
-                        "q", KnowledgeSearchService.Mode.HYBRID, "fake-embed", 10, 0.0, 0, List.of()));
+                        "q", KnowledgeSearchService.Mode.HYBRID, "fake-embed", 10, 0.0, 0, false, null, List.of()));
 
         mockMvc.perform(post("/api/v1/knowledge/search")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,7 +84,23 @@ class KnowledgeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.mode").value("HYBRID"));
 
-        verify(search).search(any(), any(), isNull(), any(), any());
+        verify(search).search(any(), any(), isNull(), any(), any(), any());
+    }
+
+    @Test
+    void rerankFlagIsPassedThroughAndEchoed() throws Exception {
+        authenticate();
+        when(search.search(any(), any(), any(), any(), any(), eq(Boolean.FALSE)))
+                .thenReturn(new KnowledgeSearchService.SearchResult(
+                        "q", KnowledgeSearchService.Mode.HYBRID, "fake-embed", 10, 0.0, 0, false, null, List.of()));
+
+        mockMvc.perform(post("/api/v1/knowledge/search")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"q\",\"rerank\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.reranked").value(false));
+
+        verify(search).search(any(), any(), any(), any(), any(), eq(Boolean.FALSE));
     }
 
     @Test
@@ -95,7 +111,7 @@ class KnowledgeControllerTest {
                         .content("{\"query\":\"q\",\"mode\":\"TELEPATHY\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
-        verify(search, never()).search(any(), any(), any(), any(), any());
+        verify(search, never()).search(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -107,13 +123,13 @@ class KnowledgeControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
-        verify(search, never()).search(any(), any(), any(), any(), any());
+        verify(search, never()).search(any(), any(), any(), any(), any(), any());
     }
 
     @Test
     void searchUnavailableMapsTo502() throws Exception {
         authenticate();
-        when(search.search(any(), any(), any(), any(), any()))
+        when(search.search(any(), any(), any(), any(), any(), any()))
                 .thenThrow(new KnowledgeSearchService.SearchUnavailableException("provider down"));
 
         mockMvc.perform(post("/api/v1/knowledge/search")
@@ -139,11 +155,11 @@ class KnowledgeControllerTest {
     void askReturnsAnswerWithCitations() throws Exception {
         authenticate();
         UUID chunkId = UUID.randomUUID();
-        when(ask.ask(eq(userId), eq("What is autoscaling?"), eq(5), isNull()))
+        when(ask.ask(eq(userId), eq("What is autoscaling?"), eq(5), isNull(), isNull()))
                 .thenReturn(new KnowledgeAskService.AskResult(
                         "What is autoscaling?", KnowledgeAskService.Status.ANSWERED,
                         "It adds pods based on metrics [1].",
-                        "openai-compatible:modelscope", "fake-embed", 1,
+                        "openai-compatible:modelscope", "fake-embed", 1, false, null,
                         List.of(new KnowledgeAskService.Citation(1, chunkId, UUID.randomUUID(),
                                 "Autoscaling", "https://example.com", "ARTICLE", 0.44))));
 
@@ -157,7 +173,7 @@ class KnowledgeControllerTest {
                 .andExpect(jsonPath("$.data.citations[0].index").value(1))
                 .andExpect(jsonPath("$.data.citations[0].title").value("Autoscaling"));
 
-        verify(ask).ask(eq(userId), eq("What is autoscaling?"), eq(5), isNull());
+        verify(ask).ask(eq(userId), eq("What is autoscaling?"), eq(5), isNull(), isNull());
     }
 
     @Test
@@ -168,6 +184,6 @@ class KnowledgeControllerTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
-        verify(ask, never()).ask(any(), any(), any(), any());
+        verify(ask, never()).ask(any(), any(), any(), any(), any());
     }
 }

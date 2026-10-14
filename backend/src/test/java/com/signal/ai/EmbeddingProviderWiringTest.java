@@ -19,7 +19,8 @@ class EmbeddingProviderWiringTest {
     static class EmbeddingConfig {
         @Bean
         AIProperties aiProperties() {
-            return new AIProperties("test", "http://localhost:9", "chat-model", "", null, "", "", 0, 500, 0);
+            return new AIProperties("test", "http://localhost:9", "chat-model", "", null, "", "", 0,
+                    null, "", "", 500, 0);
         }
     }
 
@@ -43,7 +44,8 @@ class EmbeddingProviderWiringTest {
     }
 
     @Test void embeddingModelDefaultsWhenUnset() {
-        AIProperties props = new AIProperties("p", "http://x", "m", "k", "  ", "", "", 0, 0, 9);
+        AIProperties props = new AIProperties("p", "http://x", "m", "k", "  ", "", "", 0,
+                "", "", "", 0, 9);
         assertEquals("text-embedding-3-small", props.embeddingModel());
         assertEquals(3, props.maxRetries(), "retries capped at 3");
         assertEquals(AIProperties.DEFAULT_EMBEDDING_DIMENSIONS, props.embeddingDimensions());

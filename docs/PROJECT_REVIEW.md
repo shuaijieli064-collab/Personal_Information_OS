@@ -269,11 +269,22 @@ V7/V13/V14 把 `embedding` 冻结在 `vector(384)`（当时只有 mock）。真�
 - 实测（见 `RUNTIME_VERIFICATION.md` #57–60）：V19 运行时应用；三模式在同一语料上表现符合契约；**`VECTOR&minScore=0.9` → 0 条，而 `HYBRID&minScore=0.9` → 2 条**（`vec=null`、`kw` 有值）——语义阈值丢弃全部向量命中时，词法腿仍把精确标识符捞回，RRF 分 `1/61`、`1/62` 与公式吻合。
 - 修正：`KnowledgeSearchServiceTest` 中一处**测试 bug**——原用例用 1 字符查询 `"q"` 断言关键词腿被调用，但 `toWebsearchQuery` 正确地将其作为噪声丢弃、该腿按设计跳过；改为真实词 `"kubernetes"`（产品行为无问题）。
 
+### 10.5e Rerank（交叉编码器重排）已实现（2026-10-14 续）
+
+- 动机：向量腿与词法腿各自独立打分，融合（RRF）只能做**序位**层面的合并，无法判断"这条候选是否真的回答了问题"。交叉编码器把 `(query, document)` 一起编码打分，排序质量显著高于双塔/词法各自为政。实测语料上，重排把融合序第 4 名的文档头块提升到第 2 名。
+- **供应商选型（实测，非假设）**：ModelScope 列表里**没有**任何 rerank 模型；DashScope 的 OpenAI 兼容路径 `/compatible-mode/v1/rerank` 返回 **404**，但**原生** `POST /api/v1/services/rerank/text-rerank/text-rerank` 返回 **200**。故 rerank 复用 DashScope key（与嵌入同源），模型 `qwen3.7-text-rerank`（对比 `gte-rerank-v2` 区分度更强：0.9995 vs 0.0069/0.0006）。
+- `RerankProvider` 抽象：`DashScopeRerankProvider`（有 key 时生效）/ `NoopRerankProvider`（`@ConditionalOnMissingBean` 兜底，保持检索序）。配置 `ai.rerank-base-url` / `ai.rerank-model` / `ai.rerank-api-key`，后两者分别回退到嵌入坐标与嵌入 key——单供应商部署零额外配置。
+- 管线：融合后先**过取候选池** `rerankPool = 夹取(limit, 20–50)`（且 ≤ 两条腿的过取量），再重排、再截断到 `limit`。`score` 替换为交叉编码器 relevance（0–1），`vectorScore` / `keywordScore` **保留**作为可审计的来源分；响应回显 `reranked` / `rerankModel`。
+- **可选增强，绝不致命**：未配 key、`rerank:false`、候选 ≤1、或重排调用抛错，一律保持检索序并返回 `reranked:false`（仅记 WARN）。重排能改善排序，但**不可能把一次可用的检索变成错误**——这是与"嵌入故障 → 502"刻意的不同处理。
+- 端点：`/knowledge/search` 与 `/knowledge/ask` 均新增 `rerank` 开关（默认 `true`），`/ask` 通过同一检索路径继承。
+- 新增测试：`DashScopeRerankProviderTest`（解析 `{output:{results:[{index,relevance_score}]}}`、越界/重复 index、错误处理）、`RerankProviderWiringTest`（有/无 key 的 bean 选择）、`KnowledgeSearchServiceTest` 扩至含重排的用例（重排重排+截断+标志位、关闭时保持融合序、**provider 失败降级为融合序不抛异常**）；全量 **151 绿**（+20）。
+- 实测（见 `RUNTIME_VERIFICATION.md` #61–65）：provider HTTP 200 且区分度极高；同查询 `rerank:false` vs `true` 顺序改变且分数语义切换；不传 `rerank` 默认生效；`/ask` 继承重排并给出正确 grounded 答案。
+
 ### 10.6 本轮（续）测试与验证
 
 | 检查 | 命令 | 结果 |
 |---|---|---|
-| 后端全量测试 | `cd backend && ./mvnw -o test` | ✅ Tests run: **131**, Failures: 0, Errors: 0 |
+| 后端全量测试 | `cd backend && ./mvnw -o test` | ✅ Tests run: **151**, Failures: 0, Errors: 0 |
 | 迁移 V17 + V18 | `./mvnw -o spring-boot:run` + Flyway 日志 | ✅ `now at version v18`；`ddl-auto=validate` 通过 |
 | 迁移 V19 | 重启后端（既有 V18 库） | ✅ `now at version v19`；`idx_chunks_content_fts` GIN 索引存在 |
 | 列类型 | `pg_attribute` / `pg_indexes` | ✅ 三张表 `vector(1024)`；HNSW 索引存在 |
@@ -282,5 +293,8 @@ V7/V13/V14 把 `embedding` 冻结在 `vector(384)`（当时只有 mock）。真�
 | K3 检索端点 | `POST /knowledge/search` | ✅ 排序 + 引用 + 参数夹取 + 校验 + 隔离 + 502 语义全部实测 |
 | K4 RAG 端点 | `POST /knowledge/ask` | ✅ 带引用作答 + 拒答不幻觉 + 三态状态机 + 注入对抗全部实测 |
 | Hybrid 检索 | `POST /knowledge/search` `mode=HYBRID/VECTOR/KEYWORD` | ✅ 三模式 + RRF 融合 + 双来源分 + 词法命中不被语义阈值丢弃，全部实测 |
+| Rerank provider | DashScope 原生 rerank API | ✅ HTTP 200；`0.9995` vs `0.0069`/`0.0006`；兼容路径 404、ModelScope 无重排模型 |
+| Rerank 端到端 | `POST /knowledge/search` `rerank=false` vs `true` | ✅ 顺序改变（`ord 0` #4→#2）、分数切为 relevance、`rerankModel` 回显 |
+| Rerank 默认 + `/ask` 继承 | 不传 `rerank`；`/ask` `rerank=true/false` | ✅ 默认 `reranked:true`；`/ask` 继承并给 grounded 答案 |
 
-> 结论：Phase 6 的 **K1–K4 + Hybrid 检索已全部实现并实测**（地基 → 分块/嵌入 → 向量检索 → 混合检索 → RAG 带引用作答）。下一步：Rerank（cross-encoder 重排）、前端 Citation UI / Knowledge 页。评审 §8 第 1 步（Testcontainers 迁移集成测试）仍是最该补的底座——本轮 P0-5 再次证明"无 DB 集成测试"的代价。
+> 结论：Phase 6 的 **K1–K4 + Hybrid 检索 + Rerank 已全部实现并实测**（地基 → 分块/嵌入 → 向量检索 → 混合检索 → 交叉编码器重排 → RAG 带引用作答）。下一步：前端 Citation UI / Knowledge 页（后端 K3/K4 已就绪，前端仍无消费方）。评审 §8 第 1 步（Testcontainers 迁移集成测试）仍是最该补的底座——P0-5 再次证明"无 DB 集成测试"的代价。

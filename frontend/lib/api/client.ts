@@ -178,3 +178,92 @@ export const informationApi = {
   understanding: (id: string) =>
     api.get<Understanding | null>(`/api/v1/information/${id}/understanding`),
 };
+
+/* ── Phase 6 Knowledge (K3 search / K4 RAG) ───────────────────────────────── */
+
+export type KnowledgeMode = "HYBRID" | "VECTOR" | "KEYWORD";
+export type AskStatus = "ANSWERED" | "NO_SOURCES" | "NO_ANSWER";
+
+/** One retrieval hit: a chunk plus its owning Information's citation metadata. */
+export type ScoredChunk = {
+  chunkId: string;
+  informationId: string;
+  ordinal: number;
+  content: string;
+  /** Ranking score. RRF fusion score in HYBRID, the leg's own score in a single-leg mode. */
+  score: number;
+  /** Cosine similarity [0,1], or null when the vector leg did not return this chunk. */
+  vectorScore: number | null;
+  /** PostgreSQL ts_rank_cd, or null when the keyword leg did not return this chunk. */
+  keywordScore: number | null;
+  title: string;
+  url?: string | null;
+  type: string;
+  model: string;
+};
+
+export type KnowledgeSearchResult = {
+  query: string;
+  mode: KnowledgeMode;
+  model: string;
+  limit: number;
+  minScore: number;
+  count: number;
+  /** True only when the cross-encoder actually ran. */
+  reranked: boolean;
+  rerankModel: string | null;
+  results: ScoredChunk[];
+};
+
+export type KnowledgeCitation = {
+  index: number;
+  chunkId: string;
+  informationId: string;
+  title: string;
+  url?: string | null;
+  type: string;
+  score: number;
+};
+
+export type KnowledgeAskResult = {
+  question: string;
+  status: AskStatus;
+  answer: string | null;
+  model: string;
+  embeddingModel: string;
+  sourceCount: number;
+  reranked: boolean;
+  rerankModel: string | null;
+  citations: KnowledgeCitation[];
+};
+
+export type KnowledgeReindexResult = {
+  scanned: number;
+  chunked: number;
+  chunks: number;
+  failed: number;
+};
+
+export type KnowledgeSearchParams = {
+  query: string;
+  mode?: KnowledgeMode;
+  limit?: number;
+  minScore?: number;
+  rerank?: boolean;
+};
+
+export type KnowledgeAskParams = {
+  question: string;
+  limit?: number;
+  minScore?: number;
+  rerank?: boolean;
+};
+
+export const knowledgeApi = {
+  search: (body: KnowledgeSearchParams) =>
+    api.post<KnowledgeSearchResult>("/api/v1/knowledge/search", body),
+  ask: (body: KnowledgeAskParams) =>
+    api.post<KnowledgeAskResult>("/api/v1/knowledge/ask", body),
+  reindex: () =>
+    api.post<KnowledgeReindexResult>("/api/v1/knowledge/reindex"),
+};

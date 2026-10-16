@@ -15,19 +15,19 @@ Information → Collect → Normalize → Understand → Deduplicate
 
 ## Status
 
-**Phases 1–5 complete and frozen · P0 Hardening ✅ · Phase 5.5 ✅ · Phase 6 Knowledge (K1–K4 + hybrid retrieval + rerank) in progress.**
+**Phases 1–5 complete and frozen · P0 Hardening ✅ · Phase 5.5 ✅ · Phase 6 Knowledge (K1–K4 + hybrid retrieval + rerank + console UI) in progress.**
 
 | Area | State |
 |---|---|
 | Backend | Spring Boot 4.1.1 + Java 21 · Auth (JWT + refresh rotation) · Profile/Goals/Interests/Skills · Ingestion (RSS/GitHub/URL/File) · Exact + semantic dedup · Understanding (classify/summary/topics/entities) · Relevance · Signal Score/Generation · Today · Feedback · Knowledge chunking/embedding/**hybrid** retrieval (vector + keyword, RRF-fused, `mode=HYBRID/VECTOR/KEYWORD`) + **cross-encoder rerank** /RAG (K1–K4) · Flyway V1–V19 |
-| Frontend | Next.js 16 + React 19 + Tailwind v4 + Framer Motion 14 · TanStack Query · route groups `(app)`/`(auth)` · AuthGuard + single-flight 401 refresh · AppShell · 18 routes · Vitest (16 tests) |
+| Frontend | Next.js 16 + React 19 + Tailwind v4 + Framer Motion 14 · TanStack Query · route groups `(app)`/`(auth)` · AuthGuard + single-flight 401 refresh · AppShell · 18 routes · **Knowledge console** (`/knowledge`: search + RAG ask + reindex, provenance chips, `[n]` citation chips) · Vitest (40 tests) |
 | Database | PostgreSQL + pgvector (Docker `pgvector/pgvector:pg16`); migrations live **only** in `backend/src/main/resources/db/migration/` (V1–V19, empty-DB rebuild verified) |
 | AI | `AIProvider`/`EmbeddingProvider`/`RerankProvider` abstractions · `OpenAICompatibleProvider` (key from env) mutually exclusive with `MockAIProvider` · chat, embeddings and rerank may use **different** providers (`ai.*` / `ai.embedding-*` / `ai.rerank-*`); rerank falls back to `NoopRerankProvider` when unconfigured · 1024-dim embeddings · PromptBoundary (SYSTEM / UNTRUSTED_CONTENT / QUESTION channels) |
-| Tests | Backend 151 tests green · Frontend lint/tsc/Vitest/build green |
-| Verified live | Real LLM understanding + 1024-dim embeddings (Alibaba DashScope) + `POST /knowledge/search` (**HYBRID** vector+keyword RRF; lexical matches survive a semantic floor; **rerank** reorders, relevance scores + `rerankModel` echoed) + `POST /knowledge/ask` (RAG with `[n]` citations, rerank inherited, declines instead of hallucinating, injection-resistant), end-to-end |
-| Not verified | Browser E2E at all breakpoints · citation UI |
+| Tests | Backend 151 tests green · Frontend lint/tsc/Vitest (40 tests)/build green |
+| Verified live | Real LLM understanding + 1024-dim embeddings (Alibaba DashScope) + `POST /knowledge/search` (**HYBRID** vector+keyword RRF; lexical matches survive a semantic floor; **rerank** reorders, relevance scores + `rerankModel` echoed) + `POST /knowledge/ask` (RAG with `[n]` citations, rerank inherited, declines instead of hallucinating, injection-resistant) + the **Knowledge console** driven in a real browser (search with rerank on/off, grounded answer with clickable citation chips, reindex, 390/768 responsive), end-to-end |
+| Not verified | Browser E2E at every breakpoint (desktop + 390 + 768 captured) · production-mode browser pass (production build itself is green and served both locales with HTTP 200) |
 
-Next milestone: **Phase 6 Knowledge/RAG (K4 RAG ✅ → rerank ✅ → citation UI)** → Phase 7 Agent → Phase 8 Automation. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Next milestone: **Phase 6 Knowledge/RAG (K1–K4 ✅ · hybrid ✅ · rerank ✅ · console UI ✅ → Context Builder)** → Phase 7 Agent → Phase 8 Automation. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Repository Layout
 

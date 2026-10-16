@@ -34,7 +34,7 @@ Mobile: bottom bar (Today / Inbox / Discover / Knowledge / AI), Today shows Acti
 | `/today` | daily entry | greeting → stats → Needs Attention → For You → AI Brief |
 | `/inbox` | triage raw flow | source/status filters, dense list of SignalCards |
 | `/discover` | unknown unknowns | grouped by current path, match % |
-| `/knowledge` | saved → concepts | entries + relations (graph later) |
+| `/knowledge` | ask your own corpus | search (hybrid + rerank, per-leg provenance) → ask → grounded answer + `[n]` citations |
 | `/activity` | what SIGNAL did today | processed counts, ignored items, feedback log |
 | `/ai` | command + chat | tools, not a chatbot |
 

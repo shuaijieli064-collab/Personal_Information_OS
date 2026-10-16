@@ -105,13 +105,23 @@ Board: `ui-design-runs/s5-board.html` (26 screenshots, grouped Responsive / Stat
 | 63 | **Rerank default-on** | `POST /knowledge/search` with **no** `rerank` field | ✅ `reranked:true`, `rerankModel:qwen3.7-text-rerank` — rerank is on unless explicitly disabled |
 | 64 | **`/ask` inherits rerank** | `POST /knowledge/ask` with `rerank:true` then `rerank:false` | ✅ `true` → `status:ANSWERED`, `reranked:true`, `rerankModel` echoed, answer grounded (*"…starts at 02:30 UTC… on-call data engineer is paged immediately…"*) with 3 citations scored by rerank; `false` → `reranked:false`, `rerankModel:null`, sources unchanged |
 | 65 | Regression after rerank | `./mvnw -o test` (2026-10-14) | ✅ **151 run, 0 failures** (+20 rerank tests: provider parsing/error handling, reorder/truncate/flags, disable, provider-failure degradation) |
+| 66 | Knowledge console · type/lint/unit | `npx tsc --noEmit` · `npx eslint` · `npx vitest run` (2026-10-16) | ✅ tsc + eslint clean; **40 tests pass** (+24: `lib/knowledge/format` — `[n]` splitting, citation lookup, provenance, min–max bar scaling — plus the three knowledge components) |
+| 67 | Knowledge console · browser E2E | `scripts/verify-knowledge.mjs` (Playwright against `next dev` + the live backend, seeded session, `/zh-CN/knowledge`) | ✅ page renders under AuthGuard; search **rerank on** → 5 cards reordered by relevance with `rerankModel` shown; **rerank off** → fused order; ask → `ANSWERED` with a grounded answer whose `[n]` chips resolve to the citation list; reindex reports scanned/chunked/chunks/failed; **0 console errors** |
+| 68 | Knowledge console · responsive | Playwright viewports 390 / 768 | ✅ layouts hold, no horizontal overflow (screenshots in `ui-design-runs/knowledge-shots/`) |
+| 69 | Frontend production build | `npx next build` (2026-10-16) | ✅ 18 routes compiled incl. `/[locale]/knowledge`; 33 static pages generated; `output: standalone` |
+| 70 | Production artifact smoke | standalone `server.js` on :3000 · `GET /zh-CN/knowledge` + `GET /en/knowledge` | ✅ HTTP 200 both locales (~30 KB each), all console markers present in the server-rendered HTML |
+
+> Build note: `next/font/google` fetches Inter / JetBrains Mono / Space Grotesk at build time. Behind this
+> environment's egress proxy the build fails unless Node's env-proxy support is on —
+> build with `NODE_USE_ENV_PROXY=1 npx next build`. Also clear `.next` manually first: Turbopack's own
+> bulk clean of `.next/turbopack` trips the sandbox bulk-delete guard.
 
 ## NOT VERIFIED yet
 
 - Cross-browser (Firefox/WebKit) and screen-reader pass
 - Live AI quality at scale (single-item smoke only; no batch/latency benchmark)
 - Rerank **failure** degradation is covered by unit tests (`rerankProviderFailureDegradesToFusedOrder`), not by a live provider outage
-- Citation UI on the frontend (`/knowledge` page still has no controller consumer)
+- Production-mode (`next start`) **browser** walkthrough — the build is green and the artifact was smoke-served (row 70), but the interactive pass (row 67) ran against `next dev`; the live backend was unavailable (Docker Desktop stopped) for a production-mode rerun
 - Scheduled sync / notifications (Phase 8 scope)
 
 ---

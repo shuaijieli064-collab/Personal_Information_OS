@@ -3,9 +3,12 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   informationApi,
+  knowledgeApi,
   signalsApi,
   sourcesApi,
   todayApi,
+  type KnowledgeAskParams,
+  type KnowledgeSearchParams,
 } from "./client";
 
 /** Central query keys — invalidate from anywhere by key. */
@@ -123,5 +126,35 @@ export function useDiscover() {
       { name: "JVM Internals", reason: "Deepens your backend foundation", category: "Learning", confidence: 84 },
       { name: "LangChain4j", reason: "LLM tooling aligned with your goals", category: "Library", confidence: 79 },
     ],
+  });
+}
+
+/* ── Phase 6 Knowledge (K3 search / K4 RAG) ───────────────────────────────── */
+
+/**
+ * Search and ask are mutations, not queries: they are user-triggered, run once
+ * per submit, and must not be refetched on window focus or cache-key churn.
+ */
+export function useKnowledgeSearch() {
+  return useMutation({
+    mutationFn: (params: KnowledgeSearchParams) => knowledgeApi.search(params),
+  });
+}
+
+export function useKnowledgeAsk() {
+  return useMutation({
+    mutationFn: (params: KnowledgeAskParams) => knowledgeApi.ask(params),
+  });
+}
+
+/** Rebuild the caller's chunk corpus, then refresh Today (new chunks can move signals). */
+export function useKnowledgeReindex() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => knowledgeApi.reindex(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.today });
+      qc.invalidateQueries({ queryKey: queryKeys.inbox });
+    },
   });
 }

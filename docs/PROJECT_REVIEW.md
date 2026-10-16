@@ -280,6 +280,18 @@ V7/V13/V14 把 `embedding` 冻结在 `vector(384)`（当时只有 mock）。真�
 - 新增测试：`DashScopeRerankProviderTest`（解析 `{output:{results:[{index,relevance_score}]}}`、越界/重复 index、错误处理）、`RerankProviderWiringTest`（有/无 key 的 bean 选择）、`KnowledgeSearchServiceTest` 扩至含重排的用例（重排重排+截断+标志位、关闭时保持融合序、**provider 失败降级为融合序不抛异常**）；全量 **151 绿**（+20）。
 - 实测（见 `RUNTIME_VERIFICATION.md` #61–65）：provider HTTP 200 且区分度极高；同查询 `rerank:false` vs `true` 顺序改变且分数语义切换；不传 `rerank` 默认生效；`/ask` 继承重排并给出正确 grounded 答案。
 
+### 10.5f Knowledge 控制台（前端 Citation UI / Knowledge 页）已实现（2026-10-16 续）
+
+- 动机：后端 K3/K4/Rerank 全部就绪，但前端 `/knowledge` 一直只是"知识图谱预览"占位（把 Today 的信号画成节点，91 行、无任何后端消费方）。本轮把它换成真正的控制台——**检索与问答第一次可以在产品界面里被使用和验证**。
+- 页面（`app/[locale]/(app)/knowledge/page.tsx`，419 行改动）：`search` / `ask` 两个 tab（`role="tablist"` + `aria-selected` + `aria-controls`，非当前 tab 用 `hidden` 而非卸载，保留各自结果）；共享检索旋钮 `mode`（HYBRID/VECTOR/KEYWORD）、`limit`（5/10/20/50）、`minScore`（0–1，前端即夹取）、`rerank`（默认勾选）；重建索引按钮把 `scanned/chunked/chunks/failed` 四项如实回报。结果区顶部回显 `mode / model / reranked · rerankModel / count`——**服务端生效的参数被原样展示**，而不是让用户猜。
+- 结果卡（`KnowledgeResultCard`）：名次、4 位小数分值、**组内 min–max 归一化**的分数条（RRF 分只在同一结果集内可比，绝对刻度会让所有条一样长）、`type` / `ordinal`、以及 **来源腿徽章**（`vector` / `keyword` 各自原始分，未被某腿召回就不显示）——混合检索的价值"词法命中与语义命中并排可见"直接落到界面上；另附原文外链与"在收件箱中打开"。
+- 问答（`AnswerCard` + `CitationList`）：答案按 `[n]` 拆成文本/引用段，**引用芯片可点击跳转**到下方来源列表；模型引用了未返回的编号时仍渲染为虚线芯片（隐藏会静默丢掉答案的一部分含义）。三态分别对应"基于你的知识库作答 / 无可用来源 / 未能作答"三种界面，而不是把 `NO_SOURCES` 显示成空白。
+- 纯函数抽到 `lib/knowledge/format.ts`（不依赖 React / next-intl）：`parseAnswerSegments`、`citedIndices`、`citationFor`、`provenanceOf`、`scoreRange`、`relativeBarWidth`（同分返回满格、下限 6% 保证最低名次可见）。难的部分可单测，无需 DOM 与消息目录。
+- 新增 `knowledgeApi`（`/knowledge/search|ask|reindex`）+ 三个 TanStack Query hook；`ScoredChunk` / `KnowledgeCitation` / `SearchResult` / `AskResult` 类型与后端 DTO 对齐（含 `vectorScore` / `keywordScore` / `reranked` / `rerankModel`）。
+- i18n：zh-CN / en 各新增 `Knowledge` 键并保持两语言键集合一致（脚本化写入，JSON 往返字节一致，避免手改缩进污染整文件 diff）。
+- 测试：前端 **40 绿**（+24）——`lib/knowledge/format` 的 `[n]` 拆分（含连续 `[1][2]`、纯标记答案）、引用查找、来源腿、分数条缩放；三个组件的渲染断言。tsc + eslint 全清。
+- 实测（见 `RUNTIME_VERIFICATION.md` #66–70）：`next dev` + 真实后端 + 真实会话跑 Playwright——检索（rerank 开/关各一次）、问答（`ANSWERED` + 芯片跳转）、重建索引、390/768 响应式截图，**0 控制台错误**；生产构建 18 条路由通过，standalone 产物对中英两语 `GET /knowledge` 均 200。
+
 ### 10.6 本轮（续）测试与验证
 
 | 检查 | 命令 | 结果 |
@@ -296,5 +308,11 @@ V7/V13/V14 把 `embedding` 冻结在 `vector(384)`（当时只有 mock）。真�
 | Rerank provider | DashScope 原生 rerank API | ✅ HTTP 200；`0.9995` vs `0.0069`/`0.0006`；兼容路径 404、ModelScope 无重排模型 |
 | Rerank 端到端 | `POST /knowledge/search` `rerank=false` vs `true` | ✅ 顺序改变（`ord 0` #4→#2）、分数切为 relevance、`rerankModel` 回显 |
 | Rerank 默认 + `/ask` 继承 | 不传 `rerank`；`/ask` `rerank=true/false` | ✅ 默认 `reranked:true`；`/ask` 继承并给 grounded 答案 |
+| 前端类型/静态/单测 | `npx tsc --noEmit` · `npx eslint` · `npx vitest run` | ✅ 全清；**40 测试通过**（+24） |
+| 前端浏览器端到端 | Playwright（`next dev` + 真实后端 + 真实会话，zh-CN） | ✅ 检索 rerank 开/关、问答 `ANSWERED` + `[n]` 芯片跳转、重建索引、390/768 响应式；**0 控制台错误** |
+| 前端生产构建 | `npx next build` | ✅ 18 路由（含 `/[locale]/knowledge`）、33 静态页、`output: standalone` |
+| 生产产物冒烟 | standalone `server.js` :3000 · `GET /{zh-CN,en}/knowledge` | ✅ 双语 HTTP 200（各约 30 KB），控制台标记齐全 |
 
-> 结论：Phase 6 的 **K1–K4 + Hybrid 检索 + Rerank 已全部实现并实测**（地基 → 分块/嵌入 → 向量检索 → 混合检索 → 交叉编码器重排 → RAG 带引用作答）。下一步：前端 Citation UI / Knowledge 页（后端 K3/K4 已就绪，前端仍无消费方）。评审 §8 第 1 步（Testcontainers 迁移集成测试）仍是最该补的底座——P0-5 再次证明"无 DB 集成测试"的代价。
+> 结论：Phase 6 的 **K1–K4 + Hybrid 检索 + Rerank + Knowledge 控制台已全部实现并实测**——后端到前端、从分块嵌入到带引用的问答，第一次形成完整可用闭环。下一步：**Context Builder**（为 Phase 7 Agent 组装上下文）。评审 §8 第 1 步（Testcontainers 迁移集成测试）仍是最该补的底座——P0-5 再次证明"无 DB 集成测试"的代价。
+>
+> 环境提示（本轮踩到，已解决）：`next build` 需外网拉取 Google Fonts，本机在出口代理后必须 `NODE_USE_ENV_PROXY=1 npx next build`；且 Turbopack 自清理 `.next/turbopack` 会触发沙箱批量删除护栏，构建前需手动清 `.next`。另：本地 curl 访问 localhost 需 `--noproxy '*'`。

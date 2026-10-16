@@ -231,6 +231,9 @@ export type KnowledgeAskResult = {
   answer: string | null;
   model: string;
   embeddingModel: string;
+  /** Chunks the retrieval legs returned. */
+  retrievedCount: number;
+  /** Sources that actually reached the model's context (≤ retrievedCount). */
   sourceCount: number;
   reranked: boolean;
   rerankModel: string | null;

@@ -29,7 +29,9 @@ class KnowledgeAskServiceTest {
     private final KnowledgeSearchService search = mock(KnowledgeSearchService.class);
     private final FakeAI ai = new FakeAI();
 
-    private KnowledgeAskService svc() { return new KnowledgeAskService(search, ai); }
+    private KnowledgeAskService svc() {
+        return new KnowledgeAskService(search, ai, new ContextBuilder(8000));
+    }
 
     private static ScoredChunk hit(String content, double score) {
         return new ScoredChunk(UUID.randomUUID(), UUID.randomUUID(), 0, content, score,
@@ -126,20 +128,40 @@ class KnowledgeAskServiceTest {
         assertEquals("Direct answer", KnowledgeAskService.parseAnswer("Direct answer"));
     }
 
-    // ── context assembly ───────────────────────────────────────────────────────
+    // ── context → citations ────────────────────────────────────────────────────
 
     @Test void contextNumbersSourcesWithTitles() {
-        String ctx = KnowledgeAskService.assembleContext(List.of(hit("alpha", 0.5), hit("beta", 0.4)));
-        assertTrue(ctx.startsWith("[1] (source: Autoscaling)\nalpha"), ctx);
-        assertTrue(ctx.contains("[2] (source: Autoscaling)\nbeta"), ctx);
+        searchReturns(hit("alpha", 0.5), hit("beta", 0.4));
+        svc().ask(UUID.randomUUID(), "q", null, null, null);
+        String context = ai.seen.messages().get(1).content();
+        assertTrue(context.contains("[1] (source: Autoscaling)\nalpha"), context);
+        assertTrue(context.contains("[2] (source: Autoscaling)\nbeta"), context);
     }
 
-    @Test void contextStopsAtBudgetButAlwaysKeepsTheFirstSource() {
-        ScoredChunk huge = hit("x".repeat(KnowledgeAskService.MAX_CONTEXT_CHARS + 100), 0.9);
-        ScoredChunk small = hit("tail", 0.1);
-        String ctx = KnowledgeAskService.assembleContext(List.of(huge, small));
-        assertTrue(ctx.contains("xxx"), "first source is kept even when oversized");
-        assertFalse(ctx.contains("tail"), "later sources are dropped once the budget is spent");
+    @Test void citationsOnlyCoverSourcesThatReachedTheModel() {
+        // The second chunk repeats the first verbatim, so the builder drops it. Citations
+        // must follow: numbering a source the model never received would let the answer
+        // cite a number that was never in front of it.
+        searchReturns(hit("identical body text that is long enough to matter", 0.9),
+                hit("identical body text that is long enough to matter", 0.8));
+        ai.reply = "{\"answer\":\"Only one source [1].\"}";
+
+        var r = svc().ask(UUID.randomUUID(), "q", null, null, null);
+
+        assertEquals(2, r.retrievedCount(), "both chunks were retrieved");
+        assertEquals(1, r.sourceCount(), "only one reached the model");
+        assertEquals(1, r.citations().size());
+        assertEquals(1, r.citations().get(0).index());
+        assertFalse(ai.seen.messages().get(1).content().contains("[2]"),
+                "a dropped source must not be numbered in the context");
+    }
+
+    @Test void oversizedFirstSourceIsStillSent() {
+        searchReturns(hit("x".repeat(9000), 0.9), hit("tail", 0.1));
+        svc().ask(UUID.randomUUID(), "q", null, null, null);
+        String context = ai.seen.messages().get(1).content();
+        assertTrue(context.contains("xxx"), "first source is kept even when oversized");
+        assertFalse(context.contains("tail"), "later sources are dropped once the budget is spent");
     }
 
     // ── prompt boundary (injection defence) ────────────────────────────────────

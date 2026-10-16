@@ -344,6 +344,11 @@ export default function KnowledgePage() {
                 [t("metaStatus"), t(STATUS_LABEL[ask.data.status])],
                 [t("metaModel"), ask.data.model],
                 [t("metaSources"), String(ask.data.sourceCount)],
+                // Only when the context builder had to drop retrieved chunks: the model
+                // answered from fewer sources than were found, which is worth seeing.
+                ...(ask.data.retrievedCount > ask.data.sourceCount
+                  ? ([[t("metaRetrieved"), String(ask.data.retrievedCount)]] as [string, string][])
+                  : []),
                 [
                   t("metaRerank"),
                   ask.data.reranked

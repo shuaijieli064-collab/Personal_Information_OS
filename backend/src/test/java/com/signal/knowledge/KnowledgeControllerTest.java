@@ -159,7 +159,7 @@ class KnowledgeControllerTest {
                 .thenReturn(new KnowledgeAskService.AskResult(
                         "What is autoscaling?", KnowledgeAskService.Status.ANSWERED,
                         "It adds pods based on metrics [1].",
-                        "openai-compatible:modelscope", "fake-embed", 1, false, null,
+                        "openai-compatible:modelscope", "fake-embed", 1, 1, false, null,
                         List.of(new KnowledgeAskService.Citation(1, chunkId, UUID.randomUUID(),
                                 "Autoscaling", "https://example.com", "ARTICLE", 0.44))));
 

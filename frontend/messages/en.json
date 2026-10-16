@@ -268,6 +268,7 @@
     "metaCount": "hits",
     "metaStatus": "status",
     "metaSources": "sources",
+    "metaRetrieved": "Retrieved",
     "statusAnswered": "answered",
     "statusNoSources": "no sources",
     "statusNoAnswer": "no answer",

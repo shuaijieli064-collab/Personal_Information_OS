@@ -16,8 +16,9 @@ import java.util.UUID;
  * Phase 6 K4 — RAG: retrieval (K3) + LLM synthesis with citations.
  *
  * <p>Flow: reuse {@link KnowledgeSearchService} to retrieve the caller's own chunks →
- * number them as SOURCES → ask the model to answer <b>strictly</b> from them, citing
- * each claim with {@code [n]}. The sources go through
+ * assemble them into numbered SOURCES via {@link ContextBuilder} (de-duplicated, budgeted) →
+ * ask the model to answer <b>strictly</b> from them, citing each claim with {@code [n]}. The
+ * sources go through
  * {@link PromptBoundary#untrustedInformation} so a prompt-injection payload inside an
  * ingested article can never become an instruction; the question travels in its own
  * {@link PromptBoundary#question} channel.
@@ -45,15 +46,16 @@ public class KnowledgeAskService {
 
     /** Sentinel the model must return when the sources do not contain the answer. */
     static final String NOT_FOUND = "NOT_FOUND";
-    /** Bound the assembled context (chunks are ~800 chars, so ≈10 sources). */
-    static final int MAX_CONTEXT_CHARS = 8000;
 
     private final KnowledgeSearchService search;
     private final AIProvider ai;
+    private final ContextBuilder contextBuilder;
 
-    public KnowledgeAskService(KnowledgeSearchService search, AIProvider ai) {
+    public KnowledgeAskService(KnowledgeSearchService search, AIProvider ai,
+                               ContextBuilder contextBuilder) {
         this.search = search;
         this.ai = ai;
+        this.contextBuilder = contextBuilder;
     }
 
     public enum Status { ANSWERED, NO_SOURCES, NO_ANSWER }
@@ -63,7 +65,8 @@ public class KnowledgeAskService {
                            String url, String type, double score) {}
 
     public record AskResult(String question, Status status, String answer,
-                            String model, String embeddingModel, int sourceCount,
+                            String model, String embeddingModel,
+                            int retrievedCount, int sourceCount,
                             boolean reranked, String rerankModel,
                             List<Citation> citations) {}
 
@@ -77,37 +80,41 @@ public class KnowledgeAskService {
         KnowledgeSearchService.SearchResult hits =
                 search.search(userId, q, KnowledgeSearchService.Mode.HYBRID, limit, minScore, rerank);
 
-        List<Citation> citations = new ArrayList<>(hits.results().size());
-        for (int i = 0; i < hits.results().size(); i++) {
-            ScoredChunk c = hits.results().get(i);
-            citations.add(new Citation(i + 1, c.chunkId(), c.informationId(),
-                    c.title(), c.url(), c.type(), c.score()));
-        }
-
         if (hits.results().isEmpty()) {
             // No context → never ask the model; it could only invent an answer.
             return new AskResult(q, Status.NO_SOURCES, null,
-                    ai.name(), hits.model(), 0, hits.reranked(), hits.rerankModel(), List.of());
+                    ai.name(), hits.model(), 0, 0,
+                    hits.reranked(), hits.rerankModel(), List.of());
         }
 
-        // 2) Synthesis — an LLM outage degrades to "sources only", never to a 500.
+        // 2) Context — de-duplicated and budgeted. Citations come from what the builder
+        //    kept, never from everything retrieved: a citation the model never saw is a
+        //    number it cannot legitimately cite.
+        ContextBuilder.BuiltContext context = contextBuilder.build(hits.results());
+
+        List<Citation> citations = new ArrayList<>(context.size());
+        for (int position : context.includedIndexes()) {
+            ScoredChunk c = hits.results().get(position - 1);
+            citations.add(new Citation(citations.size() + 1, c.chunkId(), c.informationId(),
+                    c.title(), c.url(), c.type(), c.score()));
+        }
+
+        // 3) Synthesis — an LLM outage degrades to "sources only", never to a 500.
         String answer = null;
         try {
-            answer = synthesize(q, hits.results());
+            answer = synthesize(q, context.text());
         } catch (Exception e) {
             log.warn("RAG synthesis failed, returning sources only: {}", e.toString());
         }
 
         Status status = (answer == null) ? Status.NO_ANSWER : Status.ANSWERED;
         return new AskResult(q, status, answer,
-                ai.name(), hits.model(), citations.size(),
+                ai.name(), hits.model(), hits.results().size(), citations.size(),
                 hits.reranked(), hits.rerankModel(), citations);
     }
 
-    /** One structured call: numbered sources + the question → a cited answer. */
-    private String synthesize(String question, List<ScoredChunk> sources) throws Exception {
-        String context = assembleContext(sources);
-
+    /** One structured call: the numbered context block + the question → a cited answer. */
+    private String synthesize(String question, String context) throws Exception {
         List<ChatMessage> messages = PromptBoundary
                 .system("You answer a question strictly from the numbered SOURCES provided. "
                         + "Rules: use ONLY the sources, never outside knowledge, never invent facts; "
@@ -122,20 +129,6 @@ public class KnowledgeAskService {
 
         String raw = ai.structuredOutput(new AIProvider.ChatRequest(messages, 0.2));
         return parseAnswer(raw);
-    }
-
-    /** Numbers the sources and stops before the context budget is exceeded. */
-    static String assembleContext(List<ScoredChunk> sources) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < sources.size(); i++) {
-            ScoredChunk c = sources.get(i);
-            String title = c.title() == null ? "" : c.title();
-            String block = "[" + (i + 1) + "] (source: " + title + ")\n" + c.content() + "\n\n";
-            // Always include the first source, even if it alone exceeds the budget.
-            if (sb.length() > 0 && sb.length() + block.length() > MAX_CONTEXT_CHARS) break;
-            sb.append(block);
-        }
-        return sb.toString();
     }
 
     /**

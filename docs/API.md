@@ -85,7 +85,50 @@ user's resource returns 404 (IDOR protected).
 | GET/POST | `/knowledge` | ⏳ |
 | POST | `/ai/command` | ⏳ |
 | POST | `/ai/conversations/{id}/messages` | ⏳ |
-| GET | `/ai/brief/today` | ⏳ |
+| GET | `/ai/brief/today` | ⏳ (superseded by `GET /brief/latest`, Phase 8) |
+
+## Agent (Phase 7) — `/api/v1/agent`
+| Method | Path | 说明 |
+|---|---|---|
+| GET | `/tools` | 工具目录：name / description / permission / parameters / required |
+| POST | `/runs` | `{goal, maxSteps?}` → 规划并执行；只读步骤自动跑，写操作停下等确认 |
+| GET | `/runs?page&size` | 历史运行（分页，最新在前） |
+| GET | `/runs/{id}` | 单次运行 + 全部步骤（审计：tool / permission / arguments / result / error / 起止时间） |
+| POST | `/runs/{id}/confirm` | `{stepId?, note?}` 确认待确认步骤并继续 |
+| POST | `/runs/{id}/reject` | `{reason?}` 拒绝 → 运行转 `REJECTED` |
+
+运行状态：`PLANNING` / `RUNNING` / `AWAITING_CONFIRMATION` / `COMPLETED` / `FAILED` / `REJECTED`。
+步骤状态：`PLANNED` / `PENDING_CONFIRMATION` / `RUNNING` / `SUCCEEDED` / `FAILED` / `SKIPPED` / `REJECTED`。
+权限：`READ`（自动执行）/ `WRITE` / `DESTRUCTIVE`（后两者必须确认）。他人 run → 404。
+
+## Automation (Phase 8) — `/api/v1/automation`
+| Method | Path | 说明 |
+|---|---|---|
+| GET | `/jobs` | 调用者的定时任务列表 |
+| POST | `/jobs` | `{type, intervalMinutes?, enabled?}` —— 按 `(user,type)` **upsert**；`type ∈ SOURCE_SYNC / DAILY_BRIEF / FEEDBACK_LOOP`，缺省间隔取类型默认（60 / 1440 / 360 分）；未知类型 → 400 |
+| PATCH | `/jobs/{id}` | `{intervalMinutes?, enabled?}` 改间隔 / 暂停恢复 |
+| DELETE | `/jobs/{id}` | 删除任务（级联删除其运行记录） |
+| POST | `/jobs/{id}/run` | 忽略 `next_run_at` 立刻运行，返回该次运行 |
+| GET | `/jobs/{id}/runs?page&size` | 某任务的运行历史（最新在前） |
+| POST | `/runs/{id}/retry` | 重试死信（或失败）运行：重新启用任务 + 清零失败计数 + 立刻再跑 |
+
+运行状态：`RUNNING` / `SUCCEEDED` / `FAILED` / `DEAD`（达到 `max-attempts` 后停用任务并raise `JOB_FAILED` 通知）。
+
+## Brief (Phase 8) — `/api/v1/brief`
+| Method | Path | 说明 |
+|---|---|---|
+| GET | `/latest` | 最新 `DAILY_BRIEF` 通知；**没有简报时返回 `{"brief": null}`，不是 404** |
+| POST | `/generate` | 立刻生成一份简报并返回 |
+
+## Notifications (Phase 8) — `/api/v1/notifications`
+| Method | Path | 说明 |
+|---|---|---|
+| GET | `?unread&page&size` | 收件箱分页 + 未读数徽章 |
+| POST | `/{id}/read` | 标记单条已读（非本人 → 404） |
+| POST | `/read-all` | 全部标记已读，返回 `{updated}` |
+
+通知类型：`DAILY_BRIEF` / `IMPORTANT_SIGNAL`（按 signal id 写在 `payload` 里去重，同一信号只通知一次）/ `JOB_FAILED`。
+`payload` 是 JSON 文本（本代码库无 jsonb 映射），形状随 `type` 变化。
 
 ## Knowledge Search DTO（Phase 6 K3 · 混合检索 + Rerank）
 Request:

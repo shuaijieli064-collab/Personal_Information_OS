@@ -41,6 +41,7 @@ public class Source {
     private Instant updatedAt = Instant.now();
 
     public UUID getId() { return id; }
+    public void setId(UUID v) { this.id = v; }
     public UUID getUserId() { return userId; }
     public void setUserId(UUID v) { this.userId = v; }
     public String getType() { return type; }

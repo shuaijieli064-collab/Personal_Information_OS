@@ -270,3 +270,153 @@ export const knowledgeApi = {
   reindex: () =>
     api.post<KnowledgeReindexResult>("/api/v1/knowledge/reindex"),
 };
+
+// ── Phase 7 · Agent & tools ──────────────────────────────────────────────────
+
+/** READ runs unattended; WRITE and DESTRUCTIVE stop the run for a human decision. */
+export type ToolPermission = "READ" | "WRITE" | "DESTRUCTIVE";
+
+export type AgentRunStatus =
+  | "PLANNING"
+  | "RUNNING"
+  | "AWAITING_CONFIRMATION"
+  | "COMPLETED"
+  | "FAILED"
+  | "REJECTED";
+
+export type AgentStepStatus =
+  | "PLANNED"
+  | "PENDING_CONFIRMATION"
+  | "RUNNING"
+  | "SUCCEEDED"
+  | "FAILED"
+  | "SKIPPED"
+  | "REJECTED";
+
+export type AgentTool = {
+  name: string;
+  description: string;
+  permission: ToolPermission;
+  parameters: Record<string, string>;
+  required: string[];
+};
+
+export type AgentStep = {
+  id: string;
+  seq: number;
+  tool: string | null;
+  permission: ToolPermission | null;
+  status: AgentStepStatus;
+  arguments: Record<string, unknown> | null;
+  result: unknown;
+  rationale: string | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
+export type AgentRun = {
+  id: string;
+  goal: string;
+  status: AgentRunStatus;
+  answer: string | null;
+  model: string;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  steps: AgentStep[];
+};
+
+export type AgentRunPage = { items: AgentRun[]; total: number };
+
+export const agentApi = {
+  tools: () => api.get<{ tools: AgentTool[] }>("/api/v1/agent/tools"),
+  create: (body: { goal: string; maxSteps?: number }) =>
+    api.post<AgentRun>("/api/v1/agent/runs", body),
+  list: (page = 0, size = 10) =>
+    api.get<AgentRunPage>(`/api/v1/agent/runs?page=${page}&size=${size}`),
+  get: (id: string) => api.get<AgentRun>(`/api/v1/agent/runs/${id}`),
+  confirm: (id: string, body: { stepId?: string; note?: string } = {}) =>
+    api.post<AgentRun>(`/api/v1/agent/runs/${id}/confirm`, body),
+  reject: (id: string, body: { reason?: string } = {}) =>
+    api.post<AgentRun>(`/api/v1/agent/runs/${id}/reject`, body),
+};
+
+// ── Phase 8 · Automation, brief & notifications ──────────────────────────────
+
+/** The three recurring job kinds the scheduler knows how to run. */
+export type JobType = "SOURCE_SYNC" | "DAILY_BRIEF" | "FEEDBACK_LOOP";
+
+/** A run's lifecycle. DEAD is the dead-letter state: capped out and disabled. */
+export type JobRunStatus = "RUNNING" | "SUCCEEDED" | "FAILED" | "DEAD";
+
+export type Job = {
+  id: string;
+  type: JobType;
+  intervalMinutes: number;
+  enabled: boolean;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  consecutiveFailures: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type JobRun = {
+  id: string;
+  jobId: string;
+  status: JobRunStatus;
+  attempt: number;
+  detail: string | null;
+  error: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  createdAt: string;
+};
+
+export type JobRunPage = { items: JobRun[]; total: number };
+
+export type NotificationType = "DAILY_BRIEF" | "IMPORTANT_SIGNAL" | "JOB_FAILED";
+
+export type Notification = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  read: boolean;
+  /** Raw JSON string; shape depends on `type`. */
+  payload: string | null;
+  createdAt: string;
+};
+
+export type NotificationPage = { items: Notification[]; total: number; unreadCount: number };
+
+export const automationApi = {
+  jobs: () => api.get<{ jobs: Job[] }>("/api/v1/automation/jobs"),
+  /** Upsert on (user, type): creating an existing type rewrites it instead of duplicating. */
+  upsertJob: (body: { type: JobType; intervalMinutes?: number; enabled?: boolean }) =>
+    api.post<Job>("/api/v1/automation/jobs", body),
+  patchJob: (id: string, body: { intervalMinutes?: number; enabled?: boolean }) =>
+    api.patch<Job>(`/api/v1/automation/jobs/${id}`, body),
+  deleteJob: (id: string) => api.del<void>(`/api/v1/automation/jobs/${id}`),
+  runJob: (id: string) => api.post<JobRun>(`/api/v1/automation/jobs/${id}/run`),
+  runs: (id: string, page = 0, size = 20) =>
+    api.get<JobRunPage>(`/api/v1/automation/jobs/${id}/runs?page=${page}&size=${size}`),
+  /** Re-enables a dead job, clears its failure count and runs it again. */
+  retryRun: (id: string) => api.post<JobRun>(`/api/v1/automation/runs/${id}/retry`),
+};
+
+export const briefApi = {
+  /** `brief` is null when none has been generated yet — an empty brief is not an error. */
+  latest: () => api.get<{ brief: Notification | null }>("/api/v1/brief/latest"),
+  generate: () => api.post<{ brief: Notification }>("/api/v1/brief/generate"),
+};
+
+export const notificationApi = {
+  list: (unread = false, page = 0, size = 20) =>
+    api.get<NotificationPage>(
+      `/api/v1/notifications?unread=${unread}&page=${page}&size=${size}`,
+    ),
+  read: (id: string) => api.post<Notification>(`/api/v1/notifications/${id}/read`),
+  readAll: () => api.post<{ updated: number }>("/api/v1/notifications/read-all"),
+};

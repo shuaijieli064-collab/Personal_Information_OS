@@ -4,18 +4,20 @@ PostgreSQL 16. Naming: snake_case, plural tables, `timestamptz` everywhere, UUID
 `pgvector` extension is enabled by `V7__semantic_dedup.sql` (`vector` columns, **1024** dims since
 V17); semantic search queries land with Knowledge/RAG (Phase 6).
 
-**Migration authority**: `backend/src/main/resources/db/migration/` only (V1–V19).
+**Migration authority**: `backend/src/main/resources/db/migration/` only (V1–V21).
 The legacy root-level `db/migrations/` draft was deleted in P0 Hardening H1 — never
-recreate it. An empty database rebuilt through V1–V19 passes Hibernate
+recreate it. An empty database rebuilt through V1–V21 passes Hibernate
 `ddl-auto=validate` (V12 aligns migration DDL with the frozen JPA entities;
 verified 2026-10-07 for V1–V15, see `docs/RUNTIME_VERIFICATION.md`; V16–V19 added
 2026-10-13 and **applied at runtime against the live DB** (Flyway `now at version v19`,
-`ddl-auto=validate` green — `RUNTIME_VERIFICATION.md` #31–#33, #57) — see *Known schema
-drift* below).
+`ddl-auto=validate` green — `RUNTIME_VERIFICATION.md` #31–#33, #57); V20 (agent audit) and
+V21 (automation) verified on a **fresh** database — `Successfully applied 21 migrations …
+now at version v21` + `Started SignalApplication`, `RUNTIME_VERIFICATION.md` #79–#80) — see
+*Known schema drift* below.
 
 > **Note (2026-10-13)**: V7/V10 **redefined** `signal_clusters`/`signal_sources` and
 > `signals` relative to their V1 draft. The tables below describe the **current**
-> (post-V19) shape, not the V1 draft. Where an entity is not mapped by a JPA class it
+> (post-V21) shape, not the V1 draft. Where an entity is not mapped by a JPA class it
 > is marked *(SQL-only)*.
 
 ## Entity overview
@@ -30,8 +32,11 @@ signals n─n source_items        (via signal_sources — V1 shape, see Known dr
 signals n─n tags                (via signal_tags — reserved, unused)
 signals 1─n user_feedback / tasks
 knowledge_entries n─n itself    (via knowledge_relations)
-users 1─n ai_conversations 1─n ai_messages   (reserved, Phase 7)
-users 1─n daily_briefs                        (reserved, Phase 8)
+users 1─n agent_runs 1─n agent_steps   (Phase 7 audit, V20)
+users 1─n scheduled_jobs 1─n job_runs  (Phase 8 automation, V21; UNIQUE (user_id, type))
+users 1─n notifications                (Phase 8 inbox, V21 — brief + alerts + job failures)
+users 1─n ai_conversations 1─n ai_messages   (reserved)
+users 1─n daily_briefs                        (reserved — superseded by notifications.type=DAILY_BRIEF)
 users 1─n connected_accounts                  (reserved)
 ```
 
@@ -135,6 +140,42 @@ INDEX `(user_id)`, `(user_id, signal_score DESC)`, UNIQUE `(information_id)`
 **information.status** — `text NOT NULL DEFAULT 'ACTIVE'`, CHECK `('ACTIVE','ARCHIVED')`; INDEX `(user_id, status)`.
 Backs the Information archive action (list filter). The column exists and is mapped by the
 `Information` entity; the archive **endpoint** is still Phase-6 backlog.
+
+### Agent audit (Phase 7, V20)
+
+**agent_runs** — one row per goal handed to the agent.
+- `id uuid PK, user_id FK, goal text, status text, answer text, model text, error text, created_at, updated_at`
+- `status` CHECK `('PLANNING','RUNNING','AWAITING_CONFIRMATION','COMPLETED','FAILED','REJECTED')`
+- INDEX `(user_id, created_at DESC)`. Mapped by `AgentRun`.
+
+**agent_steps** — the audit trail: one row per planned tool call.
+- `id uuid PK, run_id FK (ON DELETE CASCADE), seq int, tool text, permission text, status text, arguments text, result text, rationale text, error text, started_at, finished_at`
+- `permission` CHECK `('READ','WRITE','DESTRUCTIVE')`; `status` CHECK `('PLANNED','PENDING_CONFIRMATION','RUNNING','SUCCEEDED','FAILED','SKIPPED','REJECTED')`
+- `arguments` / `result` are **JSON text**, not jsonb (this codebase has no jsonb mapping).
+- UNIQUE `(run_id, seq)`; INDEX `(run_id, seq)`. Mapped by `AgentStep`.
+
+### Automation (Phase 8, V21)
+
+**scheduled_jobs** — one job per `(user, type)`; the scheduler is driven entirely off this table.
+- `id uuid PK, user_id FK (ON DELETE CASCADE), type text, interval_minutes int, enabled boolean, last_run_at, next_run_at, consecutive_failures int, created_at, updated_at`
+- `type` CHECK `('SOURCE_SYNC','DAILY_BRIEF','FEEDBACK_LOOP')`; **UNIQUE `(user_id, type)`** — this is what makes
+  `POST /automation/jobs` an upsert rather than an insert.
+- `next_run_at` is **NOT NULL**; a dead-lettered job (disabled) writes `now()` into it as an inert
+  placeholder, because the column has no null state.
+- Partial INDEX `idx_scheduled_jobs_due (next_run_at) WHERE enabled` — the tick's hot path.
+
+**job_runs** — the run history behind `consecutive_failures` and the dead-letter queue.
+- `id uuid PK, job_id FK (ON DELETE CASCADE), user_id FK, status text, attempt int, detail text, error text, started_at, finished_at, created_at`
+- `status` CHECK `('RUNNING','SUCCEEDED','FAILED','DEAD')` — `DEAD` is the dead-letter state.
+- INDEX `(job_id, created_at DESC)`, `(status)`.
+
+**notifications** — the single inbox the brief, the important-signal alerts and job failures all feed.
+- `id uuid PK, user_id FK (ON DELETE CASCADE), type text, title text, body text, read boolean, payload text, created_at`
+- `type` CHECK `('DAILY_BRIEF','IMPORTANT_SIGNAL','JOB_FAILED')`
+- `payload` is **JSON text**; for `IMPORTANT_SIGNAL` it holds the signal id and is the **dedupe key** —
+  `existsByUserIdAndTypeAndPayload` is an exact match, so a signal is announced at most once with no
+  in-memory state.
+- INDEX `(user_id, created_at DESC)`, `(user_id, read)`.
 
 ## Known schema drift (2026-10-13 review)
 

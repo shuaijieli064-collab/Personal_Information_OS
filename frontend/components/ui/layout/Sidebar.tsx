@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  ClockCountdown,
   Compass,
   GearSix,
   Graph,
@@ -17,6 +18,7 @@ const NAV = [
   { href: "/discover", key: "discover", icon: Compass },
   { href: "/knowledge", key: "knowledge", icon: Graph },
   { href: "/ai", key: "ai", icon: Sparkle },
+  { href: "/automation", key: "automation", icon: ClockCountdown },
 ] as const;
 
 function isActive(pathname: string, href: string) {

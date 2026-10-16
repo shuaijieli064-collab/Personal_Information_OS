@@ -2,11 +2,16 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  agentApi,
+  automationApi,
+  briefApi,
   informationApi,
   knowledgeApi,
+  notificationApi,
   signalsApi,
   sourcesApi,
   todayApi,
+  type JobType,
   type KnowledgeAskParams,
   type KnowledgeSearchParams,
 } from "./client";
@@ -18,6 +23,16 @@ export const queryKeys = {
   sources: ["sources"] as const,
   information: (id: string) => ["information", id] as const,
   discover: ["discover"] as const,
+  agentTools: ["agent", "tools"] as const,
+  agentRunsAll: ["agent", "runs"] as const,
+  agentRuns: (page: number) => ["agent", "runs", page] as const,
+  agentRun: (id: string) => ["agent", "run", id] as const,
+  automationJobs: ["automation", "jobs"] as const,
+  jobRunsAll: ["automation", "runs"] as const,
+  jobRuns: (id: string) => ["automation", "runs", id] as const,
+  briefLatest: ["brief", "latest"] as const,
+  notificationsAll: ["notifications"] as const,
+  notifications: (unread: boolean) => ["notifications", unread] as const,
 };
 
 export function useToday() {
@@ -156,5 +171,194 @@ export function useKnowledgeReindex() {
       qc.invalidateQueries({ queryKey: queryKeys.today });
       qc.invalidateQueries({ queryKey: queryKeys.inbox });
     },
+  });
+}
+
+/* ── Phase 7 Agent & tools ────────────────────────────────────────────────── */
+
+/** The tool catalogue — static per deployment, so a plain query is enough. */
+export function useAgentTools() {
+  return useQuery({
+    queryKey: queryKeys.agentTools,
+    queryFn: () => agentApi.tools(),
+    staleTime: Infinity,
+  });
+}
+
+export function useAgentRuns(page = 0, size = 10) {
+  return useQuery({
+    queryKey: queryKeys.agentRuns(page),
+    queryFn: () => agentApi.list(page, size),
+  });
+}
+
+/**
+ * One run, with its steps. Enabled only when an id is selected, so the console does not
+ * fetch anything until the user opens a run.
+ */
+export function useAgentRun(id: string | null) {
+  return useQuery({
+    queryKey: queryKeys.agentRun(id ?? ""),
+    queryFn: () => agentApi.get(id as string),
+    enabled: id !== null,
+  });
+}
+
+/**
+ * Starting a run, confirming a step and rejecting a run all return the whole updated
+ * run, so the mutation result is written straight into the cache — no refetch, and the
+ * run survives a page navigation.
+ */
+export function useAgentCreateRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { goal: string; maxSteps?: number }) => agentApi.create(body),
+    onSuccess: (run) => {
+      qc.setQueryData(queryKeys.agentRun(run.id), run);
+      qc.invalidateQueries({ queryKey: queryKeys.agentRunsAll });
+    },
+  });
+}
+
+export function useAgentConfirmStep() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; stepId?: string; note?: string }) =>
+      agentApi.confirm(id, body),
+    onSuccess: (run) => {
+      qc.setQueryData(queryKeys.agentRun(run.id), run);
+      qc.invalidateQueries({ queryKey: queryKeys.agentRunsAll });
+    },
+  });
+}
+
+export function useAgentRejectRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; reason?: string }) =>
+      agentApi.reject(id, body),
+    onSuccess: (run) => {
+      qc.setQueryData(queryKeys.agentRun(run.id), run);
+      qc.invalidateQueries({ queryKey: queryKeys.agentRunsAll });
+    },
+  });
+}
+
+/* ── Phase 8 Automation, brief & notifications ───────────────────────────── */
+
+export function useJobs() {
+  return useQuery({
+    queryKey: queryKeys.automationJobs,
+    queryFn: () => automationApi.jobs(),
+  });
+}
+
+/** Run history for one job; disabled until the user expands a job. */
+export function useJobRuns(jobId: string | null, size = 20) {
+  return useQuery({
+    queryKey: queryKeys.jobRuns(jobId ?? ""),
+    queryFn: () => automationApi.runs(jobId as string, 0, size),
+    enabled: jobId !== null,
+  });
+}
+
+/** Creating a job type that already exists rewrites it, so both paths refresh the list. */
+export function useUpsertJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { type: JobType; intervalMinutes?: number; enabled?: boolean }) =>
+      automationApi.upsertJob(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.automationJobs }),
+  });
+}
+
+export function usePatchJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; intervalMinutes?: number; enabled?: boolean }) =>
+      automationApi.patchJob(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.automationJobs }),
+  });
+}
+
+export function useDeleteJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => automationApi.deleteJob(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.automationJobs });
+      qc.invalidateQueries({ queryKey: queryKeys.jobRunsAll });
+    },
+  });
+}
+
+/**
+ * A manual run returns the fresh run, so we refresh both the run history of that job and
+ * the job itself (last_run_at / next_run_at / failure count all move).
+ */
+export function useRunJobNow() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => automationApi.runJob(id),
+    onSuccess: (run) => {
+      qc.invalidateQueries({ queryKey: queryKeys.jobRuns(run.jobId) });
+      qc.invalidateQueries({ queryKey: queryKeys.automationJobs });
+      qc.invalidateQueries({ queryKey: queryKeys.notificationsAll });
+      qc.invalidateQueries({ queryKey: queryKeys.today });
+    },
+  });
+}
+
+/** Retrying a dead run re-enables its job, so the job list has to refresh too. */
+export function useRetryRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => automationApi.retryRun(id),
+    onSuccess: (run) => {
+      qc.invalidateQueries({ queryKey: queryKeys.jobRuns(run.jobId) });
+      qc.invalidateQueries({ queryKey: queryKeys.automationJobs });
+    },
+  });
+}
+
+export function useLatestBrief() {
+  return useQuery({
+    queryKey: queryKeys.briefLatest,
+    queryFn: () => briefApi.latest(),
+  });
+}
+
+export function useGenerateBrief() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => briefApi.generate(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.briefLatest });
+      qc.invalidateQueries({ queryKey: queryKeys.notificationsAll });
+    },
+  });
+}
+
+export function useNotifications(unread = false, size = 20) {
+  return useQuery({
+    queryKey: queryKeys.notifications(unread),
+    queryFn: () => notificationApi.list(unread, 0, size),
+  });
+}
+
+/** Marking one read only moves the badge, so both the filtered and unfiltered lists refresh. */
+export function useMarkNotificationRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationApi.read(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.notificationsAll }),
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => notificationApi.readAll(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.notificationsAll }),
   });
 }

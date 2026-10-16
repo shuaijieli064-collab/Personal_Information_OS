@@ -5,10 +5,7 @@ import type { KnowledgeCitation, ScoredChunk } from "@/lib/api/client";
 
 // The catalogue is exercised by the app itself; here we only care that the
 // components wire the right keys/values into the DOM, so echo them back.
-vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
-    values ? `${key}:${JSON.stringify(values)}` : key,
-}));
+vi.mock("next-intl", async () => (await import("@/test/i18n")).catalogMock());
 
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ href, children }: { href: string; children: ReactNode }) => (

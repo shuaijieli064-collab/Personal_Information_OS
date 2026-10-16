@@ -1,7 +1,9 @@
 # SIGNAL — Architecture
 
 > Living design document (status: Phases 1–5 implemented; see `docs/ROADMAP.md`).
-> Components marked `[deferred]` land in Phase 6–8.
+> Components marked `[deferred]` are not built yet. Phase 6–8 have all shipped (knowledge
+> retrieval, agent & tools, automation) — the only `[deferred]` component remaining is the
+> message broker.
 
 ---
 
@@ -117,14 +119,14 @@ so the system degrades gracefully when the LLM is unavailable.
 │  ┌─────────┬──────────┬───────────┬─────────────────────┐  │
 │  │ REST    │ Security │ Pipeline  │ AI Gateway          │  │
 │  │ Controllers │ (JWT,   │ (scheduled│ (provider-agnostic)│  │
-│  │         │  RBAC)   │  collector│                     │  │
+│  │ + agent + automation │ RBAC) │  collector│ + tools   │  │
 │  └─────────┴──────────┴───────────┴─────────────────────┘  │
 └───────┬──────────────────┬───────────────────┬────────────┘
         │                  │                   │
 ┌───────▼───────┐  ┌────────▼────────┐  ┌───────▼─────────┐
 │ PostgreSQL 16 │  │ Redis           │  │ MQ [deferred]   │
 │ + pgvector    │  │ session/rate    │  │ RabbitMQ later  │
-│ (Phase 6)     │  │ limit/cache     │  │                 │
+│ (Phase 6–8)   │  │ limit/cache     │  │                 │
 └───────────────┘  └─────────────────┘  └─────────────────┘
         ▲
         │
@@ -143,7 +145,7 @@ so the system degrades gracefully when the LLM is unavailable.
 | Backend | Spring Boot 4.1.1 / Java 21 | Spec-mandated; portfolio value; strong JPA/security ecosystem |
 | Primary store | PostgreSQL (+ pgvector when RAG arrives) | One operational store; avoids a separate vector DB in Phase 1 |
 | Cache | Redis | Sessions, rate limits, hot signals, AI response cache |
-| Queue | In-process scheduler now → RabbitMQ later | Show async architecture when pipeline volume exists, not before |
+| Queue | In-process `@Scheduled` scheduler (Phase 8, `app.automation.*`) → RabbitMQ later | One-instance scheduling is enough at this scale; the tick is table-driven (`scheduled_jobs`) so swapping in a broker later is a delivery change, not a redesign |
 | AI access | `AIProvider` interface with OpenAI-compatible impls | No vendor lock-in; keys in env only |
 | Monorepo | Single repo, `frontend/` + `backend/` + `docs/` | Simplest coherent structure for one team |
 
@@ -159,18 +161,19 @@ backend/src/main/java/com/signal/
 ├── source/         # Source entity + adapters: rss/, github/, web/, import/
 ├── pipeline/       # collect → normalize → dedupe → score (worker)
 ├── signal/         # Signal read API, feedback, status transitions
-├── knowledge/      # save, concepts, relations [Phase 6]
+├── knowledge/      # chunking, embedding, hybrid retrieval, rerank, RAG, ContextBuilder
 ├── ai/             # gateway/, provider/, agent/, tools/
-├── task/           # user tasks / action items
-└── brief/          # daily brief generation
+├── task/           # user tasks / action items · automation scheduler + jobs (Phase 8)
+└── brief/          # daily brief generation + notification inbox (Phase 8)
 ```
 
 ### 2.4 AI & agent architecture
 
-- **One Signal Agent, tool-calling only** in Phase 1 — no multi-agent.
-- Tools: `search_information`, `get_signals`, `get_user_profile`, `get_github_updates`,
-  `search_knowledge`, `create_task`, `save_knowledge`, `archive_signal`,
-  `mark_important`, `generate_daily_brief`.
+- **One Signal Agent, tool-calling only** — no multi-agent. Shipped in Phase 7.
+- Tools shipped (8): **READ** — `searchKnowledge`, `askKnowledge`, `listSignals`,
+  `todaySummary`, `listSources`; **WRITE** — `syncSource`, `archiveInformation`, `addGoal`.
+  The runtime never executes a WRITE step on its own: it parks the run at
+  `AWAITING_CONFIRMATION` until a human confirms. See `docs/AI_ARCHITECTURE.md`.
 - **Prompt-injection separation** — three channels in every prompt:
   `SYSTEM` (instructions) / `USER_DATA` (user's own profile) / `UNTRUSTED_CONTENT`
   (fetched web/feed text). Untrusted content is quoted, delimited, and explicitly

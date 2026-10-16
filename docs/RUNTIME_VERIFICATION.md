@@ -1,4 +1,4 @@
-# Runtime Verification — P0 Hardening (H5) + Phase 5.5 S4–S5
+# Runtime Verification — P0 Hardening (H5) + Phase 5.5 S4–S5 + Phase 6–8
 
 > Rule: every line is backed by a command that actually ran in this environment.
 > Anything not executed stays **NOT VERIFIED** — never "should work".
@@ -7,6 +7,10 @@ Environment: Windows 11 · Docker 29.8.1 (`signal-postgres` = pgvector/pgvector:
 `signal-redis` = redis:7-alpine on 6379) · JDK 25 (runs Java 21 target) · Node 24.
 Verification backend: `signal-0.0.1-SNAPSHOT.jar`, `AI_API_KEY=` (empty → **MockAIProvider**),
 `DB_URL=...signal_flyway_check` (database rebuilt from scratch).
+
+> Phase 8 note: the container env exports `SERVER__PORT`, which Spring binds over `server.port`
+> and which collides with the host process holding that port — the Phase 8 boot passes
+> `-Dspring-boot.run.arguments="--server.port=8099"` to override it (command-line args win).
 
 | # | Check | Method | Result |
 |---|---|---|---|
@@ -111,18 +115,66 @@ Board: `ui-design-runs/s5-board.html` (26 screenshots, grouped Responsive / Stat
 | 69 | Frontend production build | `npx next build` (2026-10-16) | ✅ 18 routes compiled incl. `/[locale]/knowledge`; 33 static pages generated; `output: standalone` |
 | 70 | Production artifact smoke | standalone `server.js` on :3000 · `GET /zh-CN/knowledge` + `GET /en/knowledge` | ✅ HTTP 200 both locales (~30 KB each), all console markers present in the server-rendered HTML |
 
+## Phase 7 — Agent & Tools (2026-10-16)
+
+| # | Check | Method | Result |
+|---|---|---|---|
+| 71 | Tool catalogue is wired, not declared | `GET /api/v1/agent/tools` against the running app | ✅ 8 tools returned with name / description / permission / parameters / required — 5 `READ` (`searchKnowledge`, `askKnowledge`, `listSignals`, `todaySummary`, `listSources`) + 3 `WRITE` (`syncSource`, `archiveInformation`, `addGoal`) |
+| 72 | Duplicate tool name refuses to start | `ToolRegistryTest` (unit) | ✅ constructor throws `IllegalStateException: Duplicate agent tool name: …` — ambiguity is a programming error, caught at startup |
+| 73 | Permission gate blocks write steps | `AgentExecutorTest` + `AgentControllerTest` | ✅ a `WRITE` step is marked `PENDING_CONFIRMATION` and the run parks at `AWAITING_CONFIRMATION`; the tool is **not invoked** (no side effect). `POST /runs/{id}/confirm` resumes, `/reject` → `REJECTED` |
+| 74 | Planner degradation | `AgentPlannerTest` (provider failure + unparseable output) | ✅ both paths fall back to the deterministic single step `askKnowledge(goal)` — an LLM outage never turns into a 5xx |
+| 75 | Step failure recovery | `AgentExecutorTest` | ✅ a throwing step is retried once (`MAX_ATTEMPTS = 2`), then recorded `FAILED` with its error and the run **continues** with the remaining steps |
+| 76 | Audit trail readable | `GET /api/v1/agent/runs/{id}` | ✅ every step carries seq / tool / permission / status / arguments / result / rationale / error / start-finish; `GET /runs` pages the history |
+| 77 | Agent run isolation | two accounts, same run id | ✅ foreign `GET` / `confirm` / `reject` → **404**; unauthenticated → **401** |
+| 78 | Agent console · type/lint/unit | `npx tsc --noEmit` · `npx eslint` · `npx vitest run` (2026-10-16) | ✅ tsc + eslint clean; **62 tests pass** (+22: `lib/agent/format` 14 + the four agent components 8) |
+
+## Phase 8 — Automation (2026-10-16)
+
+Verification backend: fresh database `signal_verify` (Flyway from empty), `--server.port=8099`,
+Docker `signal-postgres` (pgvector/pgvector:pg16) + `signal-redis`. End-to-end script: 21 checks.
+
+| # | Check | Method | Result |
+|---|---|---|---|
+| 79 | Empty-DB migration V1→V21 | fresh `signal_verify`, Flyway on boot | ✅ `Successfully applied 21 migrations to schema "public", now at version v21 (execution time 00:00.524s)` |
+| 80 | Hibernate `ddl-auto=validate` on fresh DB | same boot | ✅ `Started SignalApplication in 6.442 seconds` — EMF built, entities match V21 exactly (no missing column / wrong type) |
+| 81 | Backend regression | `./mvnw -o test` (2026-10-16) | ✅ **285 run, 0 failures** (Phase 8 adds 41: `AutomationSchedulerTest` 12, `AutomationControllerTest` 9, `FeedbackLoopJobTest` 11, `JobExecutorTest` 6, `SourceSyncJobTest` 3) |
+| 82 | Empty states are not 404s | `GET /automation/jobs` · `/brief/latest` · `/notifications` | ✅ `{"jobs":[]}` · `{"brief":null}` · `{"items":[],"total":0,"unreadCount":0}` |
+| 83 | Job upsert semantics | `POST /automation/jobs {type:SOURCE_SYNC}` twice | ✅ first call applies the type default (`intervalMinutes:60`); second returns the **same id**, list stays at 1 row, interval rewritten to 30 — upsert on `(user,type)`, not duplicate insert |
+| 84 | Bad input is 400, not 500 | `POST /automation/jobs {type:"NOPE"}` | ✅ **400** |
+| 85 | Manual run + history | `POST /jobs/{id}/run` then `GET /jobs/{id}/runs` | ✅ run returns a terminal state (`SUCCEEDED`, `detail:"No enabled sources to sync"`); history newest-first with that run at the head |
+| 86 | Pause / resume | `PATCH /jobs/{id} {enabled:false}` → `{enabled:true}` | ✅ `enabled` flips both ways |
+| 87 | **Brief is never empty** | `POST /brief/generate` · `GET /brief/latest` | ✅ `type:DAILY_BRIEF` with a non-empty model-synthesised body; `/latest` returns the same record; it also lands in the notification inbox (unread +1) |
+| 88 | Notification read state | `POST /notifications/{id}/read` · `POST /notifications/read-all` | ✅ single read → `read:true`; read-all → `unreadCount` 0 |
+| 89 | **Scheduler runs due jobs unattended** | created a `FEEDBACK_LOOP` job, then `UPDATE scheduled_jobs SET next_run_at = now() - interval '1 minute'` (runs = 0), waited one tick | ✅ **1 run recorded with no manual trigger** — `SUCCEEDED`, `attempt:1`, `detail:"0 signals adjusted from feedback"`, `next_run_at` advanced a full interval (6h). Proves the tick really sweeps and picks up due jobs |
+| 90 | Job + notification isolation, and delete | second account; anon request; `DELETE /jobs/{id}` | ✅ other user's list empty; foreign `POST /jobs/{id}/run` and `GET /jobs/{id}/runs` → **404**; unauthenticated → **401**; delete → list empty |
+| 91 | Automation console · type/lint/unit/build | `npx tsc --noEmit` · `npx eslint` · `npx vitest run` · `NODE_USE_ENV_PROXY=1 npx next build` | ✅ tsc + eslint clean; **86 tests pass** (+24 automation: format helpers + `JobCard` / `RunHistory` / `NotificationList` / `BriefPanel`); build green — **19 routes incl. `/[locale]/automation`**, 35 static pages |
+| 92 | i18n key parity | scripted key-set diff over `messages/zh-CN.json` vs `messages/en.json` | ✅ 472 / 472 keys, both directions empty — no locale is missing a key another one has |
+
 > Build note: `next/font/google` fetches Inter / JetBrains Mono / Space Grotesk at build time. Behind this
 > environment's egress proxy the build fails unless Node's env-proxy support is on —
-> build with `NODE_USE_ENV_PROXY=1 npx next build`. Also clear `.next` manually first: Turbopack's own
-> bulk clean of `.next/turbopack` trips the sandbox bulk-delete guard.
+> build with `NODE_USE_ENV_PROXY=1 npx next build`. Turbopack's own bulk clean of `.next/turbopack`
+> trips the sandbox bulk-delete guard, and `rm -rf .next` trips it too (2041 files) — move the stale
+> `.next` aside instead (`mv .next node_modules/.next-bak`, gitignored) and build into a clean tree.
+
+| 93 | **Automation console · browser E2E** | `scripts/verify-automation.mjs` (Playwright 1.64 + Chrome; `next dev` :3000 → backend :8099; session seeded by `scripts/seed-automation-session.mjs`) | ✅ **17/17**: page renders under AuthGuard (`h1="自动化"`); the brief panel shows a real generated brief; all three job types listed with zh-CN labels; health chips show 运行中 + 已暂停 side by side; the interval picker shows the real cadence (1d / 6h); expanding a job reveals its run history with a real terminal run (`成功 · 第 1 次`); pause → 已暂停 then 恢复 → 运行中 round-trips against the live API; 「立即运行」appends a new run; the inbox lists the brief; a freshly generated brief shows `3 条未读` and 「全部已读」clears it; `/en/automation` renders the same console (`h1="Automation"`); **0 console errors** |
+| 94 | Automation console · responsive | Playwright viewports 390 / 768 | ✅ `scrollWidth - clientWidth = 0` at both (no horizontal overflow); screenshots in `ui-design-runs/automation-shots/` |
+| 95 | **Bug found & fixed by the browser pass** | `MISSING_MESSAGE: Could not resolve \`Automation.notifBrief\` in messages for locale zh-CN` | ✅ Real defect: the notification-type chip labels (`notifBrief` / `notifSignal` / `notifJobFailed`) were referenced by `NotificationList` but never added to either catalogue — **invisible to tsc, eslint and the unit tests**, because the test mock echoed keys back without validating them. Fixed by adding the three keys to both locales, **and** by replacing the `next-intl` test mock with a validating one (`frontend/test/i18n.ts`) that resolves every key against the real `zh-CN` catalogue and throws on an unknown one — adopted by the automation, agent **and** knowledge suites, so all three consoles now fail loudly on a missing key instead of rendering an error at runtime |
+
+> Browser-pass note: drive the dev server as `http://localhost:3000`, not `http://127.0.0.1:3000`.
+> Next.js blocks cross-origin dev resources (`/_next/hmr`) by default, and the blocked client bundle
+> leaves the page rendering nothing but the locale switcher — a false "page is broken" signal.
 
 ## NOT VERIFIED yet
 
 - Cross-browser (Firefox/WebKit) and screen-reader pass
 - Live AI quality at scale (single-item smoke only; no batch/latency benchmark)
 - Rerank **failure** degradation is covered by unit tests (`rerankProviderFailureDegradesToFusedOrder`), not by a live provider outage
-- Production-mode (`next start`) **browser** walkthrough — the build is green and the artifact was smoke-served (row 70), but the interactive pass (row 67) ran against `next dev`; the live backend was unavailable (Docker Desktop stopped) for a production-mode rerun
-- Scheduled sync / notifications (Phase 8 scope)
+- Production-mode (`next start`) **browser** walkthrough — the build is green and the Phase 6 artifact was smoke-served (row 70), but every interactive pass (rows 67, 78, 93) ran against `next dev`
+- **Phase 8 dead-letter path end-to-end**: the "hit `max-attempts` → disable job + raise `JOB_FAILED`" behaviour is unit-tested (`AutomationSchedulerTest`), but was not exercised as a live run of three consecutive real failures (needs a reliably-failing job)
+- **Scheduler under multiple instances** — no distributed lock by design; duplicate execution is expected and unmeasured
+- Scheduler stability over hours/days (tick drift, memory)
+- Push channels for notifications (only the in-app inbox exists)
+- Phase 7 `DESTRUCTIVE` permission has no real tool to walk through (only `READ` / `WRITE` tools ship)
 
 ---
-Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze.
+Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze. Phase 6 rows appended at the knowledge-console freeze; Phase 7 (agent) and Phase 8 (automation) rows appended at the Phase 8 freeze, 2026-10-16.

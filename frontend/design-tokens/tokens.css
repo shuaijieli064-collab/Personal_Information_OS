@@ -51,13 +51,14 @@
   --text-body: 0.9375rem; /* 15 */
   --text-meta: 0.75rem; /* 12, tracking-wide uppercase */
 
-  /* Typography — geometric display + humanist body + mono digits
-     (next/font variables resolve in layout; literal fallbacks keep
-     tokens.css usable standalone, e.g. in prototypes) */
-  --font-sans: var(--font-inter), "Inter", -apple-system, "SF Pro Text",
+  /* Typography — geometric display + UI-native sans body + mono digits.
+     Body is Geist (purpose-built for screens) — never Inter. next/font
+     variables resolve in layout; literal fallbacks keep tokens.css usable
+     standalone, e.g. in prototypes. */
+  --font-sans: var(--font-geist-sans), "Geist", -apple-system, "SF Pro Text",
     system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-display: var(--font-space-grotesk), "Space Grotesk", var(--font-inter),
-    "Inter", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", var(--font-geist-sans),
+    "Geist", system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", "SFMono-Regular",
     ui-monospace, "Cascadia Code", Consolas, monospace;
 
@@ -66,6 +67,45 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --shadow-float: 0 40px 90px -30px rgba(139, 133, 255, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* ── Phase: surface roles (added by the UI recast) ───────────────────
+     Semantic names over raw bg-*. Keeping the raw tokens intact lets the
+     recast adopt these incrementally without touching every page at once. */
+  --surface-1: var(--bg-1); /* card body */
+  --surface-2: var(--bg-2); /* inset / panel */
+  --surface-3: var(--bg-3); /* raised inset */
+  --surface-hover: rgba(255, 255, 255, 0.035);
+  --surface-active: rgba(255, 255, 255, 0.06);
+  --hairline: rgba(255, 255, 255, 0.07); /* 1px top highlight on surfaces */
+  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --scrim: rgba(6, 8, 12, 0.72); /* modal/overlay veil */
+
+  /* Space scale — 4px base, used by shell + page rhythm */
+  --sp-1: 0.25rem;  /* 4  */
+  --sp-2: 0.5rem;   /* 8  */
+  --sp-3: 0.75rem;  /* 12 */
+  --sp-4: 1rem;     /* 16 */
+  --sp-5: 1.25rem;  /* 20 */
+  --sp-6: 1.5rem;   /* 24 */
+  --sp-8: 2rem;     /* 32 */
+  --sp-10: 2.5rem;  /* 40 */
+  --sp-12: 3rem;    /* 48 */
+  --sp-16: 4rem;    /* 64 */
+  --sp-20: 5rem;    /* 80 */
+
+  /* Shell geometry — one set of measurements for rail + topbar */
+  --w-rail: 268px;
+  --w-rail-collapsed: 76px;
+  --h-topbar: 60px;
+  --w-page: 1180px;      /* standard content measure */
+  --w-page-wide: 1440px; /* console / dashboard measure */
+
+  /* Ambient field — two very low-opacity radials + a hairline grid.
+     Purely decorative, fixed, and pointer-transparent. */
+  --ambient-a: rgba(139, 133, 255, 0.13);
+  --ambient-b: rgba(63, 198, 232, 0.09);
+  --ambient-grid: rgba(255, 255, 255, 0.028);
+  --grain-opacity: 0.05;
 
   /* Motion */
   --dur-instant: 120ms;
@@ -82,8 +122,8 @@
 [data-theme="light"] {
   --bg-0: #f5f6f8;
   --bg-1: #ffffff;
-  --bg-2: #ffffff;
-  --bg-3: #eef1f5;
+  --bg-2: #f2f4f7;
+  --bg-3: #e9edf2;
   --line: rgba(10, 14, 20, 0.08);
   --line-strong: rgba(10, 14, 20, 0.14);
   --text-1: #10141a;
@@ -101,4 +141,20 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --shadow-float: 0 30px 70px -30px rgba(91, 84, 230, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+  /* Surface roles flip: white cards float over a cool grey page. */
+  --surface-1: #ffffff;
+  --surface-2: #f7f9fb;
+  --surface-3: #eef1f6;
+  --surface-hover: rgba(16, 24, 40, 0.035);
+  --surface-active: rgba(16, 24, 40, 0.06);
+  --hairline: rgba(16, 24, 40, 0.07);
+  --hairline-strong: rgba(16, 24, 40, 0.12);
+  --scrim: rgba(12, 16, 24, 0.44);
+
+  /* Ambient has to recede hard on light — a violet wash reads as dirt. */
+  --ambient-a: rgba(91, 84, 230, 0.07);
+  --ambient-b: rgba(14, 134, 168, 0.05);
+  --ambient-grid: rgba(16, 24, 40, 0.035);
+  --grain-opacity: 0.035;
 }

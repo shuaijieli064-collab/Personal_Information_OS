@@ -6,10 +6,13 @@ import dynamic from "next/dynamic";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { useSignalAction, useToday } from "@/lib/api/queries";
 import { SignalCard } from "@/components/ui/signal/SignalCard";
-import { BlurReveal } from "@/components/motion/BlurReveal";
 import { CountUp } from "@/components/motion/CountUp";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { IconButton } from "@/components/ui/IconButton";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatCard } from "@/components/ui/StatCard";
+import { Card } from "@/components/ui/Card";
 
 const TodayChart = dynamic(() => import("@/components/charts/TodayChart"), {
   loading: () => <Skeleton className="h-[220px] w-full" />,
@@ -23,8 +26,8 @@ function greetingKey(hour: number): "morning" | "afternoon" | "evening" {
 
 /**
  * Today — 信号控制台仪表板.
- * 方向A: display greeting, three data-hero metric cards with honest
- * compression viz, signal feed left / actions + knowledge right.
+ * Greeting + metric wall up top, the live signal feed as the spine, and a
+ * right rail for what needs attention and how the day compresses.
  */
 export default function TodayPage() {
   const t = useTranslations("Today");
@@ -53,112 +56,102 @@ export default function TodayPage() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10 lg:py-14">
-      <BlurReveal>
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <p className="text-meta text-text-3">{dateLabel}</p>
-            <h1 className="mt-3 font-display text-page-title font-semibold leading-tight tracking-[-0.02em] text-text-1">
-              {t(greetingKey(new Date().getHours()))}
-            </h1>
-            <p className="mt-2.5 text-sm text-text-2">{t("subtitle")}</p>
-          </div>
-          <button
-            type="button"
+    <div className="mx-auto w-full max-w-page-wide px-5 py-8 md:px-8 md:py-10">
+      <PageHeader
+        eyebrow={dateLabel}
+        title={t(greetingKey(new Date().getHours()))}
+        description={t("subtitle")}
+        actions={
+          <IconButton
+            label={t("refresh")}
+            icon={<ArrowsClockwise size={17} className={isFetching ? "animate-spin" : ""} />}
+            variant="outline"
+            size="lg"
             onClick={() => refetch()}
             disabled={isFetching}
-            aria-label={t("refresh")}
-            title={t("refresh")}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-card border border-line bg-bg-1 text-text-2 transition-all hover:border-signal/50 hover:text-text-1 focus-visible:ring-2 focus-visible:ring-signal/40 focus-visible:outline-none disabled:opacity-60"
-          >
-            <ArrowsClockwise
-              size={18}
-              className={isFetching ? "animate-spin" : ""}
-            />
-          </button>
-        </div>
-      </BlurReveal>
+          />
+        }
+      />
 
       {error && (
-        <p className="mt-6 rounded-card border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+        <p
+          role="alert"
+          className="mt-6 rounded-card border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
+        >
           {error instanceof Error ? error.message : t("loadFailed")}
         </p>
       )}
 
       {isLoading && (
-        <div className="mt-10 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Skeleton className="h-44" />
-            <Skeleton className="h-44" />
-            <Skeleton className="h-44" />
+        <div className="mt-8 space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-[190px]" />
+            <Skeleton className="h-[190px]" />
+            <Skeleton className="h-[190px]" />
           </div>
           <Skeleton className="h-72" />
         </div>
       )}
 
       {data && (
-        <>
-          {/* Three data-hero metrics */}
-          <section className="mt-9 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-card border border-line bg-bg-1 p-6 shadow-card">
-              <p className="text-meta text-text-3">{t("statNew")}</p>
-              <p className="mt-3 font-mono text-display font-semibold leading-none tracking-[-0.03em] text-signal tnum">
-                <CountUp to={info} />
-              </p>
-              <div className="mt-5 h-1.5 overflow-hidden rounded-pill bg-white/6">
-                <div className="h-full w-full rounded-pill bg-gradient-to-r from-signal to-signal/60" />
-              </div>
-              <p className="mt-3 text-xs text-text-3">{t("newInformation")}</p>
-            </div>
-
-            <div className="rounded-card border border-line bg-bg-1 p-6 shadow-card">
-              <p className="text-meta text-text-3">{t("statSignals")}</p>
-              <p className="mt-3 font-mono text-display font-semibold leading-none tracking-[-0.03em] text-signal-2 tnum">
-                <CountUp to={sig} />
-              </p>
-              <div className="mt-5 h-1.5 overflow-hidden rounded-pill bg-white/6">
-                <div
-                  className="h-full rounded-pill bg-gradient-to-r from-signal-2 to-signal-2/60 transition-[width] duration-700"
-                  style={{ width: `${share}%` }}
-                />
-              </div>
-              <p className="mt-3 text-xs text-text-3">
-                {t("statRatio")} <span className="font-mono text-signal-2">{share}%</span>
-              </p>
-            </div>
-
-            <div className="rounded-card border border-line bg-bg-1 p-6 shadow-card">
-              <p className="text-meta text-text-3">{t("statAction")}</p>
-              <p
-                className={`mt-3 font-mono text-display font-semibold leading-none tracking-[-0.03em] tnum ${
-                  actions > 0 ? "text-warning" : "text-success"
-                }`}
-              >
-                <CountUp to={actions} />
-              </p>
-              <div className="mt-5 flex items-center gap-1.5" aria-hidden>
-                {actions === 0 ? (
-                  <span className="inline-block h-1.5 w-16 rounded-pill bg-success/70" />
-                ) : (
-                  Array.from({ length: Math.min(actions, 9) }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="inline-block h-2.5 w-2.5 rounded-full bg-warning animate-signal-pulse"
-                      style={{ animationDelay: `${i * 0.18}s` }}
-                    />
-                  ))
-                )}
-              </div>
-              <p className="mt-3 text-xs text-text-3">
-                {actions > 0 ? t("actionNeed") : t("actionsEmpty")}
-              </p>
-            </div>
+        <div className="mt-8 space-y-4">
+          {/* Metric wall — one card per question a daily dashboard must answer. */}
+          <section className="grid gap-4 md:grid-cols-3">
+            <StatCard
+              label={t("statNew")}
+              value={<CountUp to={info} />}
+              hint={t("newInformation")}
+              micro={
+                <div className="h-1.5 overflow-hidden rounded-pill bg-white/6">
+                  <div className="h-full w-full rounded-pill bg-gradient-to-r from-signal to-signal/50" />
+                </div>
+              }
+            />
+            <StatCard
+              label={t("statSignals")}
+              value={<CountUp to={sig} />}
+              tone="accent"
+              hint={
+                <>
+                  {t("statRatio")} <span className="font-mono text-signal-2 tnum">{share}%</span>
+                </>
+              }
+              micro={
+                <div className="h-1.5 overflow-hidden rounded-pill bg-white/6">
+                  <div
+                    className="h-full rounded-pill bg-gradient-to-r from-signal-2 to-signal-2/50 transition-[width] duration-700"
+                    style={{ width: `${Math.max(share, 2)}%` }}
+                  />
+                </div>
+              }
+            />
+            <StatCard
+              label={t("statAction")}
+              value={<CountUp to={actions} />}
+              tone={actions > 0 ? "warning" : "success"}
+              hint={actions > 0 ? t("actionNeed") : t("actionsEmpty")}
+              micro={
+                <div className="flex items-center gap-1.5" aria-hidden="true">
+                  {actions === 0 ? (
+                    <span className="inline-block h-1.5 w-16 rounded-pill bg-success/70" />
+                  ) : (
+                    Array.from({ length: Math.min(actions, 9) }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="inline-block h-2.5 w-2.5 rounded-full bg-warning animate-signal-pulse"
+                        style={{ animationDelay: `${i * 0.18}s` }}
+                      />
+                    ))
+                  )}
+                </div>
+              }
+            />
           </section>
 
-          {/* Feed left / actions + knowledge right */}
-          <section className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-            <div className="rounded-card border border-line bg-bg-1 shadow-card">
-              <div className="flex items-baseline justify-between px-6 pt-6">
+          {/* Feed spine + right rail */}
+          <section className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+            <Card pad="none" className="overflow-hidden">
+              <div className="flex items-center justify-between gap-4 px-6 pt-6">
                 <h2 className="text-section-title font-semibold tracking-[-0.01em] text-text-1">
                   {t("topSignals")}
                 </h2>
@@ -166,7 +159,7 @@ export default function TodayPage() {
                   {sig.toString().padStart(2, "0")}
                 </span>
               </div>
-              <div className="mt-3 space-y-3 px-4 pb-4">
+              <div className="mt-4 space-y-3 px-4 pb-4">
                 {data.signals.length === 0 && (
                   <div className="px-2 py-6">
                     <EmptyState title={t("emptyTitle")} body={t("emptyBody")} />
@@ -182,14 +175,16 @@ export default function TodayPage() {
                   />
                 ))}
               </div>
-            </div>
+            </Card>
 
             <div className="flex flex-col gap-4">
-              <div className="rounded-card border border-line bg-bg-1 p-6 shadow-card">
-                <p className="text-meta text-text-3">{t("actionsTitle")}</p>
+              <Card>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-3">
+                  {t("actionsTitle")}
+                </p>
                 {actions > 0 ? (
                   <p className="mt-3 text-sm leading-relaxed text-text-2">
-                    <span className="font-mono text-lg font-semibold text-warning tnum">
+                    <span className="font-mono text-2xl font-semibold text-warning tnum">
                       {actions}
                     </span>{" "}
                     {t("actionsPending")}
@@ -197,19 +192,21 @@ export default function TodayPage() {
                 ) : (
                   <p className="mt-3 text-sm text-text-3">{t("actionsEmptyBody")}</p>
                 )}
-              </div>
+              </Card>
 
-              <div className="rounded-card border border-line bg-bg-1 p-6 shadow-card">
-                <p className="text-meta text-text-3">{t("knowledgeTitle")}</p>
+              <Card>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-3">
+                  {t("knowledgeTitle")}
+                </p>
                 <p className="mt-1.5 text-xs text-text-3">{t("knowledgeSub")}</p>
                 <div className="mt-4">
                   <TodayChart data={chartData} />
                 </div>
-              </div>
+              </Card>
             </div>
           </section>
-        </>
+        </div>
       )}
-    </main>
+    </div>
   );
 }

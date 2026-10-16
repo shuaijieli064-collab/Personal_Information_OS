@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Geist, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "../globals.css";
 import { MotionProvider } from "@/components/motion/MotionProvider";
-import { LocaleSwitch } from "@/components/LocaleSwitch";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { routing } from "@/i18n/routing";
 
-const inter = Inter({
-  variable: "--font-inter",
+const geist = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
@@ -26,9 +25,6 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
 });
-
-/** Runs before paint to apply the saved theme and avoid a flash. */
-const themeInitScript = `(function(){try{var t=localStorage.getItem('signal-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
 
 type LocaleLayoutProps = {
   children: React.ReactNode;
@@ -57,21 +53,23 @@ export default async function RootLayout({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
 
+  // Theme is carried by a cookie so the server paints the right surfaces on
+  // the very first request. No inline script: React 19 refuses to render
+  // script tags inside a component and logs it as a console error.
+  const savedTheme = (await cookies()).get("signal-theme")?.value;
+  const theme = savedTheme === "light" ? "light" : "dark";
+
   return (
-    <html
-      lang={locale}
-      suppressHydrationWarning
-      className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
-    >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+      <html
+        lang={locale}
+        data-theme={theme}
+        suppressHydrationWarning
+        className={`${geist.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      >
       <body className="min-h-full flex flex-col bg-bg-0 text-text-1">
         <NextIntlClientProvider>
           <ThemeProvider>
             <MotionProvider>{children}</MotionProvider>
-            <LocaleSwitch />
-            <ThemeToggle />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

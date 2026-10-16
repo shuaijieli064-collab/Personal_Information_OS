@@ -9,11 +9,11 @@ import {
   useSyncSource,
 } from "@/lib/api/queries";
 import { SourceCard } from "@/components/ui/information/SourceCard";
-import { BlurReveal } from "@/components/motion/BlurReveal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiError } from "@/lib/api/client";
 
 /**
@@ -131,15 +131,10 @@ export default function SourcesPage() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <BlurReveal>
-        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-sm text-text-3">{t("subtitle")}</p>
-      </BlurReveal>
+    <main className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
-      <form onSubmit={add} className="mt-10 rounded-card border border-line bg-bg-1 p-4">
+      <form onSubmit={add} className="mt-8 rounded-card border border-line bg-bg-1 p-4">
         <p className="text-xs uppercase tracking-[0.2em] text-text-3">{t("addSource")}</p>
         <div className="mt-3 grid gap-3">
           <Input

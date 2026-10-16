@@ -19,7 +19,7 @@ import {
   useUpsertJob,
 } from "@/lib/api/queries";
 import { missingTypes } from "@/lib/automation/format";
-import { BlurReveal } from "@/components/motion/BlurReveal";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BriefPanel } from "@/components/ui/automation/BriefPanel";
@@ -75,13 +75,8 @@ export default function AutomationPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <BlurReveal>
-        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-sm text-text-2">{t("subtitle")}</p>
-      </BlurReveal>
+    <main className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
       {/* ── Daily brief ───────────────────────────────────────────────────── */}
       <BriefPanel

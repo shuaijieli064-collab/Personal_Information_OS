@@ -44,6 +44,157 @@
   --radius-input: var(--r-input);
   --radius-button: var(--r-button);
   --radius-pill: var(--r-pill);
+
+  /* Surface roles (UI recast) */
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-active: var(--surface-active);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-scrim: var(--scrim);
+
+  /* Page measures → max-w-page / max-w-page-wide */
+  --container-page: var(--w-page);
+  --container-page-wide: var(--w-page-wide);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Shell primitives — the atoms the recast builds every surface from.
+   Kept in @layer components so Tailwind utilities always win.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Card body: surface + hairline + edge highlight + diffusion shadow. */
+  .surface {
+    @apply relative rounded-card border border-line bg-surface-1;
+    box-shadow: var(--shadow-card);
+  }
+  /* Inset panel — one step down, for nested groups inside a card. */
+  .surface-inset {
+    @apply relative rounded-card border border-line bg-surface-2;
+  }
+  /* Raised overlay surface (topbar, popovers, command palette). */
+  .surface-raised {
+    @apply relative rounded-card border border-hairline-strong bg-surface-1/85 backdrop-blur-xl;
+    box-shadow: var(--shadow-float);
+  }
+  /* Top edge highlight — the 1px catch of light that makes a card read
+     as a physical object rather than a filled rectangle. */
+  .edge-highlight::before {
+    content: "";
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px rounded-pill;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--hairline-strong) 20%,
+      var(--hairline-strong) 80%,
+      transparent
+    );
+  }
+
+  /* Ambient field: two low-opacity radials + a hairline grid that fades
+     out before it reaches the content. Fixed, non-interactive, GPU-only. */
+  .ambient {
+    @apply pointer-events-none fixed inset-0 -z-10 overflow-hidden;
+  }
+  .ambient::before {
+    content: "";
+    @apply absolute -top-[35vh] -left-[15vw] h-[85vh] w-[65vw] rounded-full blur-[120px];
+    background: radial-gradient(circle, var(--ambient-a), transparent 68%);
+  }
+  .ambient::after {
+    content: "";
+    @apply absolute -right-[20vw] -bottom-[40vh] h-[80vh] w-[55vw] rounded-full blur-[130px];
+    background: radial-gradient(circle, var(--ambient-b), transparent 70%);
+  }
+
+  /* Hairline grid, masked so it dissolves instead of ending abruptly. */
+  .ambient-grid {
+    @apply pointer-events-none absolute inset-0;
+    background-image: linear-gradient(to right, var(--ambient-grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ambient-grid) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse 120% 90% at 50% 0%, #000 20%, transparent 78%);
+    -webkit-mask-image: radial-gradient(
+      ellipse 120% 90% at 50% 0%,
+      #000 20%,
+      transparent 78%
+    );
+  }
+
+  /* Fine grain — kills the "flat CSS" look at near-zero cost. */
+  .grain {
+    @apply pointer-events-none fixed inset-0 -z-10 mix-blend-overlay;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Navigation rail item — the shared shape for sidebar + mobile tabs. */
+  .rail-link {
+    @apply relative flex items-center gap-3 rounded-button text-sm font-medium text-text-2 transition-colors duration-200;
+  }
+  .rail-link:hover {
+    @apply bg-surface-hover text-text-1;
+  }
+  .rail-link[aria-current="page"] {
+    @apply bg-signal-dim text-signal;
+  }
+
+  /* Focus ring for keyboard users on custom (non-base) interactive bits. */
+  .focus-ring {
+    @apply outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal;
+  }
+
+  /* Tactile card hover — 1px lift + edge sweep. Compositor-friendly:
+     transform and colour only, never layout properties. */
+  .card-lift {
+    @apply transition-[transform,border-color,box-shadow] duration-200 ease-[var(--ease-out)];
+  }
+  .card-lift:hover {
+    @apply border-hairline-strong;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-float);
+  }
+  .card-lift:active {
+    transform: translateY(0);
+  }
+  .card-lift::after {
+    content: "";
+    @apply pointer-events-none absolute inset-x-4 top-0 h-px opacity-0 transition-opacity duration-200;
+    background: linear-gradient(90deg, transparent, var(--signal), transparent);
+  }
+  .card-lift:hover::after {
+    @apply opacity-60;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Loading sweep — a light band crossing the placeholder. */
+  .skeleton-shimmer::after {
+    content: "";
+    @apply absolute inset-0;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      var(--surface-active) 50%,
+      transparent 80%
+    );
+    transform: translateX(-100%);
+    animation: skeleton-sweep 1.6s var(--ease-standard) infinite;
+  }
+  @keyframes skeleton-sweep {
+    to {
+      transform: translateX(100%);
+    }
+  }
 }
 
 html, body {
@@ -88,5 +239,35 @@ html[data-theme] *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* ── Selection & scrollbars ────────────────────────────────────────────
+   Small details, but they are what separate "a web page" from "a product". */
+::selection {
+  background: var(--signal-dim);
+  color: var(--text-1);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-active);
+  background-clip: content-box;
 }

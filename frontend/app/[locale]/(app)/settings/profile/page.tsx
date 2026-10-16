@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { api, ApiError } from "@/lib/api/client";
-import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const LANGUAGES = [
   { value: "zh-CN", label: "中文" },
@@ -66,16 +66,13 @@ export default function SettingsProfile() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <BlurReveal>
-        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <form onSubmit={save} className="mt-6 flex flex-col gap-4">
-          <section className="rounded-card border border-line bg-bg-1 p-5 shadow-card">
-            <h2 className="text-meta uppercase tracking-[0.18em] text-text-3">
-              {t("groupAccount")}
-            </h2>
+    <div className="mx-auto w-full max-w-2xl px-5 py-8 md:px-8 md:py-10">
+      <PageHeader title={t("title")} />
+      <form onSubmit={save} className="mt-6 flex flex-col gap-4">
+        <section className="surface p-5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-3">
+            {t("groupAccount")}
+          </h2>
             <div className="mt-4 flex flex-col gap-4">
               <label className="flex flex-col gap-1.5">
                 <span className="text-meta uppercase tracking-[0.18em] text-text-3">
@@ -101,8 +98,8 @@ export default function SettingsProfile() {
             </div>
           </section>
 
-          <section className="rounded-card border border-line bg-bg-1 p-5 shadow-card">
-            <h2 className="text-meta uppercase tracking-[0.18em] text-text-3">
+          <section className="surface p-5">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-text-3">
               {t("groupPreferences")}
             </h2>
             <div className="mt-4 flex flex-col gap-4">
@@ -141,13 +138,12 @@ export default function SettingsProfile() {
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center justify-center gap-2 rounded-button bg-signal px-4 py-2.5 text-sm font-medium text-white transition-all hover:brightness-110 hover:shadow-[0_0_18px_-4px_var(--glow)] disabled:opacity-50"
+            className="focus-ring flex items-center justify-center gap-2 rounded-button bg-signal px-4 py-2.5 text-sm font-medium text-white transition-[filter,box-shadow] hover:brightness-110 hover:shadow-[0_0_18px_-4px_var(--glow)] disabled:pointer-events-none disabled:opacity-50"
           >
             {saving && <Spinner className="h-3.5 w-3.5" />}
             {saved ? t("saved") : saving ? t("saving") : t("save")}
           </button>
         </form>
-      </BlurReveal>
     </div>
   );
 }

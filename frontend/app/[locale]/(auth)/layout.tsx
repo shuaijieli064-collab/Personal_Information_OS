@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { SignalWave } from "@/components/brand/SignalWave";
+import { CornerControls } from "@/components/layout/CornerControls";
 
 /**
  * Auth layout — 方向A split stage: brand field (lg+) left, glass form card
@@ -15,6 +16,7 @@ export default async function AuthLayout({
 
   return (
     <div className="relative grid min-h-full overflow-hidden lg:grid-cols-[1.15fr_1fr]">
+      <CornerControls />
       {/* Left: brand field */}
       <section className="relative hidden overflow-hidden border-r border-line lg:block">
         <div

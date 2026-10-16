@@ -31,17 +31,33 @@ describe("ui primitives", () => {
     expect(screen.getByTestId("custom")).toBeInTheDocument();
   });
 
-  it("Skeleton renders a placeholder block", () => {
+  it("Skeleton renders a placeholder block with a loading sweep", () => {
     render(<Skeleton className="h-4 w-40" />);
-    expect(document.querySelector(".animate-pulse")).toBeInTheDocument();
+    const block = document.querySelector(".skeleton-shimmer");
+    expect(block).toBeInTheDocument();
+    // Placeholders are decorative: never announced to assistive tech.
+    expect(block?.getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("Button primary carries the glow shadow and focus-visible ring", () => {
+  it("Button primary carries the glow shadow and the shared focus ring", () => {
     render(<Button>go</Button>);
     const btn = screen.getByRole("button", { name: "go" });
     expect(btn.className).toContain("bg-signal");
     expect(btn.className).toContain("shadow-[0_14px_38px");
-    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-ring");
+  });
+
+  it("Button sizes and iconOnly shape the hit area", () => {
+    const { rerender } = render(<Button size="sm">go</Button>);
+    expect(screen.getByRole("button", { name: "go" }).className).toContain("h-8");
+    rerender(
+      <Button size="lg" iconOnly aria-label="only">
+        x
+      </Button>,
+    );
+    const square = screen.getByRole("button", { name: "only" });
+    expect(square.className).toContain("h-12");
+    expect(square.className).toContain("aspect-square");
   });
 
   it("Button loading disables itself and exposes the spinner", () => {

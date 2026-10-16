@@ -9,6 +9,7 @@ import { SignalTimeline } from "@/components/ui/signal/SignalTimeline";
 import { BlurReveal } from "@/components/motion/BlurReveal";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 /**
  * Inbox — the information sorting center, not a message list.
@@ -46,15 +47,13 @@ export default function InboxPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <BlurReveal>
-        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-sm text-text-3 tnum">
-          {isLoading ? t("loading") : t("count", { count: total })}
-        </p>
-      </BlurReveal>
+    <main className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
+      <PageHeader
+        title={t("title")}
+        description={
+          <span className="tnum">{isLoading ? t("loading") : t("count", { count: total })}</span>
+        }
+      />
 
       {error && (
         <p className="mt-6 text-sm text-danger">

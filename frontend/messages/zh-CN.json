@@ -32,7 +32,11 @@
     "settings": "设置",
     "me": "我的",
     "live": "在线",
-    "automation": "自动化"
+    "automation": "自动化",
+    "groupWorkspace": "工作区",
+    "groupInsight": "洞察",
+    "signOut": "退出登录",
+    "signal": "信号"
   },
   "SignalCard": {
     "highImpact": "🔥 高影响",
@@ -501,11 +505,6 @@
     "email": "邮件",
     "tools": "工具"
   },
-  "LocaleSwitch": {
-    "label": "切换语言",
-    "zh": "中文",
-    "en": "English"
-  },
   "Enums": {
     "infoType": {
       "ARTICLE": "文章",
@@ -544,5 +543,15 @@
       "ANNOUNCEMENT": "公告",
       "OTHER": "其他"
     }
+  },
+  "Topbar": {
+    "search": "搜索",
+    "notifications": "通知",
+    "switchLocale": "切换语言",
+    "toLight": "切换到亮色主题",
+    "toDark": "切换到暗色主题",
+    "collapseRail": "收起侧栏",
+    "expandRail": "展开侧栏",
+    "operational": "运行正常"
   }
 }

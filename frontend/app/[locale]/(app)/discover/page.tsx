@@ -2,9 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { useDiscover } from "@/lib/api/queries";
-import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Card } from "@/components/ui/Card";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 /** Discover — AI-recommended information sources, not a search box. */
 export default function DiscoverPage() {
@@ -12,16 +13,16 @@ export default function DiscoverPage() {
   const { data, isLoading, error } = useDiscover();
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <BlurReveal>
-        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-sm text-text-2">
-          {t("basedOn")}:{" "}
-          <span className="text-signal">Java · Backend · AI</span>
-        </p>
-      </BlurReveal>
+    <main className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
+      <PageHeader
+        title={t("title")}
+        description={
+          <>
+            {t("basedOn")}:{" "}
+            <span className="text-signal">Java · Backend · AI</span>
+          </>
+        }
+      />
 
       {error && (
         <p className="mt-6 text-sm text-danger">
@@ -30,17 +31,17 @@ export default function DiscoverPage() {
       )}
 
       {isLoading && (
-        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
         </div>
       )}
 
       {data && (
-        <Stagger className="mt-10 grid gap-3 sm:grid-cols-2">
+        <Stagger className="mt-8 grid gap-3 sm:grid-cols-2">
           {data.map((item) => (
             <StaggerItem key={item.name}>
-              <article className="flex h-full flex-col rounded-card border border-line bg-bg-1 p-5 transition-colors hover:border-line-strong">
+              <Card as="article" interactive className="flex h-full flex-col">
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-card-title font-medium text-text-1">{item.name}</h2>
                   <span className="tnum shrink-0 text-sm text-signal">
@@ -56,7 +57,7 @@ export default function DiscoverPage() {
                   </p>
                   <p className="mt-1 text-sm text-text-2">{item.reason}</p>
                 </div>
-              </article>
+              </Card>
             </StaggerItem>
           ))}
         </Stagger>

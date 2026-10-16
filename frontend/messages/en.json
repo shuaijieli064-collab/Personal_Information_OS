@@ -32,7 +32,11 @@
     "settings": "Settings",
     "me": "Me",
     "live": "Live",
-    "automation": "Automation"
+    "automation": "Automation",
+    "groupWorkspace": "Workspace",
+    "groupInsight": "Insight",
+    "signOut": "Sign out",
+    "signal": "Signal"
   },
   "SignalCard": {
     "highImpact": "🔥 High Impact",
@@ -501,11 +505,6 @@
     "email": "Email",
     "tools": "Tools"
   },
-  "LocaleSwitch": {
-    "label": "Switch language",
-    "zh": "中文",
-    "en": "English"
-  },
   "Enums": {
     "infoType": {
       "ARTICLE": "Article",
@@ -544,5 +543,15 @@
       "ANNOUNCEMENT": "Announcement",
       "OTHER": "Other"
     }
+  },
+  "Topbar": {
+    "search": "Search",
+    "notifications": "Notifications",
+    "switchLocale": "Switch language",
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme",
+    "collapseRail": "Collapse sidebar",
+    "expandRail": "Expand sidebar",
+    "operational": "Operational"
   }
 }

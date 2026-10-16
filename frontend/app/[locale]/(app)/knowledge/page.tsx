@@ -9,7 +9,7 @@ import {
   useKnowledgeReindex,
   useKnowledgeSearch,
 } from "@/lib/api/queries";
-import { BlurReveal } from "@/components/motion/BlurReveal";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -156,13 +156,8 @@ export default function KnowledgePage() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-10">
-      <BlurReveal>
-        <h1 className="text-page-title font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-sm text-text-3">{t("subtitle")}</p>
-      </BlurReveal>
+    <main className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
       {/* Reindex — the corpus must exist before search can return anything. */}
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-bg-1 p-4">

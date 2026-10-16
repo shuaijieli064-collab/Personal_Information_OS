@@ -5,9 +5,9 @@ import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
 import { api, tokens, ApiError } from "@/lib/api/client";
 import { Warning } from "@phosphor-icons/react";
-import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { AuthCard } from "@/components/ui/auth/AuthCard";
 
 export default function RegisterPage() {
   const t = useTranslations("Register");
@@ -39,23 +39,19 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center">
-      <BlurReveal className="w-full rounded-shell border border-line-strong bg-bg-2/70 p-9 shadow-float backdrop-blur-xl">
-        <div className="mb-7 flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-signal/10 text-signal ring-1 ring-signal/20 lg:hidden">
-            <span className="text-lg font-bold">S</span>
-          </div>
-          <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-3 lg:mt-0">
-            SIGNAL
-          </p>
-        </div>
-
-        <h1 className="text-center font-display text-2xl font-semibold tracking-[-0.02em] text-text-1">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-center text-sm text-text-2">{t("subtitle")}</p>
-
-        <form onSubmit={submit} className="mt-8 flex flex-col gap-4">
+    <AuthCard
+      title={t("title")}
+      subtitle={t("subtitle")}
+      footer={
+        <>
+          {t("hasAccount")}{" "}
+          <Link href="/login" className="font-medium text-signal hover:underline">
+            {t("signIn")}
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={submit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-xs font-medium uppercase tracking-wider text-text-3">
               {t("email")}
@@ -105,18 +101,10 @@ export default function RegisterPage() {
               {error}
             </p>
           )}
-          <Button type="submit" loading={loading} className="mt-2 w-full">
+          <Button type="submit" size="lg" loading={loading} className="mt-2 w-full">
             {loading ? t("submitting") : t("submit")}
           </Button>
         </form>
-
-        <p className="mt-8 text-center text-sm text-text-3">
-          {t("hasAccount")}{" "}
-          <Link href="/login" className="font-medium text-signal hover:underline">
-            {t("signIn")}
-          </Link>
-        </p>
-      </BlurReveal>
-    </main>
+    </AuthCard>
   );
 }

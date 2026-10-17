@@ -70,7 +70,8 @@
     "ignoreHint": "向左拖动忽略",
     "keep": "保留",
     "ignore": "忽略",
-    "createSignal": "生成信号"
+    "analyse": "分析",
+    "kept": "已保留"
   },
   "Command": {
     "label": "命令中心",
@@ -202,12 +203,15 @@
     "loadMore": "加载更多",
     "loadingMore": "加载中…",
     "sectionReview": "需要处理",
-    "sectionFiltered": "AI 过滤",
     "sectionSignals": "已生成信号",
-    "filteredCount": "{count} 条已忽略",
-    "filteredEmpty": "被 AI 判定为噪音的条目会出现在这里。",
     "signalsEmpty": "今天的信号将在这里生成。",
-    "localOnly": "已本地忽略 {count} 条（归档将在后续版本同步到后端）。"
+    "sectionIgnored": "已忽略",
+    "ignoredEmpty": "被你忽略的条目会出现在这里，随时可以恢复。",
+    "restore": "恢复",
+    "actionFailed": "操作失败，请重试。",
+    "analyseDone": "已分析：信号分 {score}。达到门槛的条目才会出现在「已生成信号」。",
+    "analyseDoneNoScore": "已分析，但这次没有算出信号分。",
+    "reviewClear": "这一批都处理完了。新内容进来会出现在这里。"
   },
   "Detail": {
     "loading": "读取中…",

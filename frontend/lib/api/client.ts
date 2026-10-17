@@ -129,9 +129,13 @@ export type Source = {
   id: string; type: string; name: string; url?: string;
   status: string; lastSyncedAt?: string; createdAt: string;
 };
+/** Inbox triage states. ACTIVE = waiting, KEPT = kept on purpose, ARCHIVED = dismissed. */
+export type TriageStatus = "ACTIVE" | "KEPT" | "ARCHIVED";
+
 export type InformationItem = {
   id: string; type: string; title: string; excerpt?: string;
   content?: string; url?: string; author?: string; publishedAt?: string;
+  status?: TriageStatus;
 };
 
 export const sourcesApi = {
@@ -195,12 +199,23 @@ export const profileApi = {
 };
 
 export const informationApi = {
-  page: (page = 0, size = 20) =>
-    api.get<{ items: InformationItem[]; total: number }>(
-      `/api/v1/information?page=${page}&size=${size}`),
+  page: (page = 0, size = 20, status?: TriageStatus | `${TriageStatus},${TriageStatus}`) =>
+    api.get<{
+      items: InformationItem[];
+      total: number;
+      /** information id → signal id, for the rows on this page. */
+      signalIds?: Record<string, string>;
+    }>(
+      `/api/v1/information?page=${page}&size=${size}${status ? `&status=${status}` : ""}`),
   get: (id: string) => api.get<InformationItem>(`/api/v1/information/${id}`),
   understanding: (id: string) =>
     api.get<Understanding | null>(`/api/v1/information/${id}/understanding`),
+  /** Persists a triage decision — this is what makes "ignore" survive a refresh. */
+  setStatus: (id: string, status: TriageStatus) =>
+    api.patch<InformationItem>(`/api/v1/information/${id}`, { status }),
+  /** Runs the real pipeline (understand → score → maybe signal). May legitimately produce none. */
+  analyse: (id: string) =>
+    api.post<Understanding>(`/api/v1/information/${id}/understanding`),
 };
 
 /* ── Phase 6 Knowledge (K3 search / K4 RAG) ───────────────────────────────── */

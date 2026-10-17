@@ -70,7 +70,8 @@
     "ignoreHint": "Drag left to ignore",
     "keep": "Keep",
     "ignore": "Ignore",
-    "createSignal": "Create Signal"
+    "analyse": "Analyse",
+    "kept": "Kept"
   },
   "Command": {
     "label": "Command Center",
@@ -202,12 +203,15 @@
     "loadMore": "Load more",
     "loadingMore": "Loading…",
     "sectionReview": "Need Review",
-    "sectionFiltered": "AI Filtered",
     "sectionSignals": "Signals Generated",
-    "filteredCount": "{count} ignored",
-    "filteredEmpty": "Items the AI judges as noise will land here.",
     "signalsEmpty": "Today's signals will appear here.",
-    "localOnly": "{count} ignored locally (archiving syncs to the backend in a later version)."
+    "sectionIgnored": "Ignored",
+    "ignoredEmpty": "Items you dismiss land here, and can be restored at any time.",
+    "restore": "Restore",
+    "actionFailed": "That did not work. Try again.",
+    "analyseDone": "Analysed: signal score {score}. Only items above the threshold become signals.",
+    "analyseDoneNoScore": "Analysed, but no signal score came back this time.",
+    "reviewClear": "Nothing left to review. New items will land here."
   },
   "Detail": {
     "loading": "Reading…",

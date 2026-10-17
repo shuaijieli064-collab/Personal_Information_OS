@@ -22,4 +22,11 @@ public interface SignalRepository extends JpaRepository<Signal, UUID> {
 
     /** Used by the notification dedupe sweep: the user's signals in a given status. */
     List<Signal> findByUserIdAndStatus(UUID userId, String status);
+
+    /**
+     * Read-only lookup for the inbox: which of these information rows already became a
+     * signal. Without it the inbox has to offer "analyse" on rows that were already
+     * analysed, because the page only knows about the top signals in the feed.
+     */
+    List<Signal> findByInformationIdIn(java.util.Collection<UUID> informationIds);
 }

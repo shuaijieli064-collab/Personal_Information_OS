@@ -13,6 +13,11 @@ public interface InformationRepository extends JpaRepository<Information, UUID> 
     Optional<Information> findBySourceItemId(UUID sourceItemId);
     Optional<Information> findByIdAndUserId(UUID id, UUID userId);
     Page<Information> findByUserId(UUID userId, Pageable pageable);
+    /** Inbox filtering: one triage state at a time (ACTIVE / KEPT / ARCHIVED). */
+    Page<Information> findByUserIdAndStatus(UUID userId, String status, Pageable pageable);
+    /** Inbox "needs review" is two states at once: ACTIVE and KEPT. */
+    Page<Information> findByUserIdAndStatusIn(UUID userId, java.util.Collection<String> statuses,
+                                              Pageable pageable);
     List<Information> findByUserId(UUID userId);
     long countByUserId(UUID userId);
 }

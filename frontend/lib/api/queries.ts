@@ -21,6 +21,7 @@ import {
 export const queryKeys = {
   today: ["today"] as const,
   inbox: ["inbox"] as const,
+  inboxIgnored: ["inbox", "ignored"] as const,
   sources: ["sources"] as const,
   information: (id: string) => ["information", id] as const,
   discover: ["discover"] as const,
@@ -47,14 +48,27 @@ export function useToday() {
   });
 }
 
+/**
+ * The review list: ACTIVE (untouched) plus KEPT (explicitly kept — the user still wants to
+ * see it). ARCHIVED is excluded here and fetched separately, because dismissed rows must
+ * not eat page slots in the list you actually work through.
+ */
 export function useInbox() {
   return useInfiniteQuery({
     queryKey: queryKeys.inbox,
-    queryFn: ({ pageParam }) => informationApi.page(pageParam, 20),
+    queryFn: ({ pageParam }) => informationApi.page(pageParam, 20, "ACTIVE,KEPT"),
     initialPageParam: 0,
     getNextPageParam: (last, pages) =>
       pages.length * 20 < last.total ? pages.length : undefined,
     placeholderData: (prev) => prev,
+  });
+}
+
+/** Dismissed rows, so "ignore" has somewhere to go and can be undone. */
+export function useIgnoredInbox() {
+  return useQuery({
+    queryKey: queryKeys.inboxIgnored,
+    queryFn: () => informationApi.page(0, 10, "ARCHIVED"),
   });
 }
 

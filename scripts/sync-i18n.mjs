@@ -142,10 +142,49 @@ const TOOL_DESC_ADD = {
   },
 };
 
+/** Inbox triage: the three sections now all carry real data, and every action persists. */
+const INBOX_ADD = {
+  "zh-CN": {
+    section: {
+      sectionIgnored: "已忽略",
+      ignoredEmpty: "被你忽略的条目会出现在这里，随时可以恢复。",
+      reviewClear: "这一批都处理完了。新内容进来会出现在这里。",
+      restore: "恢复",
+      actionFailed: "操作失败，请重试。",
+      analyseDone: "已分析：信号分 {score}。达到门槛的条目才会出现在「已生成信号」。",
+      analyseDoneNoScore: "已分析，但这次没有算出信号分。",
+    },
+    item: {
+      analyse: "分析",
+      kept: "已保留",
+    },
+  },
+  en: {
+    section: {
+      sectionIgnored: "Ignored",
+      ignoredEmpty: "Items you dismiss land here, and can be restored at any time.",
+      reviewClear: "Nothing left to review. New items will land here.",
+      restore: "Restore",
+      actionFailed: "That did not work. Try again.",
+      analyseDone: "Analysed: signal score {score}. Only items above the threshold become signals.",
+      analyseDoneNoScore: "Analysed, but no signal score came back this time.",
+    },
+    item: {
+      analyse: "Analyse",
+      kept: "Kept",
+    },
+  },
+};
+
 /** Namespaces whose owning component was deleted in the UI recast. */
 const DROP_NAMESPACES = ["LocaleSwitch"];
 
-const DROP_KEYS = {};
+const DROP_KEYS = {
+  // The "AI filtered" section never had data behind it, and ignore-only-locally is gone.
+  Inbox: ["sectionFiltered", "filteredCount", "filteredEmpty", "localOnly"],
+  // "Create signal" was a lie: the button only navigated. It now analyses.
+  InboxItem: ["createSignal", "viewSignal"],
+};
 
 function collectKeys(obj, prefix = "", out = new Set()) {
   for (const [k, v] of Object.entries(obj)) {
@@ -183,6 +222,8 @@ for (const locale of LOCALES) {
     ...(json.Agent ?? {}),
     toolDesc: { ...(json.Agent?.toolDesc ?? {}), ...TOOL_DESC_ADD[locale] },
   };
+  json.Inbox = { ...(json.Inbox ?? {}), ...INBOX_ADD[locale].section };
+  json.InboxItem = { ...(json.InboxItem ?? {}), ...INBOX_ADD[locale].item };
 
   const out = `${JSON.stringify(json, null, 2)}\n`;
   if (out !== raw) {

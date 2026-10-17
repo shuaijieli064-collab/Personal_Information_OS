@@ -75,6 +75,12 @@ export function InboxItem({
                   {new Date(item.publishedAt).toLocaleDateString()}
                 </>
               )}
+              {item.status === "KEPT" && (
+                <>
+                  <span className="text-text-3/50">·</span>
+                  <span className="text-success">{t("kept")}</span>
+                </>
+              )}
             </p>
           </div>
           {classification && (
@@ -102,7 +108,7 @@ export function InboxItem({
             onClick={() => onAction?.("signal")}
             className="rounded-button border border-line px-3 py-1.5 text-xs text-text-2 transition-colors hover:border-signal/60 hover:text-signal disabled:opacity-50"
           >
-            {t("createSignal")}
+            {t("analyse")}
           </button>
           <button
             type="button"

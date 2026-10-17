@@ -180,6 +180,10 @@ business logic were not touched — the `knowledge` / `agent` / `automation` tes
 | 101 | i18n key parity | scripted key-set diff, `messages/zh-CN.json` vs `messages/en.json` | ✅ **490 / 490**, both directions empty (recast adds 18 keys: masthead edition/issue labels + front-page kicker/lead/colophon) |
 | 102 | **UI recast · browser walkthrough** | `scripts/brief-verify.mjs` (Playwright 1.58 + real Chrome; `next dev` :3000 → backend :8080; probe account from `scripts/brief-probe-account.mjs`, data from `backend/target/seed-signals.sql`) | ✅ **51 / 51 PASS** — masthead nameplate + dateline (`第 289 期 · … · 晨版`) + live unread badge **2**; morning edition is default and body bg = `rgb(246, 241, 231)`; vertical rail 7 destinations, width **96px**, `.vrail` computed `writing-mode: vertical-rl`; front-page figures strip + lead story (`pgvector 0.8 …`, `score 0.94`) + colophon; ⌘K opens the command center; edition switch → evening paper with body bg = `rgb(20, 20, 15)`; 10 zh-CN routes each render an `h1` with **0 console errors**; locale switch reaches `/en/automation` with an English dateline; **0px horizontal overflow** at 390px on 4 routes; mobile bottom nav visible; **0 console errors across the whole walk** |
 | 103 | **Recast is skin-deep (no logic drift)** | `vitest run` before/after | ✅ the `knowledge`, `agent` and `automation` suites needed **zero edits** and stayed green — only `components/ui/ui.test.tsx` changed, for two assertions bound to the old glow recipe (`Button` shadow, `Input` focus ring) |
+| 104 | **UI recast · browser walkthrough in PRODUCTION mode** | `scripts/brief-verify.mjs` with `BASE=http://localhost:3000` against **`next start`** (not `next dev`); same probe account and seed | ✅ **51 / 51 PASS** — every assertion that passed on the dev server passes on the production build, including the masthead dateline, the live unread badge **2**, morning default (`rgb(246, 241, 231)`), the 96px vertical rail with `vertical-rl`, ⌘K, the evening edition (`rgb(20, 20, 15)`), 10 routes with **0 console errors**, the English dateline, **0px** overflow at 390px, and the mobile nav. Raw SSR from production carries `data-theme="light"` and links the hashed production CSS. Screenshots: `ui-design-runs/brief-shots-prod/` |
+| 105 | **Self-hosted fonts reach a real browser** | `scripts/brief-fonts.mjs` — Chrome against `next start`, recording every `/fonts/` response and asking `document.fonts` | ✅ **21 requests / 797.3 KB** on the front page; every body-carrying response is **`font/woff2`** and 200; repeat visits revalidate with **304**; **no request failed**. `document.fonts.check` is true for Fraunces, Noto Serif SC, Geist and JetBrains Mono, and `document.fonts` reports all four **loaded** — i.e. the webfonts really rendered, they did not fall back |
+| 106 | **CJK is fetched on demand, not wholesale** | same run, grouped by family | ✅ only **9–15 of the 101** `noto-serif-sc` subsets were ever requested for the front page — the `unicode-range` slicing preserved from next/font does its job, so the 5.75 MB never reaches the browser |
+| 107 | **The shared-subset weight question, settled** | WOFF2 table-directory parse of all 115 files (`scripts/selfhost-fonts.mjs` now asserts it) + a browser render of weights 200→900 | ✅ **115 / 115 files are variable fonts** (`fvar` present). This is why next/font legitimately points the 400 / 600 / 700 `@font-face` rules at the *same* per-subset file: the file is an axis, and the declared `font-weight` is applied as a variation setting. Confirmed visually — Noto Serif SC renders a monotonic weight ramp from 200 (light) to 900 (black), which synthetic emboldening could not produce. The generator now **fails loudly** if a file shared across weights turns out to be static |
 
 > Build note (supersedes the `NODE_USE_ENV_PROXY=1` note above for UI work): fonts are now served from
 > `frontend/public/fonts/` and declared in the generated `frontend/app/fonts.css`, so no build needs the
@@ -202,18 +206,14 @@ business logic were not touched — the `knowledge` / `agent` / `automation` tes
 - Scheduler stability over hours/days (tick drift, memory)
 - Push channels for notifications (only the in-app inbox exists)
 - Phase 7 `DESTRUCTIVE` permission has no real tool to walk through (only `READ` / `WRITE` tools ship)
-- **UI recast in production mode**: rows 97–100 prove the build is offline, the fonts land in the bundle,
-  the fonts are served, and the edition default is symmetric — but the **interactive** walkthrough (row 102)
-  ran against `next dev`. The one-line edition-default change that followed the 51/51 run was verified
-  separately by SSR assertion (row 100), not by re-running the walkthrough.
 - **UI recast · cross-browser / screen reader**: Chrome only. `writing-mode: vertical-rl` on the navigation
   rail has not been assessed with a screen reader.
-- **UI recast · CJK font-weight fidelity**: the 101 Noto Serif SC subset files are referenced by the 400 /
-  600 / 700 `@font-face` rules alike (that is what next/font emitted, and the self-hosting script carried it
-  over verbatim). Dev and production behave identically, but the rendered glyphs were not compared weight by
-  weight against the pre-self-hosting build.
 - **UI recast · visual regression**: no pixel diff between the next/font build and the self-hosted build —
-  only same-source screenshots on the dev side.
+  only same-source screenshots. (The self-hosted CSS is the next/font CSS verbatim with `url()` rewritten,
+  so a difference is not expected, but it was not measured.)
+- `next start` warns that it "does not work with `output: standalone`". It served the production build
+  correctly for rows 104–106, but the standalone server (`node .next/standalone/server.js`) — the artifact
+  the Dockerfile actually ships — has not been exercised.
 
 ---
-Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze. Phase 6 rows appended at the knowledge-console freeze; Phase 7 (agent) and Phase 8 (automation) rows appended at the Phase 8 freeze, 2026-10-16. UI recast rows 96–103 appended at the direction-B「晨报」delivery, 2026-10-17.
+Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze. Phase 6 rows appended at the knowledge-console freeze; Phase 7 (agent) and Phase 8 (automation) rows appended at the Phase 8 freeze, 2026-10-16. UI recast rows 96–103 appended at the direction-B「晨报」delivery, 2026-10-17; production-mode walkthrough + font-delivery rows 104–107 appended the same day once Docker Desktop was restarted.

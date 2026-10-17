@@ -77,9 +77,9 @@
 | 组件基元 | Button/Chip/IconButton/Input/Select/Segmented/Skeleton/PageHeader/StatCard/AuthCard/CommandCenter/SignalTimeline/CornerControls 全部扁平化（圆角 2–3px，去玻璃/光晕/投影） | ✅ |
 | 双版式 | `light` 晨报（默认）/ `dark` 晚报；cookie 驱动 SSR 首屏不闪烁 | ✅ |
 | 字体自托管 | `scripts/selfhost-fonts.mjs` → `frontend/public/fonts/`（115 woff2 / 6.3 MB）+ 生成 `frontend/app/fonts.css`（333 `@font-face`）；移除 `next/font/google`，构建离线化 | ✅ |
-| 验证 | tsc / eslint / vitest 87 / `next build` 19 路由 / 字体可达性 / 浏览器走查 **51/51** / i18n 490 键对齐 | ✅ |
+| 验证 | tsc / eslint / vitest 87 / `next build` 19 路由 / 字体可达性 / 浏览器走查 **51/51（dev 与生产模式各一轮）** / 浏览器实取字体 / i18n 490 键对齐 | ✅ |
 
-**5.5+ 已记录偏差**：主题由 cookie 驱动使路由表从「35 页静态预渲染」变为 **19 条全 `ƒ` Dynamic**（SSR 首屏不闪烁的代价）；CJK 自托管占仓库 5.75 MB（运行时不浪费，`unicode-range` 按需下载）；生产模式交互走查与跨浏览器/读屏仍未做（沿用 Phase 6–8 遗留项）。
+**5.5+ 已记录偏差**：主题由 cookie 驱动使路由表从「35 页静态预渲染」变为 **19 条全 `ƒ` Dynamic**（SSR 首屏不闪烁的代价）；CJK 自托管占仓库 5.75 MB（运行时不浪费，`unicode-range` 按需下载，实测页面只取 9–15/101 分片）；跨浏览器/读屏与 `output: standalone` 产物走查仍未做。
 
 ## Risks
 
@@ -102,6 +102,6 @@
   - 代理计划升级：依赖图、失败后重新规划、跨运行记忆。
   - `/api/v1/discover` 后端端点（前端目前是本地兜底，端点上线后恢复探测）。
   - 检索规模化：>10⁵ chunks 的延迟与召回基准、按文档/时间范围过滤、多轮问答。
-- **遗留技术债**：生产模式（`next start`）下的浏览器交互走查；跨浏览器（Firefox/WebKit）与读屏；`DESTRUCTIVE` 权限尚无真实工具可走查；UI 重铸的 CJK 字重逐字比对与像素级视觉回归。
+- **遗留技术债**：跨浏览器（Firefox/WebKit）与读屏；`DESTRUCTIVE` 权限尚无真实工具可走查；UI 重铸的像素级视觉回归与 `output: standalone` 产物走查。（生产模式的浏览器交互走查已于 2026-10-17 补齐。）
 
 每阶段交付必须附：验收模板（Scope/变更/测试结果/运行验证/已知问题/未验证项/冻结结论）→ `docs/PHASE_X_FINAL_QA.md`。

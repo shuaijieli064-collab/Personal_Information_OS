@@ -70,6 +70,53 @@ function variables(rest) {
   return [...new Set(out)];
 }
 
+/* ── WOFF2 sanity check ────────────────────────────────────────────────────
+   Google serves one *variable* file per unicode-range subset, so the same
+   woff2 is legitimately referenced by the 400 / 600 / 700 @font-face rules.
+   That is only sound if the file really carries an `fvar` axis — if a static
+   file were shared across weights, bold text would silently render as regular.
+   The check below asserts exactly that pairing, so a future regeneration can
+   never quietly introduce it.
+
+   WOFF2 layout: a 48-byte header, then one entry per table — UInt8 flags,
+   a 4-byte tag only when (flags & 0x3f) === 0x3f else KNOWN_TAGS[flags & 0x3f],
+   UIntBase128 origLength, and UIntBase128 transformLength for glyf/loca when
+   the transform version is not 3. */
+const KNOWN_TAGS = [
+  "cmap", "head", "hhea", "hmtx", "maxp", "name", "OS/2", "post", "cvt ", "fpgm", "glyf", "loca",
+  "prep", "CFF ", "VORG", "EBDT", "EBLC", "gasp", "hdmx", "kern", "LTSH", "PCLT", "VDMX", "vhea",
+  "vmtx", "BASE", "GDEF", "GPOS", "GSUB", "EBSC", "JSTF", "MATH", "CBDT", "CBLC", "COLR", "CPAL",
+  "SVG ", "sbix", "acnt", "avar", "bdat", "bloc", "bsln", "cvar", "fdsc", "feat", "fmtx", "fvar",
+  "gvar", "hsty", "just", "lcar", "mort", "morx", "opbd", "prop", "trak", "Zapf", "Silf", "Glat",
+  "Gloc", "Feat", "Sill",
+];
+function base128(b, o) {
+  let v = 0;
+  for (let i = 0; i < 5; i++) {
+    const c = b[o++];
+    v = (v << 7) | (c & 0x7f);
+    if (!(c & 0x80)) return [v, o];
+  }
+  throw new Error("malformed UIntBase128");
+}
+function woff2Tables(file) {
+  const b = fs.readFileSync(file);
+  if (b.toString("ascii", 0, 4) !== "wOF2") throw new Error(`not a woff2: ${file}`);
+  const count = b.readUInt16BE(12);
+  let o = 48;
+  const tags = [];
+  for (let i = 0; i < count; i++) {
+    const flags = b[o++];
+    const index = flags & 0x3f;
+    const tag = index === 0x3f ? b.toString("ascii", o, (o += 4)) : KNOWN_TAGS[index];
+    const transformVersion = (flags >> 6) & 0x03;
+    [, o] = base128(b, o);
+    if ((tag === "glyf" || tag === "loca") && transformVersion !== 3) [, o] = base128(b, o);
+    tags.push(tag);
+  }
+  return tags;
+}
+
 const blocks = [];
 const vars = [];
 const copied = new Set();
@@ -97,8 +144,31 @@ for (const { key, slug } of FAMILIES) {
   const v = variables(rest);
   if (!v.length) throw new Error(`no --font-* variable found for "${key}"`);
   vars.push(...v);
+
+  /* One file shared by several weights is only valid for a variable font. */
+  const weightsPerFile = new Map();
+  for (const face of rewritten) {
+    const weight = (face.match(/font-weight:\s*([^;]+);/) ?? [])[1]?.trim();
+    for (const [, name] of face.matchAll(/url\("\/fonts\/[^"]*\/([^"]+)"\)/g)) {
+      if (!weightsPerFile.has(name)) weightsPerFile.set(name, new Set());
+      if (weight) weightsPerFile.get(name).add(weight);
+    }
+  }
+  const shared = [...weightsPerFile].filter(([, w]) => w.size > 1);
+  const staticShared = shared.filter(([name]) => !woff2Tables(path.join(destDir, name)).includes("fvar"));
+  if (staticShared.length) {
+    throw new Error(
+      `${slug}: ${staticShared.length} static woff2 file(s) are declared for more than one font-weight ` +
+        `(e.g. ${staticShared[0][0]} -> ${[...staticShared[0][1]].join(", ")}). Bold text would render as regular.`
+    );
+  }
+
+  const fileCount = new Set(rewritten.flatMap((f) => [...f.matchAll(/url\("\/fonts\/[^"]+"\)/g)].map((m) => m[0]))).size;
+  const variableCount = [...new Set(weightsPerFile.keys())].filter((n) => woff2Tables(path.join(destDir, n)).includes("fvar")).length;
   console.log(
-    `${slug.padEnd(16)} faces=${String(faces.length).padStart(4)} files=${String(new Set(rewritten.flatMap((f) => [...f.matchAll(/url\("\/fonts\/[^"]+"\)/g)].map((m) => m[0]))).size).padStart(4)} ${((dirBytes(destDir)) / 1048576).toFixed(2)} MB`
+    `${slug.padEnd(16)} faces=${String(faces.length).padStart(4)} files=${String(fileCount).padStart(4)}` +
+      ` variable=${String(variableCount).padStart(4)} shared-across-weights=${String(shared.length).padStart(4)}` +
+      ` ${((dirBytes(destDir)) / 1048576).toFixed(2)} MB`
   );
 }
 function dirBytes(dir) {

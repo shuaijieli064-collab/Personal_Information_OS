@@ -122,7 +122,8 @@ Failed to fetch `Noto Serif SC` from Google Fonts.
 | 生产构建 | `next build` | ✅ 19 路由全绿，`@font-face` ×333 / `/fonts/` ×329 进入产物 |
 | 字体可达性 | `next start` + curl | ✅ `/fonts/fraunces/…woff2` → **200 `font/woff2` 18652 B**；`/fonts/noto-serif-sc/…woff2` → **200 `font/woff2` 4604 B** |
 | i18n 键集 | 脚本比对 | ✅ 490 / 490，双向差集为空 |
-| 浏览器走查 | `scripts/brief-verify.mjs` | ✅ **51 / 51**（详见 §7） |
+| 浏览器走查 | `scripts/brief-verify.mjs` | ✅ **51 / 51**（dev 与**生产模式各一轮**，详见 §7） |
+| 浏览器取字体 | `scripts/brief-fonts.mjs` | ✅ 21 请求 / 797.3 KB，全部 `font/woff2`，四族 `document.fonts` 均 loaded，CJK 只取 **9–15/101** 分片 |
 
 > 关键证据：`knowledge` / `agent` / `automation` 三套测试件**零修改**仍全绿
 > —— 证明本次只换皮，未触碰任何业务逻辑。
@@ -147,7 +148,40 @@ Failed to fetch `Noto Serif SC` from Google Fonts.
 - 390px 视口 4 条路由 **横向溢出 0px**；移动底栏可见
 - **整轮走查 0 console error**
 
-截图：`ui-design-runs/brief-shots/`（含晨版/晚报全页、命令中心、10 路由、移动端）。
+截图：`ui-design-runs/brief-shots/`（dev）与 `ui-design-runs/brief-shots-prod/`（生产，含晨版/晚报全页、命令中心、10 路由、移动端）。
+
+### 7.1 生产模式复跑
+
+同一脚本、同一探针账号，`BASE=http://localhost:3000` 指向 **`next start`**（而非 `next dev`）：
+**51 / 51 全数通过**。raw SSR 携带 `data-theme="light"` 并引用带哈希的生产 CSS。
+这一轮关掉了「生产模式交互走查」这条遗留项。
+
+### 7.2 字体真的进了浏览器
+
+`scripts/brief-fonts.mjs` 驱动 Chrome 打生产构建，记录每一条 `/fonts/` 响应并直接问 `document.fonts`：
+
+```
+jetbrains-mono     2 files  30.6 KB
+geist              2 files  28.6 KB
+fraunces           2 files  60.6 KB
+noto-serif-sc     15 files 677.5 KB
+TOTAL             21 files 797.3 KB
+```
+
+- 全部 200 且带 `font/woff2`；重复访问以 **304** 复用缓存；无失败请求。
+- `document.fonts.check` 对 Fraunces / Noto Serif SC / Geist / JetBrains Mono **全部为真**，
+  `document.fonts` 列出四族状态为 `loaded` —— 是**真的渲染了网页字体**，不是回退到系统字。
+- **CJK 只取了 101 个分片中的 9–15 个**：`unicode-range` 切分确实生效，5.75 MB 永远不会整包发给浏览器。
+
+### 7.3 权重共享之谜已结案
+
+`Noto Serif SC` 的 101 个分片文件被 400/600/700 三条 `@font-face` 共同引用，一度被列为存疑项。
+用 WOFF2 表目录解析（`scripts/selfhost-fonts.mjs` 现在内置该断言）确认：**115 / 115 个文件都是可变字体**
+（含 `fvar`）。所以「同一文件服务三个字重」是**正确的**——文件本身是一条轴，规则里的 `font-weight`
+作为变体设置施加。浏览器实测佐证：Noto Serif SC 从 200 到 900 渲染出单调的字重阶梯，
+这是合成加粗做不出来的。
+
+生成器现在会在「文件被多字重共享但**不是**可变字体」时**直接报错退出**，杜绝以后再悄悄引入该缺陷。
 
 ---
 
@@ -167,19 +201,22 @@ Failed to fetch `Noto Serif SC` from Google Fonts.
 
 ## 9. 未验证项（NOT VERIFIED）
 
-- **生产模式（`next start`）下的完整浏览器走查**：本次只在生产模式下 curl 验证了字体可达性与
-  `/zh-CN/login` 渲染；交互走查（51 项）跑在 `next dev`。这与 Phase 6–8 的遗留项一致。
 - **跨浏览器 / 读屏**：仅 Chrome。`writing-mode: vertical-rl` 的读屏语义未评估。
-- **字重渲染细节**：`Noto Serif SC` 的 101 个分片文件被 400/600/700 三个 `@font-face` 共同引用
-  （next/font 的产物如此，本脚本原样搬运）。dev 与生产表现一致，但**未逐字重比对**中文粗体的实际字形。
-- **自托管字体的视觉回归**：未做「自托管前 vs 自托管后」的像素级 diff，只有 dev 侧同源截图。
+- **自托管字体的像素级视觉回归**：未做「自托管前 vs 自托管后」的 diff。
+  自托管的 CSS 是 next/font 产物的**逐字搬运**（只重写 `url()`），预期无差异，但没有实测。
+- **`output: standalone` 产物**：`next start` 会警告它与 `output: standalone` 不兼容；
+  第 104–106 行的验证用的是 `next start`，它能正确服务生产构建。
+  Dockerfile 实际发布的 `node .next/standalone/server.js` 尚未跑过。
+
+> 已结案（原 NOT VERIFIED，本轮补齐）：生产模式交互走查（§7.1）、CJK 字重保真（§7.3）、
+> 浏览器实际取用自托管字体（§7.2）。
 
 ---
 
 ## 10. 冻结结论
 
 方向 B「晨报 The Brief」**视觉层交付完成**：令牌、外壳、组件基元、主要页面、双版式主题、
-字体自托管全部落地；类型 / Lint / 单测 / 构建 / 字体可达性 / 浏览器走查六道门禁全绿，
+字体自托管全部落地；类型 / Lint / 单测 / 构建 / 字体可达性 / **dev 与生产两轮浏览器走查** 七道门禁全绿，
 且业务测试件零修改。后端与 API 契约未受影响。
 
-**遗留动作**：提交（本文件与代码同批）；生产模式交互走查补做；跨浏览器与读屏补做。
+**遗留动作**：跨浏览器与读屏补做；`output: standalone` 产物走查；自托管前后像素级 diff。

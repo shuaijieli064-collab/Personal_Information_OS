@@ -39,12 +39,13 @@ describe("ui primitives", () => {
     expect(block?.getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("Button primary carries the glow shadow and the shared focus ring", () => {
+  it("Button primary is flat printed ink, with the shared focus ring", () => {
     render(<Button>go</Button>);
     const btn = screen.getByRole("button", { name: "go" });
     expect(btn.className).toContain("bg-signal");
-    expect(btn.className).toContain("shadow-[0_14px_38px");
+    expect(btn.className).not.toContain("shadow-[0_14px_38px");
     expect(btn.className).toContain("focus-ring");
+    expect(btn.className).toContain("rounded-[2px]");
   });
 
   it("Button sizes and iconOnly shape the hit area", () => {
@@ -67,11 +68,11 @@ describe("ui primitives", () => {
     expect(screen.getByRole("status")).toBeInTheDocument();
   });
 
-  it("Input focus uses the accent glow recipe", () => {
+  it("Input focus underlines in ink instead of glowing", () => {
     render(<Input placeholder="p" />);
     const input = screen.getByPlaceholderText("p");
-    expect(input.className).toContain("focus:border-signal/70");
-    expect(input.className).toContain("focus:shadow-[0_0_18px");
+    expect(input.className).toContain("focus:border-signal");
+    expect(input.className).not.toContain("focus:shadow-[0_0_18px");
   });
 
   it("CountUp jumps to the final value under prefers-reduced-motion", async () => {

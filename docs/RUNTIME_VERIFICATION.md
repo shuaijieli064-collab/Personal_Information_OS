@@ -164,6 +164,33 @@ Docker `signal-postgres` (pgvector/pgvector:pg16) + `signal-redis`. End-to-end s
 > Next.js blocks cross-origin dev resources (`/_next/hmr`) by default, and the blocked client bundle
 > leaves the page rendering nothing but the locale switcher — a false "page is broken" signal.
 
+## UI recast — direction B「晨报 The Brief」(2026-10-17)
+
+Full record: `docs/UI_RECAST_BRIEF.md`. The recast replaces the design language on all four axes
+(lightness / material / type / geometry) and self-hosts every webfont. Backend, API contracts and
+business logic were not touched — the `knowledge` / `agent` / `automation` test suites ran unmodified.
+
+| # | Check | Method | Result |
+|---|---|---|---|
+| 96 | Type / lint / unit | `tsc --noEmit` · `eslint .` · `vitest run` | ✅ 0 error / 0 warning · **87 tests, 8 files, 0 failures** |
+| 97 | **Production build is offline** | `next build` (no proxy, no `NODE_USE_ENV_PROXY`) | ✅ **exit 0**, 19 routes, 35 static pages — `next/font/google` removed entirely, so nothing reaches fonts.googleapis.com |
+| 98 | Self-hosted fonts reach the bundle | grep of `.next/static/chunks/*.css` | ✅ **333 `@font-face`**, **329 `/fonts/` urls** — every rule carried over with its `unicode-range`, `font-weight` and `font-display` intact |
+| 99 | Self-hosted fonts are actually served | `next start` :3100 + curl | ✅ `/fonts/fraunces/9f2c…woff2` → **200 `font/woff2` 18652 B**; `/fonts/noto-serif-sc/7c3b…woff2` → **200 `font/woff2` 4604 B** |
+| 100 | Edition default is symmetric between server and client | raw SSR HTML, `curl` with and without the cookie | ✅ no cookie → `data-theme="light"`; `signal-theme=dark` → `data-theme="dark"`. Before the fix a cookie-less first visit painted the **evening** edition and the client store then flipped it to morning — a visible flash. Only an explicit `dark` cookie now selects the evening paper, matching `initialTheme` in `lib/stores/ui.ts` |
+| 101 | i18n key parity | scripted key-set diff, `messages/zh-CN.json` vs `messages/en.json` | ✅ **490 / 490**, both directions empty (recast adds 18 keys: masthead edition/issue labels + front-page kicker/lead/colophon) |
+| 102 | **UI recast · browser walkthrough** | `scripts/brief-verify.mjs` (Playwright 1.58 + real Chrome; `next dev` :3000 → backend :8080; probe account from `scripts/brief-probe-account.mjs`, data from `backend/target/seed-signals.sql`) | ✅ **51 / 51 PASS** — masthead nameplate + dateline (`第 289 期 · … · 晨版`) + live unread badge **2**; morning edition is default and body bg = `rgb(246, 241, 231)`; vertical rail 7 destinations, width **96px**, `.vrail` computed `writing-mode: vertical-rl`; front-page figures strip + lead story (`pgvector 0.8 …`, `score 0.94`) + colophon; ⌘K opens the command center; edition switch → evening paper with body bg = `rgb(20, 20, 15)`; 10 zh-CN routes each render an `h1` with **0 console errors**; locale switch reaches `/en/automation` with an English dateline; **0px horizontal overflow** at 390px on 4 routes; mobile bottom nav visible; **0 console errors across the whole walk** |
+| 103 | **Recast is skin-deep (no logic drift)** | `vitest run` before/after | ✅ the `knowledge`, `agent` and `automation` suites needed **zero edits** and stayed green — only `components/ui/ui.test.tsx` changed, for two assertions bound to the old glow recipe (`Button` shadow, `Input` focus ring) |
+
+> Build note (supersedes the `NODE_USE_ENV_PROXY=1` note above for UI work): fonts are now served from
+> `frontend/public/fonts/` and declared in the generated `frontend/app/fonts.css`, so no build needs the
+> egress proxy any more. Regenerate with `node scripts/selfhost-fonts.mjs` (idempotent; source is the
+> woff2 set the dev build parked in `node_modules/.next-dev-parked/`).
+>
+> Stale-cache note: two builds hung after `Running next.config.ts` with no further output for >2 minutes
+> while a 558 MB `.next` from a killed build was present. Moving it aside
+> (`mv .next node_modules/.next-bak2`, gitignored) and rebuilding compiled in 12.6 s. If a build stalls
+> at that line, the persistent Turbopack cache is the cause, not the code.
+
 ## NOT VERIFIED yet
 
 - Cross-browser (Firefox/WebKit) and screen-reader pass
@@ -175,6 +202,18 @@ Docker `signal-postgres` (pgvector/pgvector:pg16) + `signal-redis`. End-to-end s
 - Scheduler stability over hours/days (tick drift, memory)
 - Push channels for notifications (only the in-app inbox exists)
 - Phase 7 `DESTRUCTIVE` permission has no real tool to walk through (only `READ` / `WRITE` tools ship)
+- **UI recast in production mode**: rows 97–100 prove the build is offline, the fonts land in the bundle,
+  the fonts are served, and the edition default is symmetric — but the **interactive** walkthrough (row 102)
+  ran against `next dev`. The one-line edition-default change that followed the 51/51 run was verified
+  separately by SSR assertion (row 100), not by re-running the walkthrough.
+- **UI recast · cross-browser / screen reader**: Chrome only. `writing-mode: vertical-rl` on the navigation
+  rail has not been assessed with a screen reader.
+- **UI recast · CJK font-weight fidelity**: the 101 Noto Serif SC subset files are referenced by the 400 /
+  600 / 700 `@font-face` rules alike (that is what next/font emitted, and the self-hosting script carried it
+  over verbatim). Dev and production behave identically, but the rendered glyphs were not compared weight by
+  weight against the pre-self-hosting build.
+- **UI recast · visual regression**: no pixel diff between the next/font build and the self-hosted build —
+  only same-source screenshots on the dev side.
 
 ---
-Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze. Phase 6 rows appended at the knowledge-console freeze; Phase 7 (agent) and Phase 8 (automation) rows appended at the Phase 8 freeze, 2026-10-16.
+Filled incrementally by P0 Hardening; browser walkthrough appended at Phase 5.5 S4; responsive + state screenshot pass appended at Phase 5.5 S5; finalized at Phase 5.5 freeze. Phase 6 rows appended at the knowledge-console freeze; Phase 7 (agent) and Phase 8 (automation) rows appended at the Phase 8 freeze, 2026-10-16. UI recast rows 96–103 appended at the direction-B「晨报」delivery, 2026-10-17.

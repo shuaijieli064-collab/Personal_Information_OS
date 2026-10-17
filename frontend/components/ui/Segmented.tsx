@@ -33,7 +33,7 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className="inline-flex items-center gap-0.5 rounded-pill border border-line bg-surface-2 p-0.5"
+      className="inline-flex items-center gap-0.5 rounded-[2px] border border-line bg-surface-2 p-0.5"
     >
       {options.map((opt) => {
         const active = opt.value === value;
@@ -44,7 +44,7 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className={`focus-ring relative rounded-pill font-medium transition-colors duration-200 ${pad} ${
+            className={`focus-ring relative rounded-[2px] font-medium transition-colors duration-200 ${pad} ${
               active ? "text-text-1" : "text-text-3 hover:text-text-2"
             }`}
           >
@@ -52,7 +52,7 @@ export function Segmented<T extends string>({
               <motion.span
                 layoutId={layoutId}
                 transition={{ duration: dur.fast, ease: ease.out }}
-                className="absolute inset-0 rounded-pill border border-line bg-surface-1 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.5)]"
+                className="absolute inset-0 rounded-[2px] border border-line bg-surface-1"
               />
             )}
             <span className="relative z-10 whitespace-nowrap">{opt.label}</span>

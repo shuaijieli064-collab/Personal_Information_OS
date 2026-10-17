@@ -1,0 +1,172 @@
+/* SIGNAL design tokens — 方向B「晨报 The Brief」(default since the 2026-10 recast).
+   A printed morning broadsheet: warm paper ground, ink text, vermillion and
+   ink-blue accents, hairline rules instead of shadows, serif display type.
+
+   Variable names are identical to the legacy console tokens on purpose: the
+   Tailwind @theme mapping in app/globals.css and every component keep working
+   untouched, so this file alone re-skins the whole product.
+
+   Two impressions, one language:
+     :root / [data-theme="light"]  → 晨报 (morning paper, warm white)
+     [data-theme="dark"]           → 晚报 (evening paper, deep ink)
+   The theme switch is the morning/evening edition of the same newspaper.
+
+   Do not hardcode colors elsewhere. */
+
+:root,
+[data-theme="light"] {
+  /* ── 晨报 · 昼 impression ─────────────────────────────────────────── */
+  /* Surfaces — warm paper. bg-1 is the "sheet of paper" that sits on the
+     desk-coloured page; never pure white, never pure grey. */
+  --bg-0: #f6f1e7; /* 版面：暖纸 */
+  --bg-1: #fffdf7; /* 卡：纸片 */
+  --bg-2: #efe9da; /* 嵌面 */
+  --bg-3: #e5ddc9; /* 嵌面 2 */
+
+  /* Lines — printed rules. Hairline by default; strong for mastheads. */
+  --line: #ddd5c0;
+  --line-strong: #c4b99e;
+
+  /* Text — three inks on paper. text-3 stays ≥4.5:1 on --bg-1. */
+  --text-1: #1b1915; /* 墨黑 */
+  --text-2: #4b453a; /* 淡墨 */
+  --text-3: #7a7263; /* 灰墨 */
+
+  /* Accent — ink blue for anything interactive (press ink), vermillion
+     reserved for urgency. Two families, never a third. */
+  --signal: #23456f; /* 墨蓝：主交互 */
+  --signal-2: #b23a2a; /* 朱砂：次系列 / 紧急 */
+  --signal-dim: rgba(35, 69, 111, 0.09);
+  --signal-2-dim: rgba(178, 58, 42, 0.09);
+  --glow: rgba(178, 58, 42, 0.16);
+
+  /* Semantic — printer's ink set */
+  --success: #2f7d4f; /* 松绿 */
+  --warning: #9c6a15; /* 赭黄 */
+  --danger: #a8342a; /* 绛朱 */
+
+  /* Radius — print has almost none. 2–3px keeps hover states from
+     reading as broken, while still being visibly "engineered". */
+  --r-shell: 3px;
+  --r-card: 3px;
+  --r-input: 2px;
+  --r-button: 2px;
+  --r-pill: 9999px;
+  /* Legacy aliases (kept for existing usages during migration) */
+  --r-sm: 2px;
+  --r-md: 3px;
+  --r-lg: 3px;
+
+  /* Typography — serif display for headlines, screen sans for body, mono
+     for every figure. No Inter anywhere: interstitial weight plus low
+     stroke contrast reads as "default web". */
+  --font-sans: var(--font-geist-sans), "Geist", -apple-system, "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-display: var(--font-fraunces), var(--font-noto-serif-sc),
+    "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", "SFMono-Regular",
+    ui-monospace, Consolas, monospace;
+
+  /* Type scale — the cliff between a headline and body copy is the whole
+     point of a broadsheet. Numbers in mono always. */
+  --text-display: clamp(2.6rem, 4.4vw, 3.6rem); /* 42–58, 头条 */
+  --text-hero: clamp(3rem, 5vw, 4.25rem); /* 48–68 */
+  --text-page-title: clamp(1.7rem, 2.2vw, 2.1rem); /* 27–34, 版头 */
+  --text-section-title: 1.1875rem; /* 19 */
+  --text-card-title: 1.0625rem; /* 17 */
+  --text-body: 0.9375rem; /* 15 */
+  --text-meta: 0.75rem; /* 12, 栏目小字 */
+
+  /* Shadows — paper has no light source. A card is a sheet lying on the
+     desk: at most a 1px contact shadow. */
+  --shadow-card: 0 1px 0 rgba(27, 25, 21, 0.05);
+  --shadow-float: 0 2px 10px rgba(27, 25, 21, 0.1);
+
+  /* ── Surface roles ───────────────────────────────────────────────── */
+  --surface-1: var(--bg-1);
+  --surface-2: var(--bg-2);
+  --surface-3: var(--bg-3);
+  --surface-hover: rgba(27, 25, 21, 0.035);
+  --surface-active: rgba(27, 25, 21, 0.06);
+  --hairline: rgba(27, 25, 21, 0.07);
+  --hairline-strong: rgba(27, 25, 21, 0.14);
+  --scrim: rgba(27, 25, 21, 0.42);
+
+  /* Space scale — 4px base */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+  --sp-20: 5rem;
+
+  /* Shell geometry — a narrow vertical rail (竖排文字轨) instead of a
+     wide icon rail, plus a taller masthead. */
+  --w-rail: 104px;
+  --w-rail-collapsed: 60px;
+  --h-topbar: 68px;
+  --w-page: 1120px; /* 版心 */
+  --w-page-wide: 1400px;
+
+  /* Ambient — barely there. A warm tint from the top-left, ink from the
+     bottom-right, and a column grid that reads as 版心 guidelines. */
+  --ambient-a: rgba(178, 58, 42, 0.05);
+  --ambient-b: rgba(35, 69, 111, 0.04);
+  --ambient-grid: rgba(27, 25, 21, 0.05);
+  --grain-opacity: 0.055; /* 纸纤维 */
+
+  /* Motion — print settles, it does not glide. */
+  --dur-instant: 110ms;
+  --dur-fast: 170ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --dur-cinematic: 900ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasize: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── 晚报 · 夜 impression ──────────────────────────────────────────────
+   The evening edition: same broadsheet grammar, printed on dark stock. */
+[data-theme="dark"] {
+  --bg-0: #14140f; /* 深夜纸 */
+  --bg-1: #1d1c16; /* 纸片 */
+  --bg-2: #24231b;
+  --bg-3: #2d2b20;
+
+  --line: rgba(240, 232, 212, 0.11);
+  --line-strong: rgba(240, 232, 212, 0.2);
+
+  --text-1: #f3eddd; /* 米白 */
+  --text-2: #cdc5b0;
+  --text-3: #948c76;
+
+  --signal: #e0705a; /* 亮朱砂：夜版主交互 */
+  --signal-2: #8fb0dd; /* 浅墨蓝 */
+  --signal-dim: rgba(224, 112, 90, 0.14);
+  --signal-2-dim: rgba(143, 176, 221, 0.12);
+  --glow: rgba(224, 112, 90, 0.2);
+
+  --success: #5fae7d;
+  --warning: #d0a04a;
+  --danger: #e0705a;
+
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 2px 12px rgba(0, 0, 0, 0.45);
+
+  --surface-hover: rgba(243, 237, 221, 0.05);
+  --surface-active: rgba(243, 237, 221, 0.08);
+  --hairline: rgba(243, 237, 221, 0.08);
+  --hairline-strong: rgba(243, 237, 221, 0.16);
+  --scrim: rgba(10, 10, 7, 0.66);
+
+  --ambient-a: rgba(224, 112, 90, 0.07);
+  --ambient-b: rgba(143, 176, 221, 0.055);
+  --ambient-grid: rgba(243, 237, 221, 0.05);
+  --grain-opacity: 0.05;
+}

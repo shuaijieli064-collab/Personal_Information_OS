@@ -42,7 +42,7 @@ export default function Home() {
 
       {/* top bar */}
       <header className="relative z-10 flex items-center gap-3 px-6 py-5 sm:px-10">
-        <span className="h-2.5 w-2.5 rounded-full bg-signal shadow-[0_0_14px_var(--glow)]" />
+        <span className="h-2.5 w-2.5 bg-signal-2" />
         <b className="font-display text-[15px] font-bold tracking-[0.18em] text-text-1">
           SIGNAL
         </b>

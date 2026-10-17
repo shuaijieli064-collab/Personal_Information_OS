@@ -22,6 +22,10 @@ const PATCH = {
       collapseRail: "收起侧栏",
       expandRail: "展开侧栏",
       operational: "运行正常",
+      editionMorning: "晨版",
+      editionEvening: "晚版",
+      issue: "第 {n} 期",
+      today: "今日",
     },
     en: {
       search: "Search",
@@ -32,6 +36,10 @@ const PATCH = {
       collapseRail: "Collapse sidebar",
       expandRail: "Expand sidebar",
       operational: "Operational",
+      editionMorning: "Morning edition",
+      editionEvening: "Evening edition",
+      issue: "Issue {n}",
+      today: "Today",
     },
   },
 };
@@ -48,6 +56,23 @@ const NAV_ADD = {
     groupInsight: "Insight",
     signOut: "Sign out",
     signal: "Signal",
+  },
+};
+
+const TODAY_ADD = {
+  "zh-CN": {
+    kicker: "今日要闻",
+    lead: "头条",
+    alsoToday: "其余要闻",
+    noLead: "今日无头条",
+    colophon: "本版由 SIGNAL 依据你的信息源自动编排。",
+  },
+  en: {
+    kicker: "Today's brief",
+    lead: "Lead story",
+    alsoToday: "Also today",
+    noLead: "No lead story today",
+    colophon: "This edition was composed automatically by SIGNAL from your sources.",
   },
 };
 
@@ -80,6 +105,7 @@ for (const locale of LOCALES) {
 
   json.Nav = { ...(json.Nav ?? {}), ...NAV_ADD[locale] };
   json.Topbar = { ...(json.Topbar ?? {}), ...PATCH.Topbar[locale] };
+  json.Today = { ...(json.Today ?? {}), ...TODAY_ADD[locale] };
 
   const out = `${JSON.stringify(json, null, 2)}\n`;
   if (out !== raw) {

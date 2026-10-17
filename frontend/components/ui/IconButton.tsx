@@ -7,14 +7,14 @@ type Size = "sm" | "md" | "lg";
 type Variant = "ghost" | "outline";
 
 const SIZES: Record<Size, string> = {
-  sm: "h-7 w-7 rounded-[8px]",
-  md: "h-9 w-9 rounded-button",
-  lg: "h-11 w-11 rounded-card",
+  sm: "h-7 w-7 rounded-[2px]",
+  md: "h-9 w-9 rounded-[2px]",
+  lg: "h-11 w-11 rounded-[2px]",
 };
 
 const VARIANTS: Record<Variant, string> = {
   ghost: "text-text-2 hover:bg-surface-hover hover:text-text-1",
-  outline: "border border-line bg-bg-1/60 text-text-2 hover:border-line-strong hover:text-text-1",
+  outline: "border border-line bg-bg-1 text-text-2 hover:border-line-strong hover:text-text-1",
 };
 
 /**
@@ -55,7 +55,7 @@ export function IconButton({
       {children}
       {typeof badge === "number" && badge > 0 && (
         <span
-          className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-pill bg-signal px-1 font-mono text-[10px] font-semibold leading-none text-white tabular-nums shadow-[0_2px_8px_-2px_var(--glow)]"
+          className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-pill bg-signal px-1 font-mono text-[10px] font-semibold leading-none text-bg-0 tabular-nums"
         >
           {badge > 99 ? "99+" : badge}
           <span className="sr-only">{` · ${label}`}</span>

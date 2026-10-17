@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@import "../design-tokens/tokens.css";
+@import "./fonts.css";
+@import "../design-tokens/brief.css";
 
 /* Map SIGNAL design tokens into Tailwind v4 theme.
    Dark-first: no prefers-color-scheme auto-switching — the product is cinematic dark. */
@@ -61,11 +62,12 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   Shell primitives — the atoms the recast builds every surface from.
+   Shell primitives — the atoms the broadsheet builds every surface from.
    Kept in @layer components so Tailwind utilities always win.
+   晨报 grammar: rules instead of shadows, sheets instead of panels.
    ═══════════════════════════════════════════════════════════════════ */
 @layer components {
-  /* Card body: surface + hairline + edge highlight + diffusion shadow. */
+  /* Card body: a sheet of paper on the desk — 1px rule, contact shadow only. */
   .surface {
     @apply relative rounded-card border border-line bg-surface-1;
     box-shadow: var(--shadow-card);
@@ -74,42 +76,38 @@
   .surface-inset {
     @apply relative rounded-card border border-line bg-surface-2;
   }
-  /* Raised overlay surface (topbar, popovers, command palette). */
+  /* Raised overlay surface (topbar, popovers, command palette).
+     Opaque on purpose: glass reads as plastic on paper. */
   .surface-raised {
-    @apply relative rounded-card border border-hairline-strong bg-surface-1/85 backdrop-blur-xl;
+    @apply relative rounded-card border border-line-strong bg-surface-1;
     box-shadow: var(--shadow-float);
   }
-  /* Top edge highlight — the 1px catch of light that makes a card read
-     as a physical object rather than a filled rectangle. */
+
+  /* Top rule — the hairline that closes a sheet. Flat, never a gradient:
+     print has one ink weight per rule. */
   .edge-highlight::before {
     content: "";
-    @apply pointer-events-none absolute inset-x-0 top-0 h-px rounded-pill;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--hairline-strong) 20%,
-      var(--hairline-strong) 80%,
-      transparent
-    );
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px;
+    background: var(--line-strong);
   }
 
-  /* Ambient field: two low-opacity radials + a hairline grid that fades
-     out before it reaches the content. Fixed, non-interactive, GPU-only. */
+  /* Ambient field — two barely-there tints + a column grid that reads as
+     版心 guidelines. Fixed, non-interactive, and cheap: no blur filter. */
   .ambient {
     @apply pointer-events-none fixed inset-0 -z-10 overflow-hidden;
   }
   .ambient::before {
     content: "";
-    @apply absolute -top-[35vh] -left-[15vw] h-[85vh] w-[65vw] rounded-full blur-[120px];
-    background: radial-gradient(circle, var(--ambient-a), transparent 68%);
+    @apply absolute -top-[30vh] -left-[12vw] h-[75vh] w-[60vw] rounded-full;
+    background: radial-gradient(circle, var(--ambient-a), transparent 66%);
   }
   .ambient::after {
     content: "";
-    @apply absolute -right-[20vw] -bottom-[40vh] h-[80vh] w-[55vw] rounded-full blur-[130px];
-    background: radial-gradient(circle, var(--ambient-b), transparent 70%);
+    @apply absolute -right-[16vw] -bottom-[32vh] h-[70vh] w-[50vw] rounded-full;
+    background: radial-gradient(circle, var(--ambient-b), transparent 68%);
   }
 
-  /* Hairline grid, masked so it dissolves instead of ending abruptly. */
+  /* Column grid, masked so it dissolves instead of ending abruptly. */
   .ambient-grid {
     @apply pointer-events-none absolute inset-0;
     background-image: linear-gradient(to right, var(--ambient-grid) 1px, transparent 1px),
@@ -123,11 +121,39 @@
     );
   }
 
-  /* Fine grain — kills the "flat CSS" look at near-zero cost. */
+  /* Fine grain — paper fibre. Kills the "flat CSS" look at near-zero cost. */
   .grain {
-    @apply pointer-events-none fixed inset-0 -z-10 mix-blend-overlay;
+    @apply pointer-events-none fixed inset-0 -z-10 mix-blend-multiply dark:mix-blend-overlay;
     opacity: var(--grain-opacity);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Newspaper rules ────────────────────────────────────────────────
+     The vertical grammar of a broadsheet: kickers, rules, hairline
+     columns. Every divider in the product should come from here. */
+  .rule {
+    @apply h-px w-full border-0 bg-line;
+  }
+  /* The double rule under a masthead. */
+  .rule-double {
+    @apply h-[3px] w-full border-0;
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+    background: transparent;
+  }
+  /* Kicker: a section label above its headline — small, tracked out. */
+  .kicker {
+    @apply text-meta font-medium uppercase tracking-[0.22em] text-text-3;
+    font-family: var(--font-sans);
+  }
+  /* Dateline: date · issue number, set in mono so it never reflows. */
+  .dateline {
+    @apply font-mono text-meta tabular-nums tracking-[0.08em] text-text-3;
+  }
+  /* Vertical writing — the rail runs top-to-bottom, right-to-left. */
+  .vrail {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
   }
 
   /* Navigation rail item — the shared shape for sidebar + mobile tabs. */
@@ -140,32 +166,29 @@
   .rail-link[aria-current="page"] {
     @apply bg-signal-dim text-signal;
   }
+  /* Active mark: a solid rule on the leading edge, not a glow. */
+  .rail-link[aria-current="page"]::before {
+    content: "";
+    @apply pointer-events-none absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-pill;
+    background: var(--signal);
+  }
 
   /* Focus ring for keyboard users on custom (non-base) interactive bits. */
   .focus-ring {
     @apply outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal;
   }
 
-  /* Tactile card hover — 1px lift + edge sweep. Compositor-friendly:
-     transform and colour only, never layout properties. */
+  /* Tactile card hover — print does not lift. Only the rule darkens. */
   .card-lift {
-    @apply transition-[transform,border-color,box-shadow] duration-200 ease-[var(--ease-out)];
+    @apply transition-[border-color,background-color] duration-200 ease-[var(--ease-out)];
   }
   .card-lift:hover {
-    @apply border-hairline-strong;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-float);
+    @apply border-line-strong bg-surface-2;
   }
-  .card-lift:active {
-    transform: translateY(0);
-  }
-  .card-lift::after {
-    content: "";
-    @apply pointer-events-none absolute inset-x-4 top-0 h-px opacity-0 transition-opacity duration-200;
-    background: linear-gradient(90deg, transparent, var(--signal), transparent);
-  }
-  .card-lift:hover::after {
-    @apply opacity-60;
+
+  /* Ledger row — a hairline-separated line of a table or log. */
+  .ledger-row {
+    @apply flex items-center justify-between gap-3 border-b border-line py-2.5 last:border-b-0;
   }
 }
 

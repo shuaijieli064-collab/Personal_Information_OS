@@ -7,19 +7,14 @@ type UiState = {
   commandOpen: boolean;
   setCommandOpen: (open: boolean) => void;
 
-  /** Desktop navigation rail: collapsed to icons only (persisted). */
-  railCollapsed: boolean;
-  setRailCollapsed: (collapsed: boolean) => void;
-  toggleRail: () => void;
-
-  /** Visual theme (dark-first cinematic default) */
+  /** Visual theme: "light" is the morning broadsheet, "dark" the evening one. */
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 };
 
-const initialTheme: Theme = "dark";
-const RAIL_KEY = "signal-rail";
+/* The morning paper is the front page; "dark" prints the evening edition. */
+const initialTheme: Theme = "light";
 const THEME_KEY = "signal-theme";
 
 /** Mirror the theme into a cookie so the server can render the right theme
@@ -38,27 +33,9 @@ function persistTheme(theme: Theme) {
   }
 }
 
-function readRail(): boolean {
-  try {
-    return localStorage.getItem(RAIL_KEY) === "collapsed";
-  } catch {
-    return false;
-  }
-}
-
 export const useUiStore = create<UiState>((set, get) => ({
   commandOpen: false,
   setCommandOpen: (commandOpen) => set({ commandOpen }),
-  railCollapsed: readRail(),
-  setRailCollapsed: (collapsed) => {
-    try {
-      localStorage.setItem(RAIL_KEY, collapsed ? "collapsed" : "expanded");
-    } catch {
-      /* storage unavailable (private mode) — in-memory state still works */
-    }
-    set({ railCollapsed: collapsed });
-  },
-  toggleRail: () => get().setRailCollapsed(!get().railCollapsed),
   theme: initialTheme,
   setTheme: (theme) => {
     persistTheme(theme);

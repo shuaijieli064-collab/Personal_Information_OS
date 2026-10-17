@@ -17,8 +17,10 @@
 | 6 | Knowledge & Retrieval | Chunk、Embedding、Vector Retrieval、Hybrid Search、Rerank、RAG、Citation、Context Builder | ✅ Frozen 2026-10-16（`docs/PHASE_6_FINAL_QA.md`） |
 | 7 | Agent & Tools | Tool Registry、Permission、Planner/Executor、Audit、Confirmation、Failure Recovery | ✅ Frozen 2026-10-16（`docs/PHASE_7_FINAL_QA.md`） |
 | 8 | Automation | Scheduled Sync、Daily Brief、Notification、Feedback Loop、Job Monitoring、Retry/Dead Letter | ✅ Frozen 2026-10-16（`docs/PHASE_8_FINAL_QA.md`） |
+| **5.5+** | **UI 重铸 · 方向 B「晨报 The Brief」** | 四轴反转设计语言、报头 + 竖排文字轨 + 头版语法、晨/晚报双 impression、字体自托管（构建离线化） | **✅ 完成 2026-10-17（`docs/UI_RECAST_BRIEF.md`）** |
 
 **硬性顺序**：先 Hardening，再 5.5，再 6 → 7 → 8。不在不稳定基础上堆功能。
+5.5+ 是在 Phase 8 冻结之后、对**视觉层**的独立重铸，不触碰 Phase 1–8 的任何后端契约。
 
 ## P0 Hardening queue (H1–H6)
 
@@ -64,6 +66,21 @@
 
 **Phase 6–8 已记录偏差**：重排故障降级而嵌入故障 502（重排是精度增强，不是可用性前提）；调度器为单实例假设，无分布式互斥；排期只支持固定间隔（无 cron / 自然语言）；简报计数上限为 100 的扫描近似；`DESTRUCTIVE` 权限已建模但暂无工具使用。
 
+## 5.5+ UI 重铸 — 方向 B「晨报 The Brief」
+
+| 单元 | 内容 | Status |
+|---|---|---|
+| 方向选择 | 三方向并排对比（B 晨报 / C 临床 / D 会所），按明度·材质·字体·几何四轴量化差异，用户拍板 **B** | ✅ |
+| 令牌层 | `design-tokens/brief.css` 沿用旧令牌**同名变量**，`globals.css` 只改 import → 全部组件无需改名即换装 | ✅ |
+| 外壳 | 报头 `Masthead`（名plate + 朱砂印 + dateline 期号日期 + 工具组 + 双细规线）；竖排文字轨 `Sidebar`（`writing-mode: vertical-rl`，永不折叠）；删除 `TopBar` | ✅ |
+| 页面 | 头版 `today`（数据条 → 头条 → 双分栏 → 报尾）、auth 报纸展开页、intro、landing | ✅ |
+| 组件基元 | Button/Chip/IconButton/Input/Select/Segmented/Skeleton/PageHeader/StatCard/AuthCard/CommandCenter/SignalTimeline/CornerControls 全部扁平化（圆角 2–3px，去玻璃/光晕/投影） | ✅ |
+| 双版式 | `light` 晨报（默认）/ `dark` 晚报；cookie 驱动 SSR 首屏不闪烁 | ✅ |
+| 字体自托管 | `scripts/selfhost-fonts.mjs` → `frontend/public/fonts/`（115 woff2 / 6.3 MB）+ 生成 `frontend/app/fonts.css`（333 `@font-face`）；移除 `next/font/google`，构建离线化 | ✅ |
+| 验证 | tsc / eslint / vitest 87 / `next build` 19 路由 / 字体可达性 / 浏览器走查 **51/51** / i18n 490 键对齐 | ✅ |
+
+**5.5+ 已记录偏差**：主题由 cookie 驱动使路由表从「35 页静态预渲染」变为 **19 条全 `ƒ` Dynamic**（SSR 首屏不闪烁的代价）；CJK 自托管占仓库 5.75 MB（运行时不浪费，`unicode-range` 按需下载）；生产模式交互走查与跨浏览器/读屏仍未做（沿用 Phase 6–8 遗留项）。
+
 ## Risks
 
 | Risk | Mitigation |
@@ -85,6 +102,6 @@
   - 代理计划升级：依赖图、失败后重新规划、跨运行记忆。
   - `/api/v1/discover` 后端端点（前端目前是本地兜底，端点上线后恢复探测）。
   - 检索规模化：>10⁵ chunks 的延迟与召回基准、按文档/时间范围过滤、多轮问答。
-- **遗留技术债**：生产模式（`next start`）下的浏览器交互走查；跨浏览器（Firefox/WebKit）与读屏；`DESTRUCTIVE` 权限尚无真实工具可走查。
+- **遗留技术债**：生产模式（`next start`）下的浏览器交互走查；跨浏览器（Firefox/WebKit）与读屏；`DESTRUCTIVE` 权限尚无真实工具可走查；UI 重铸的 CJK 字重逐字比对与像素级视觉回归。
 
 每阶段交付必须附：验收模板（Scope/变更/测试结果/运行验证/已知问题/未验证项/冻结结论）→ `docs/PHASE_X_FINAL_QA.md`。

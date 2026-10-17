@@ -4,20 +4,20 @@ import { Spinner } from "./Spinner";
 type Variant = "primary" | "outline" | "danger" | "ghost";
 type Size = "sm" | "md" | "lg";
 
+/* A broadsheet has two kinds of button: the printed one (solid ink) and the
+   ruled one (hairline outline). No glow, no gradient — ink is flat. */
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    "bg-signal text-white shadow-[0_14px_38px_-14px_var(--glow),inset_0_1px_0_rgba(255,255,255,0.25)] hover:brightness-110 hover:shadow-[0_18px_46px_-12px_var(--glow),inset_0_1px_0_rgba(255,255,255,0.3)]",
+  primary: "bg-signal text-bg-0 hover:bg-signal/90",
   outline:
-    "border border-line-strong bg-white/5 text-text-2 hover:border-signal/60 hover:text-text-1",
-  danger:
-    "border border-danger/60 text-danger hover:bg-danger hover:text-white",
+    "border border-line-strong bg-transparent text-text-2 hover:border-signal hover:text-signal",
+  danger: "border border-danger/60 bg-transparent text-danger hover:bg-danger hover:text-bg-0",
   ghost: "text-text-2 hover:bg-surface-hover hover:text-text-1",
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 gap-1.5 rounded-[9px] px-3 text-[13px]",
-  md: "h-10 gap-2 rounded-button px-4 text-sm",
-  lg: "h-12 gap-2.5 rounded-button px-5 text-[15px]",
+  sm: "h-8 gap-1.5 rounded-[2px] px-3 text-[13px]",
+  md: "h-10 gap-2 rounded-[2px] px-4 text-sm",
+  lg: "h-12 gap-2.5 rounded-[2px] px-5 text-[15px]",
 };
 
 /** Shared button: variant + size + optional loading spinner + disabled handling. */
@@ -42,7 +42,7 @@ export function Button({
     <button
       {...rest}
       disabled={disabled || loading}
-      className={`focus-ring inline-flex items-center justify-center font-medium transition-[transform,filter,background-color,border-color,color,box-shadow] duration-200 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 ${
+      className={`focus-ring inline-flex items-center justify-center font-medium tracking-[0.01em] transition-[background-color,border-color,color] duration-150 active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 ${
         iconOnly ? SIZES[size].replace(/px-[\d.]+/, "px-0") + " aspect-square" : SIZES[size]
       } ${VARIANTS[variant]} ${className}`}
     >

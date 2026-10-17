@@ -184,7 +184,12 @@
     "knowledgeSub": "Information → Signal compression is your knowledge growth.",
     "chartNew": "New information",
     "chartSignals": "Signals",
-    "chartActions": "Actions"
+    "chartActions": "Actions",
+    "kicker": "Today's brief",
+    "lead": "Lead story",
+    "alsoToday": "Also today",
+    "noLead": "No lead story today",
+    "colophon": "This edition was composed automatically by SIGNAL from your sources."
   },
   "Inbox": {
     "title": "Inbox",
@@ -552,6 +557,10 @@
     "toDark": "Switch to dark theme",
     "collapseRail": "Collapse sidebar",
     "expandRail": "Expand sidebar",
-    "operational": "Operational"
+    "operational": "Operational",
+    "editionMorning": "Morning edition",
+    "editionEvening": "Evening edition",
+    "issue": "Issue {n}",
+    "today": "Today"
   }
 }

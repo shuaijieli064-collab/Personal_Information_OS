@@ -3,15 +3,6 @@ import { motion } from "framer-motion";
 import type { Tone } from "@/lib/ui/tone";
 import { fadeIn } from "@/components/motion/motion-config";
 
-const TONE_TEXT: Record<Tone, string> = {
-  neutral: "text-text-2",
-  signal: "text-signal",
-  accent: "text-signal-2",
-  success: "text-success",
-  warning: "text-warning",
-  danger: "text-danger",
-};
-
 const TONE_BAR: Record<Tone, string> = {
   neutral: "bg-text-3/40",
   signal: "bg-signal",
@@ -22,9 +13,10 @@ const TONE_BAR: Record<Tone, string> = {
 };
 
 /**
- * StatCard — a metric with its own hierarchy: label on top, the figure at
- * display scale, an optional micro-visualisation, and a footnote that says
- * what the number means rather than restating it.
+ * StatCard — a metric set the way a newspaper sets one: a heavy rule across
+ * the top, the label kicked out beside it, and the figure at display scale in
+ * mono so columns of numbers stay aligned. No card surface, no icon chip —
+ * the rule does the separating.
  */
 export function StatCard({
   label,
@@ -33,7 +25,6 @@ export function StatCard({
   tone = "neutral",
   hint,
   micro,
-  icon,
   index = 0,
 }: {
   label: string;
@@ -43,7 +34,6 @@ export function StatCard({
   tone?: Tone;
   hint?: ReactNode;
   micro?: ReactNode;
-  icon?: ReactNode;
   index?: number;
 }) {
   return (
@@ -52,27 +42,21 @@ export function StatCard({
       custom={index}
       initial="hidden"
       animate="show"
-      className="surface edge-highlight flex flex-col p-6"
+      className="flex flex-col pt-3"
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-3">
-          {label}
-        </p>
-        {icon && <span className="text-text-3">{icon}</span>}
-      </div>
+      {/* Heavy rule — the editorial device that groups a stat to its label. */}
+      <span aria-hidden="true" className={`mb-3 block h-[2px] w-9 ${TONE_BAR[tone]}`} />
 
-      <p className="mt-4 flex items-baseline gap-1.5">
-        <span
-          className={`font-mono text-[clamp(2.25rem,3.2vw,2.9rem)] font-semibold leading-none tracking-[-0.035em] tnum ${TONE_TEXT[tone]}`}
-        >
+      <p className="kicker">{label}</p>
+
+      <p className="mt-2.5 flex items-baseline gap-1.5">
+        <span className="font-mono text-[clamp(2.1rem,3vw,2.6rem)] font-medium leading-none tracking-[-0.03em] text-text-1 tnum">
           {value}
         </span>
-        {suffix && (
-          <span className="font-mono text-sm font-medium text-text-3">{suffix}</span>
-        )}
+        {suffix && <span className="font-mono text-sm font-medium text-text-3">{suffix}</span>}
       </p>
 
-      <div className="mt-5">{micro ?? <div className="h-1.5 rounded-pill bg-white/6" />}</div>
+      {micro && <div className="mt-4">{micro}</div>}
 
       {hint && <p className="mt-3 text-xs leading-relaxed text-text-3">{hint}</p>}
     </motion.div>

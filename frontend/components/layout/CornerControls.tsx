@@ -7,10 +7,12 @@ import { routing, type Locale } from "@/i18n/routing";
 import { useUiStore } from "@/lib/stores/ui";
 
 /**
- * CornerControls — appearance + locale for pages that sit outside the app
- * shell (login, register). Pinned to the top-right so it never competes
- * with the form, and hidden entirely inside the shell (the TopBar owns
- * both affordances there).
+ * CornerControls — edition + locale for pages that sit outside the app shell
+ * (login, register). Pinned to the top-right so it never competes with the
+ * form, and hidden entirely inside the shell (the Masthead owns both
+ * affordances there).
+ *
+ * Flat hairline chips on the paper, not floating glass.
  */
 export function CornerControls() {
   const t = useTranslations("Topbar");
@@ -30,16 +32,16 @@ export function CornerControls() {
         onClick={() => router.replace(pathname, { locale: nextLocale })}
         aria-label={t("switchLocale")}
         title={t("switchLocale")}
-        className="focus-ring flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-button border border-line bg-bg-1/70 px-2.5 text-[11px] font-semibold text-text-2 backdrop-blur-md transition-colors hover:border-line-strong hover:text-text-1"
+        className="focus-ring flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-[2px] border border-line bg-bg-1 px-2.5 text-[11px] font-semibold text-text-2 transition-colors hover:border-line-strong hover:text-text-1"
       >
         <span className="font-mono">{nextLocale === "zh-CN" ? "中" : "EN"}</span>
       </button>
       <button
         type="button"
         onClick={toggleTheme}
-        aria-label={isDark ? t("toLight") : t("toDark")}
-        title={isDark ? t("toLight") : t("toDark")}
-        className="focus-ring flex h-9 w-9 items-center justify-center rounded-button border border-line bg-bg-1/70 text-text-2 backdrop-blur-md transition-colors hover:border-line-strong hover:text-text-1"
+        aria-label={isDark ? t("editionMorning") : t("editionEvening")}
+        title={isDark ? t("editionMorning") : t("editionEvening")}
+        className="focus-ring flex h-9 w-9 items-center justify-center rounded-[2px] border border-line bg-bg-1 text-text-2 transition-colors hover:border-line-strong hover:text-text-1"
       >
         {isDark ? <Sun size={16} /> : <Moon size={16} />}
       </button>

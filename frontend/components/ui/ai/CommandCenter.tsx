@@ -123,7 +123,7 @@ export function CommandCenter() {
     <AnimatePresence>
       {commandOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center bg-bg-0/80 px-4 pt-[18vh] backdrop-blur-xl"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-bg-0/92 px-4 pt-[18vh]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

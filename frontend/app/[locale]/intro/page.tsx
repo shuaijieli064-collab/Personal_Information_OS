@@ -45,7 +45,7 @@ export default function IntroPage() {
         <button
           type="button"
           onClick={() => setPhase("done")}
-          className="absolute right-5 top-5 rounded-md border border-line bg-bg-1/80 px-3 py-1.5 text-xs text-text-2 backdrop-blur-md transition-colors hover:border-signal hover:text-text-1"
+          className="focus-ring absolute right-5 top-5 rounded-[2px] border border-line bg-bg-1 px-3 py-1.5 text-xs text-text-2 transition-colors hover:border-signal hover:text-text-1"
         >
           {t("skip")}
         </button>

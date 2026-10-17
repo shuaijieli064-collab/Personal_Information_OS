@@ -7,7 +7,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
-      className={`skeleton-shimmer relative overflow-hidden rounded-card bg-bg-1 ${className}`}
+      className={`skeleton-shimmer relative overflow-hidden rounded-[2px] bg-bg-1 ${className}`}
     />
   );
 }

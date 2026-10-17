@@ -24,9 +24,9 @@ export function SignalTimeline({ signals }: { signals: SignalItem[] }) {
           transition={{ duration: dur.base, ease: ease.out, delay: i * 0.04 }}
           className="relative"
         >
-          <span className="absolute -left-[27px] top-1.5 h-2.5 w-2.5 rounded-full bg-signal shadow-[0_0_12px_rgba(77,157,255,0.7)]">
+          <span className="absolute -left-[27px] top-1.5 h-2.5 w-2.5 bg-signal">
             <motion.span
-              className="absolute inset-0 rounded-full bg-signal"
+              className="absolute inset-0 bg-signal"
               animate={{ opacity: [0.6, 0], scale: [1, 2.4] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
             />

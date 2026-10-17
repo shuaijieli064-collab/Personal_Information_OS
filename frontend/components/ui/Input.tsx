@@ -1,7 +1,8 @@
 import type { InputHTMLAttributes } from "react";
 
 /**
- * Shared text input with the SIGNAL dark-first field styling.
+ * Shared text input. A ruled field on paper: hairline border, 2px
+ * corners, and an ink underline on focus instead of a glow.
  *
  * The background is supplied through `className` (default `bg-bg-1`) rather
  * than baked into the base string, so a caller on a `bg-bg-1` card can pass
@@ -15,7 +16,7 @@ export function Input({
   return (
     <input
       {...rest}
-      className={`w-full rounded-input border border-line px-3.5 py-2.5 text-sm text-text-1 outline-none transition-all duration-200 placeholder:text-text-3 focus:border-signal/70 focus:ring-2 focus:ring-signal/25 focus:shadow-[0_0_18px_-6px_var(--glow)] ${className}`}
+      className={`w-full rounded-[2px] border border-line px-3.5 py-2.5 text-sm text-text-1 outline-none transition-all duration-200 placeholder:text-text-3 focus:border-signal focus:ring-1 focus:ring-signal/40 ${className}`}
     />
   );
 }

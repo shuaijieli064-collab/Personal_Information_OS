@@ -170,6 +170,30 @@ export const signalsApi = {
     api.patch<SignalItem>(`/api/v1/signals/${id}`, { status }),
 };
 
+/* The personalisation graph. Discover reads it for its "based on your goals"
+   line so the chips come from the account instead of a hardcoded list. */
+export type Profile = {
+  bio?: string; displayName?: string; language?: string;
+  timezone?: string; theme?: string; avatarUrl?: string;
+  onboardingCompleted?: boolean;
+};
+export type Goal = {
+  id: string; title: string; status: string; priority: number; description?: string;
+};
+export type Interest = {
+  id: string; name: string; weight: number; source: string;
+};
+export type Skill = {
+  id: string; name: string; level: string;
+};
+
+export const profileApi = {
+  get: () => api.get<Profile>("/api/v1/profile"),
+  goals: () => api.get<Goal[]>("/api/v1/goals"),
+  interests: () => api.get<Interest[]>("/api/v1/interests"),
+  skills: () => api.get<Skill[]>("/api/v1/skills"),
+};
+
 export const informationApi = {
   page: (page = 0, size = 20) =>
     api.get<{ items: InformationItem[]; total: number }>(

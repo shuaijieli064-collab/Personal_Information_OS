@@ -183,6 +183,33 @@ TOTAL             21 files 797.3 KB
 
 生成器现在会在「文件被多字重共享但**不是**可变字体」时**直接报错退出**，杜绝以后再悄悄引入该缺陷。
 
+### 7.4 Discover 页 i18n 泄漏与伪造标签，已修
+
+走查程序员学习账号时发现的**真实产品缺陷**（不是断言写错）：`/discover` 在中文界面渲染硬编码英文文案
+（`You follow Java · AI backend`），并且「基于你的目标」后面跟的是**凭空捏造的** `Java · Backend · AI`。
+
+修法是把「用户可读的一切」收进消息目录：
+
+- `lib/api/queries.ts` 的 `useDiscover` 改为返回 `reasonKey` / `categoryKey`（产品名保持字面量——
+  它们是两种语言下的专有名词），由页面 `t()` 解析；
+- 页头标签改从账号的**真实** personalisation 图谱推导（新增 `profileApi` 与
+  `useProfile` / `useGoals` / `useInterests` / `useSkills`）：按权重取前 4 个兴趣，无兴趣时退回技能，
+  两者都空时显示诚实的 `Discover.basedOnEmpty` 而不是猜；
+- 新键经 `scripts/sync-i18n.mjs` 写入两套目录（**497 / 497** 键集相等，往返字节稳定，重跑为 no-op）。
+
+浏览器实证（`scripts/learn-verify.mjs`，19/19）：页头渲染
+`基于你的目标: 系统设计 · 分布式 · 数据库 · PostgreSQL`——正是该账号权重最高的四个兴趣。
+
+### 7.5 程序员学习账号
+
+`scripts/seed-programmer-account.mjs` 注册专用账号并灌入完整语料：6 个订阅源、17 条信息、
+17 条信号（0.72–0.96，覆盖 ACTIVE / SAVED / IMPORTANT / ARCHIVED）、标签、反馈、5 条通知（含晨报正文）、
+3 个调度任务 + 7 条运行历史，以及目标 / 兴趣 / 技能。`scripts/learn-verify.mjs` 驱动 Chrome 走查
+该账号的 19 项断言，**dev 与生产两轮均 19/19**。
+
+顺带修正两条**写错的断言**（产品本身没问题）：`innerText` 取不到 `<textarea>` 的 value（改用
+`inputValue()`）；discover 的断言原本在找一个该页面从未有过的字符串。
+
 ---
 
 ## 8. 已知问题
@@ -205,8 +232,11 @@ TOTAL             21 files 797.3 KB
 - **自托管字体的像素级视觉回归**：未做「自托管前 vs 自托管后」的 diff。
   自托管的 CSS 是 next/font 产物的**逐字搬运**（只重写 `url()`），预期无差异，但没有实测。
 - **`output: standalone` 产物**：`next start` 会警告它与 `output: standalone` 不兼容；
-  第 104–106 行的验证用的是 `next start`，它能正确服务生产构建。
+  第 104–106、111 行的验证用的是 `next start`，它能正确服务生产构建。
   Dockerfile 实际发布的 `node .next/standalone/server.js` 尚未跑过。
+- **`/discover` 的推荐是确定性占位，不是模型输出**：`GET /api/v1/discover` 尚无控制器
+  （见 `docs/ROADMAP.md`），`useDiscover` 返回固定四张卡片；只有页头标签是活的（来自真实兴趣/技能）。
+  该卡片集按程序员学习画像撰写，未在其他画像上验证。
 
 > 已结案（原 NOT VERIFIED，本轮补齐）：生产模式交互走查（§7.1）、CJK 字重保真（§7.3）、
 > 浏览器实际取用自托管字体（§7.2）。
@@ -218,5 +248,9 @@ TOTAL             21 files 797.3 KB
 方向 B「晨报 The Brief」**视觉层交付完成**：令牌、外壳、组件基元、主要页面、双版式主题、
 字体自托管全部落地；类型 / Lint / 单测 / 构建 / 字体可达性 / **dev 与生产两轮浏览器走查** 七道门禁全绿，
 且业务测试件零修改。后端与 API 契约未受影响。
+
+本轮追加：程序员学习账号 + 19 项走查（§7.5）、Discover 页 i18n 泄漏与伪造标签修复（§7.4）、
+修复后生产构建复跑（333 `@font-face` / 115 woff2 引用，`brief-verify` 51/51、`learn-verify` 19/19、
+`brief-fonts` 12/12）。
 
 **遗留动作**：跨浏览器与读屏补做；`output: standalone` 产物走查；自托管前后像素级 diff。

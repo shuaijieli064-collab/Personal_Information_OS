@@ -76,6 +76,35 @@ const TODAY_ADD = {
   },
 };
 
+const DISCOVER_ADD = {
+  "zh-CN": {
+    basedOnEmpty: "完善你的目标与兴趣后，这里会更懂你",
+    category: {
+      library: "开发库",
+      learning: "学习资源",
+    },
+    reason: {
+      springAi: "你在学 RAG 与 AI 应用，Spring AI 是 Java 侧最直接的落点。",
+      projectReactor: "你做后端性能优化，Reactor 的响应式模型值得放进工具箱。",
+      jvmInternals: "DDIA 之外的硬基础——延迟从哪来，最终要回到 JVM 里找答案。",
+      langchain4j: "和 Spring AI 对照着看，LangChain4j 的编排抽象能补全你的选型视野。",
+    },
+  },
+  en: {
+    basedOnEmpty: "Add goals and interests and this page will learn you",
+    category: {
+      library: "Library",
+      learning: "Learning",
+    },
+    reason: {
+      springAi: "You are learning RAG and AI applications — Spring AI is the most direct path on the JVM.",
+      projectReactor: "You tune backend performance; the reactive model belongs in your toolbox.",
+      jvmInternals: "Hard foundations next to DDIA — a latency spike always comes back to the JVM.",
+      langchain4j: "Weighed against Spring AI, its orchestration abstraction rounds out your options.",
+    },
+  },
+};
+
 /** Namespaces whose owning component was deleted in the UI recast. */
 const DROP_NAMESPACES = ["LocaleSwitch"];
 
@@ -106,6 +135,12 @@ for (const locale of LOCALES) {
   json.Nav = { ...(json.Nav ?? {}), ...NAV_ADD[locale] };
   json.Topbar = { ...(json.Topbar ?? {}), ...PATCH.Topbar[locale] };
   json.Today = { ...(json.Today ?? {}), ...TODAY_ADD[locale] };
+  json.Discover = {
+    ...(json.Discover ?? {}),
+    basedOnEmpty: DISCOVER_ADD[locale].basedOnEmpty,
+    category: { ...(json.Discover?.category ?? {}), ...DISCOVER_ADD[locale].category },
+    reason: { ...(json.Discover?.reason ?? {}), ...DISCOVER_ADD[locale].reason },
+  };
 
   const out = `${JSON.stringify(json, null, 2)}\n`;
   if (out !== raw) {

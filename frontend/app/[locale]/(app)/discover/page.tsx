@@ -1,16 +1,39 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useDiscover } from "@/lib/api/queries";
+import { useDiscover, useInterests, useSkills } from "@/lib/api/queries";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 
+/** Chips beyond this get folded away — the header is a standfirst, not a tag cloud. */
+const MAX_CHIPS = 4;
+
+/**
+ * The header claims these recommendations come from the user's goals, so the chips
+ * must be derived from the real personalisation graph instead of a hardcoded list.
+ * Interests are short and weighted, so they lead; skills fill in while no interest
+ * has been stated yet. Both live on cached query keys shared with the settings page.
+ */
+function useGoalChips(): string[] {
+  const interests = useInterests();
+  const skills = useSkills();
+
+  const byWeight = [...(interests.data ?? [])]
+    .sort((a, b) => b.weight - a.weight)
+    .map((i) => i.name);
+  if (byWeight.length) return byWeight.slice(0, MAX_CHIPS);
+
+  const named = (skills.data ?? []).map((s) => s.name);
+  return named.slice(0, MAX_CHIPS);
+}
+
 /** Discover — AI-recommended information sources, not a search box. */
 export default function DiscoverPage() {
   const t = useTranslations("Discover");
   const { data, isLoading, error } = useDiscover();
+  const chips = useGoalChips();
 
   return (
     <main className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
@@ -19,7 +42,11 @@ export default function DiscoverPage() {
         description={
           <>
             {t("basedOn")}:{" "}
-            <span className="text-signal">Java · Backend · AI</span>
+            {chips.length ? (
+              <span className="text-signal">{chips.join(" · ")}</span>
+            ) : (
+              <span className="text-text-3">{t("basedOnEmpty")}</span>
+            )}
           </>
         }
       />
@@ -49,13 +76,15 @@ export default function DiscoverPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs uppercase tracking-wider text-text-3">
-                  {item.category}
+                  {t(`category.${item.categoryKey}`)}
                 </p>
                 <div className="mt-4 border-t border-line pt-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-text-3">
                     {t("whyRecommended")}
                   </p>
-                  <p className="mt-1 text-sm text-text-2">{item.reason}</p>
+                  <p className="mt-1 text-sm text-text-2">
+                    {t(`reason.${item.reasonKey}`)}
+                  </p>
                 </div>
               </Card>
             </StaggerItem>

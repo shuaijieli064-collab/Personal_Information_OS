@@ -247,7 +247,18 @@
     "title": "发现",
     "basedOn": "基于你的目标",
     "whyRecommended": "为什么推荐",
-    "loadFailed": "推荐加载失败"
+    "loadFailed": "推荐加载失败",
+    "basedOnEmpty": "完善你的目标与兴趣后，这里会更懂你",
+    "category": {
+      "library": "开发库",
+      "learning": "学习资源"
+    },
+    "reason": {
+      "springAi": "你在学 RAG 与 AI 应用，Spring AI 是 Java 侧最直接的落点。",
+      "projectReactor": "你做后端性能优化，Reactor 的响应式模型值得放进工具箱。",
+      "jvmInternals": "DDIA 之外的硬基础——延迟从哪来，最终要回到 JVM 里找答案。",
+      "langchain4j": "和 Spring AI 对照着看，LangChain4j 的编排抽象能补全你的选型视野。"
+    }
   },
   "Knowledge": {
     "title": "知识",

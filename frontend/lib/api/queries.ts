@@ -8,6 +8,7 @@ import {
   informationApi,
   knowledgeApi,
   notificationApi,
+  profileApi,
   signalsApi,
   sourcesApi,
   todayApi,
@@ -33,6 +34,10 @@ export const queryKeys = {
   briefLatest: ["brief", "latest"] as const,
   notificationsAll: ["notifications"] as const,
   notifications: (unread: boolean) => ["notifications", unread] as const,
+  profile: ["profile"] as const,
+  goals: ["goals"] as const,
+  interests: ["interests"] as const,
+  skills: ["skills"] as const,
 };
 
 export function useToday() {
@@ -121,26 +126,59 @@ export function useSyncSource() {
 
 export type DiscoverItem = {
   name: string;
-  reason: string;
-  category: string;
+  /** i18n key suffix under `Discover.reason` — never prose. */
+  reasonKey: string;
+  /** i18n key suffix under `Discover.category`. */
+  categoryKey: string;
   confidence: number;
 };
 
 /**
  * Discover — AI-recommended sources. GET /api/v1/discover is still planned
- * (docs/API.md, no controller yet), so we serve a deterministic local
- * recommendation layer directly: the page stays interactive and the console
- * stays clean. Re-add the live probe when the endpoint ships.
+ * (docs/ROADMAP.md, no controller yet), so the card set is a deterministic local
+ * placeholder and stays that way until the endpoint ships. Everything a user can
+ * *read* is an i18n key resolved by the page — only the product names are
+ * literal, because they are proper nouns in both locales.
  */
 export function useDiscover() {
   return useQuery({
     queryKey: queryKeys.discover,
     queryFn: async (): Promise<DiscoverItem[]> => [
-      { name: "Spring AI", reason: "You follow Java · AI backend", category: "Library", confidence: 92 },
-      { name: "Project Reactor", reason: "Reactive pipelines match your stack", category: "Library", confidence: 87 },
-      { name: "JVM Internals", reason: "Deepens your backend foundation", category: "Learning", confidence: 84 },
-      { name: "LangChain4j", reason: "LLM tooling aligned with your goals", category: "Library", confidence: 79 },
+      { name: "Spring AI", reasonKey: "springAi", categoryKey: "library", confidence: 92 },
+      { name: "Project Reactor", reasonKey: "projectReactor", categoryKey: "library", confidence: 87 },
+      { name: "JVM Internals", reasonKey: "jvmInternals", categoryKey: "learning", confidence: 84 },
+      { name: "LangChain4j", reasonKey: "langchain4j", categoryKey: "library", confidence: 79 },
     ],
+  });
+}
+
+/* ── Personalisation graph ─────────────────────────────────────────────── */
+
+export function useProfile() {
+  return useQuery({
+    queryKey: queryKeys.profile,
+    queryFn: () => profileApi.get(),
+  });
+}
+
+export function useGoals() {
+  return useQuery({
+    queryKey: queryKeys.goals,
+    queryFn: () => profileApi.goals(),
+  });
+}
+
+export function useInterests() {
+  return useQuery({
+    queryKey: queryKeys.interests,
+    queryFn: () => profileApi.interests(),
+  });
+}
+
+export function useSkills() {
+  return useQuery({
+    queryKey: queryKeys.skills,
+    queryFn: () => profileApi.skills(),
   });
 }
 

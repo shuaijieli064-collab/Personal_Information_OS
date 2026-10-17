@@ -37,7 +37,7 @@
   <div class="card">
     <p class="kicker">SIGNAL · 一键登录</p>
     <h1>正在为你登录</h1>
-    <p>凭据从地址栏读取，不会写入任何文件；成功后会直接跳转到今日要闻。</p>
+    <p>正在使用开发演示账号 <code>dev-learn-mvbppgxe@example.com</code> 登录，成功后会直接跳转到今日要闻。</p>
     <div class="state" id="state"><span class="spin"></span>正在连接服务…</div>
   </div>
 
@@ -45,19 +45,39 @@
   // Dev convenience only: performs the SAME real login the /login form performs,
   // it just does it for you. Nothing is stored but the tokens the app already
   // stores (localStorage `signal.access` / `signal.refresh`).
+  //
+  // Usage:
+  //   /login-now.html                                   -> logs in the seeded dev account below
+  //   /login-now.html?email=a@b.c&password=x            -> logs in the account you name
+  //   /login-now.html?email=...&password=...&next=/zh-CN/inbox
+  //
+  // The seeded account is a LOCAL DEMO account created by
+  // scripts/seed-programmer-account.mjs (6 sources / 17 info / 17 signals).
+  // It is embedded here on purpose so the link carries no credentials and the
+  // page stays reloadable. If that is not acceptable for your setup, delete
+  // this file — nothing else depends on it, and /zh-CN/login still works.
+  const DEV_ACCOUNT = {
+    email: "dev-learn-mvbppgxe@example.com",
+    password: "learn-ofbzai7c-pgxe",
+  };
+
   (async () => {
     const state = document.getElementById("state");
     const say = (html) => { state.innerHTML = html; };
 
     const q = new URLSearchParams(location.search);
-    const email = q.get("email");
-    const password = q.get("password");
+    const emailParam = q.get("email");
+    const passwordParam = q.get("password");
+    const email = emailParam !== null ? emailParam : DEV_ACCOUNT.email;
+    const password = passwordParam !== null ? passwordParam : DEV_ACCOUNT.password;
     const next = q.get("next") || "/zh-CN/today";
     const API = "http://localhost:8080";
 
+    // An empty ?email= or ?password= must not silently fall back to the dev
+    // account — that would look like "my login did not work".
     if (!email || !password) {
-      say('<span class="err">缺少 email / password 参数。</span>请从完整链接打开，或回到 ' +
-          '<a href="/zh-CN/login">手动登录页</a>。');
+      say('<span class="err">email / password 参数为空。</span>去掉它们即可用开发演示账号登录，' +
+          '或回到 <a href="/zh-CN/login">手动登录页</a>。');
       return;
     }
 

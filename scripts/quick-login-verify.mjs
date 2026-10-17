@@ -1,8 +1,9 @@
 import fs from "node:fs";
 const ROOT = "D:/A_Items/Personal_Information_OS";
 const { chromium } = await import(process.env.PW_MODULE);
-const creds = JSON.parse(fs.readFileSync(`${ROOT}/backend/target/.learn.json`, "utf8"));
-const url = `http://localhost:3000/login-now.html?email=${encodeURIComponent(creds.email)}&password=${encodeURIComponent(creds.password)}`;
+// The bare link, no credentials in the URL — the helper falls back to the
+// seeded dev account. An explicit ?email=&password= still overrides it.
+const url = "http://localhost:3000/login-now.html";
 
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

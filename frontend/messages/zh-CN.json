@@ -357,7 +357,17 @@
     "runStatusAwaiting": "等待确认",
     "runStatusCompleted": "已完成",
     "runStatusFailed": "失败",
-    "runStatusRejected": "已拒绝"
+    "runStatusRejected": "已拒绝",
+    "toolDesc": {
+      "addGoal": "为你新建一个目标。",
+      "archiveInformation": "把某条信息归档，让它离开活跃信息流。",
+      "askKnowledge": "只依据你自己的知识库回答问题，并给出引用。",
+      "listSignals": "按信号分排序列出你的信号。",
+      "listSources": "列出你的信息源（RSS、GitHub、URL、文件）。",
+      "searchKnowledge": "在你的知识库里检索与查询相关的段落。",
+      "syncSource": "同步某个信息源，抓取并存入新条目。",
+      "todaySummary": "概括你今天的信息量、信号数，以及有多少条需要处理。"
+    }
   },
   "Automation": {
     "title": "自动化",
@@ -422,7 +432,9 @@
     "ageNow": "刚刚",
     "ageMinutes": "{value} 分钟前",
     "ageHours": "{value} 小时前",
-    "ageDays": "{value} 天前"
+    "ageDays": "{value} 天前",
+    "notifBriefTitle": "晨报 · {count} 条信号",
+    "notifJobFailedTitle": "定时任务失败：{jobType}"
   },
   "Signals": {
     "notFoundTitle": "未找到该信号。",

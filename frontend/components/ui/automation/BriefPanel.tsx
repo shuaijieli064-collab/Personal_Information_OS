@@ -67,7 +67,14 @@ export function BriefPanel({
 
       {brief && (
         <>
-          <p className="mt-3 text-sm font-medium text-text-1">{brief.title}</p>
+          <p className="mt-3 text-sm font-medium text-text-1">
+            {/* Chrome, not content: composed from the payload so it follows the interface
+                language. The stored title was written once, in whatever language the
+                backend emitted, and would otherwise read as English in a Chinese edition. */}
+            {typeof counts?.signalCount === "number"
+              ? t("notifBriefTitle", { count: counts.signalCount })
+              : brief.title}
+          </p>
           {brief.body && (
             <p className="mt-2 whitespace-pre-wrap text-body leading-relaxed text-text-2">
               {brief.body}

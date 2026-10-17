@@ -14,6 +14,23 @@ const TYPE_LABEL: Record<NotificationType, string> = {
 };
 
 /**
+ * Titles that are UI chrome rather than content, composed here so they follow the
+ * interface language. A stored title cannot: the row was written once, in whatever
+ * language the backend happened to emit, and would then read as English in a Chinese
+ * interface (or the reverse). `IMPORTANT_SIGNAL` keeps its stored title because that is
+ * the signal's own headline — content, not chrome.
+ */
+function parsePayload(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The notification inbox: what the automation layer raised on its own. An unread row is
  * marked with a signal dot and can be acknowledged in place; the header carries the
  * unread badge and a bulk "mark all read".
@@ -34,6 +51,17 @@ export function NotificationList({
   onReadAll: () => void;
 }) {
   const t = useTranslations("Automation");
+
+  const titleOf = (n: Notification): string => {
+    const p = parsePayload(n.payload);
+    if (n.type === "DAILY_BRIEF" && p && typeof p.signalCount === "number") {
+      return t("notifBriefTitle", { count: p.signalCount });
+    }
+    if (n.type === "JOB_FAILED" && p && typeof p.jobType === "string") {
+      return t("notifJobFailedTitle", { jobType: p.jobType });
+    }
+    return n.title;
+  };
 
   return (
     <section className="mt-10">
@@ -85,7 +113,7 @@ export function NotificationList({
                     />
                   )}
                   <Chip tone={notificationTone(n.type)} label={t(TYPE_LABEL[n.type])} />
-                  <span className="min-w-0 flex-1 truncate text-sm text-text-1">{n.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-text-1">{titleOf(n)}</span>
                   <span className="font-mono text-[10px] text-text-3">
                     {age ? t(AGE_KEY[age.unit], { value: age.value }) : "—"}
                   </span>

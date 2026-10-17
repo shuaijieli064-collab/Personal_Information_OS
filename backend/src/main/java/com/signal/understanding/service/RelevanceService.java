@@ -21,8 +21,15 @@ public class RelevanceService {
     /**
      * Result of a relevance pass. Decomposed so the Signal scorer can weigh
      * goal alignment and personal interest separately instead of reusing one number.
+     *
+     * <p><b>No prose here on purpose.</b> This service is a deterministic matcher, not a
+     * writer: it reports <em>which</em> goal and interests matched, in the user's own
+     * words, and leaves the sentence to {@code WhyItMattersService} (model-generated) or
+     * to the UI (a localised fallback). Earlier versions assembled English sentences here
+     * ("Matches your goal: …"), which leaked English into every other locale.
      */
-    public record Relevance(double score, boolean goalMatched, int interestMatches, String why) {}
+    public record Relevance(double score, boolean goalMatched, int interestMatches,
+                            String matchedGoal, List<String> matchedInterests) {}
 
     private static final double BASE = 20;
     private static final double GOAL_BONUS = 35;
@@ -56,12 +63,13 @@ public class RelevanceService {
         double score = BASE;
         boolean goalMatched = false;
         int interestMatches = 0;
-        List<String> reasons = new ArrayList<>();
+        String matchedGoal = null;
+        List<String> matchedInterests = new ArrayList<>();
         for (String g : goals) {
             if (contains(hay, g)) {
                 score += GOAL_BONUS;
                 goalMatched = true;
-                reasons.add("Matches your goal: " + g);
+                matchedGoal = g;
                 break;
             }
         }
@@ -69,14 +77,11 @@ public class RelevanceService {
             if (contains(hay, i)) {
                 score += INTEREST_BONUS;
                 interestMatches++;
-                reasons.add("Matches your interest: " + i);
+                matchedInterests.add(i);
             }
         }
         score = Math.min(100, score);
-        String why = reasons.isEmpty()
-                ? "Not clearly matched to your current context."
-                : String.join(" ", reasons);
-        return new Relevance(score, goalMatched, interestMatches, why);
+        return new Relevance(score, goalMatched, interestMatches, matchedGoal, List.copyOf(matchedInterests));
     }
 
     /** Persists the computed relevance onto the understanding row. */
@@ -88,7 +93,8 @@ public class RelevanceService {
                     return nr;
                 });
         row.setRelevanceScore(r.score());
-        row.setWhyRelevant(r.why());
+        // why_relevant stays empty: a machine sentence here would be untranslatable.
+        row.setWhyRelevant(null);
         row.setUpdatedAt(Instant.now());
         row.setStatus("COMPLETED");
         repo.save(row);

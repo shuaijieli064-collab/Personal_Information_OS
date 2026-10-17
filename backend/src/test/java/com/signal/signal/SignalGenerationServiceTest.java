@@ -5,6 +5,7 @@ import com.signal.ingestion.repository.InformationRepository;
 import com.signal.signal.entity.Signal;
 import com.signal.signal.repository.SignalRepository;
 import com.signal.signal.service.SignalGenerationService;
+import com.signal.signal.service.WhyItMattersService;
 import com.signal.understanding.entity.InformationUnderstanding;
 import com.signal.understanding.repository.InformationUnderstandingRepository;
 import com.signal.understanding.service.RelevanceService.Relevance;
@@ -25,8 +26,10 @@ class SignalGenerationServiceTest {
     private final InformationRepository infoRepo = mock(InformationRepository.class);
     private final InformationUnderstandingRepository undRepo = mock(InformationUnderstandingRepository.class);
     private final SignalRepository signalRepo = mock(SignalRepository.class);
+    private final WhyItMattersService whyItMatters = mock(WhyItMattersService.class);
 
-    private final SignalGenerationService svc = new SignalGenerationService(infoRepo, undRepo, signalRepo, 70);
+    private final SignalGenerationService svc =
+            new SignalGenerationService(infoRepo, undRepo, signalRepo, whyItMatters, 70);
 
     @BeforeEach
     void stubUnderstandingRow() {
@@ -34,6 +37,7 @@ class SignalGenerationServiceTest {
         und.setInformationId(UUID.randomUUID());
         when(undRepo.findByInformationId(any())).thenReturn(Optional.of(und));
         when(undRepo.save(any())).thenAnswer(a -> a.getArgument(0));
+        when(whyItMatters.generate(any(), any(), any(), any())).thenReturn("why");
     }
 
     private Information info() {
@@ -45,7 +49,7 @@ class SignalGenerationServiceTest {
     }
 
     private Relevance rel(double score, boolean goalMatched, int interestMatches) {
-        return new Relevance(score, goalMatched, interestMatches, "why");
+        return new Relevance(score, goalMatched, interestMatches, null, java.util.List.of());
     }
 
     @Test void belowThresholdNoSignal() {

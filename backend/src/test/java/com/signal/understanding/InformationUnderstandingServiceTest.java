@@ -48,7 +48,7 @@ class InformationUnderstandingServiceTest {
     void stubTransactionsAndRelevance() {
         when(txManager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         when(relevanceService.compute(any(), anyString(), any()))
-                .thenReturn(new Relevance(60, true, 1, "Matches your goal: Java"));
+                .thenReturn(new Relevance(60, true, 1, "Java", java.util.List.of("PostgreSQL")));
     }
 
     private Information ownedInfo() {

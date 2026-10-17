@@ -105,6 +105,43 @@ const DISCOVER_ADD = {
   },
 };
 
+/** Notification titles that are UI chrome — composed on the client from type + payload. */
+const NOTIFY_ADD = {
+  "zh-CN": {
+    notifBriefTitle: "晨报 · {count} 条信号",
+    notifJobFailedTitle: "定时任务失败：{jobType}",
+  },
+  en: {
+    notifBriefTitle: "Daily brief · {count} signals",
+    notifJobFailedTitle: "Scheduled job failed: {jobType}",
+  },
+};
+
+/** Tool catalogue descriptions. Tool names stay identifiers; the prose is translated. */
+const TOOL_DESC_ADD = {
+  "zh-CN": {
+    addGoal: "为你新建一个目标。",
+    archiveInformation: "把某条信息归档，让它离开活跃信息流。",
+    askKnowledge: "只依据你自己的知识库回答问题，并给出引用。",
+    listSignals: "按信号分排序列出你的信号。",
+    listSources: "列出你的信息源（RSS、GitHub、URL、文件）。",
+    searchKnowledge: "在你的知识库里检索与查询相关的段落。",
+    syncSource: "同步某个信息源，抓取并存入新条目。",
+    todaySummary: "概括你今天的信息量、信号数，以及有多少条需要处理。",
+  },
+  en: {
+    addGoal: "Create a new goal for the user.",
+    archiveInformation: "Archive one of the user's information items so it leaves the active feed.",
+    askKnowledge: "Answer a question strictly from the user's own knowledge base, with citations.",
+    listSignals: "List the user's signals, ranked by signal score.",
+    listSources: "List the user's ingestion sources (RSS, GitHub, URL, file).",
+    searchKnowledge: "Search the user's own knowledge base for passages relevant to a query.",
+    syncSource: "Synchronise one of the user's sources, fetching and storing new items.",
+    todaySummary:
+      "Summarise the user's current day: information count, signal count and how many need action.",
+  },
+};
+
 /** Namespaces whose owning component was deleted in the UI recast. */
 const DROP_NAMESPACES = ["LocaleSwitch"];
 
@@ -140,6 +177,11 @@ for (const locale of LOCALES) {
     basedOnEmpty: DISCOVER_ADD[locale].basedOnEmpty,
     category: { ...(json.Discover?.category ?? {}), ...DISCOVER_ADD[locale].category },
     reason: { ...(json.Discover?.reason ?? {}), ...DISCOVER_ADD[locale].reason },
+  };
+  json.Automation = { ...(json.Automation ?? {}), ...NOTIFY_ADD[locale] };
+  json.Agent = {
+    ...(json.Agent ?? {}),
+    toolDesc: { ...(json.Agent?.toolDesc ?? {}), ...TOOL_DESC_ADD[locale] },
   };
 
   const out = `${JSON.stringify(json, null, 2)}\n`;

@@ -48,7 +48,7 @@ let text = await goto("/today");
 check("front page leads with the Raft deep-dive", text.includes("Raft 精读"), text.split("\n").slice(0, 3).join(" "));
 check("front page carries the seeded figures", /\b17\b/.test(text), text.match(/\d+/g)?.slice(0, 6).join("/"));
 check("front page lists the rest of the news", text.includes("其余要闻") && text.includes("Raft 精读"));
-check("front page shows the highest score", text.includes("0.96"));
+check("front page shows the highest score", /score\s*96\b/.test(text), text.match(/score[^\n]{0,12}/)?.[0]);
 check("front page carries the colophon", text.includes("本版由 SIGNAL"));
 await page.screenshot({ path: path.join(SHOTS, "01-today.png"), fullPage: true });
 

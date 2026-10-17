@@ -44,7 +44,7 @@ const SOURCES = [
    archived tail. */
 const ITEMS = [
   {
-    src: "deep", daysAgo: 0, hoursAgo: 3, score: 0.96, urgency: "HIGH", status: "IMPORTANT",
+    src: "deep", daysAgo: 0, hoursAgo: 3, score: 96, urgency: "HIGH", status: "IMPORTANT",
     classification: "TUTORIAL", relevance: 96,
     title: "Raft 精读：从 Leader Election 到 Log Compaction",
     author: "分布式系统笔记",
@@ -55,7 +55,7 @@ const ITEMS = [
     keyPoints: ["选主安全性来自任期单调 + 单票制，不是随机超时", "只能提交当前任期的日志条目", "快照要解决不停机生成一致点"],
   },
   {
-    src: "deep", daysAgo: 1, hoursAgo: 5, score: 0.91, urgency: "HIGH", status: "ACTIVE",
+    src: "deep", daysAgo: 1, hoursAgo: 5, score: 91, urgency: "HIGH", status: "ACTIVE",
     classification: "RESEARCH", relevance: 91,
     title: "为什么你的分布式锁在时钟回拨时会失效",
     author: "分布式系统笔记",
@@ -66,7 +66,7 @@ const ITEMS = [
     keyPoints: ["共识锁靠 quorum，TTL 锁靠时钟", "GC 停顿与虚拟机挂起会破坏租约假设", "fencing token 必须由被保护资源校验才有意义"],
   },
   {
-    src: "weekly", daysAgo: 2, hoursAgo: 8, score: 0.93, urgency: "HIGH", status: "ACTIVE",
+    src: "weekly", daysAgo: 2, hoursAgo: 8, score: 93, urgency: "HIGH", status: "ACTIVE",
     classification: "TUTORIAL", relevance: 93,
     title: "PostgreSQL 索引的代价：为什么加了索引反而更慢",
     author: "技术周刊",
@@ -77,7 +77,7 @@ const ITEMS = [
     keyPoints: ["低基数列上应该用部分索引而不是普通索引", "估算行数偏离会直接导致选错计划", "INCLUDE 可以做覆盖索引避免回表"],
   },
   {
-    src: "weekly", daysAgo: 0, hoursAgo: 6, score: 0.94, urgency: "HIGH", status: "ACTIVE",
+    src: "weekly", daysAgo: 0, hoursAgo: 6, score: 94, urgency: "HIGH", status: "ACTIVE",
     classification: "RELEASE", relevance: 94,
     title: "pgvector 0.8 发布：HNSW 索引重建延迟下降 40%",
     author: "技术周刊",
@@ -88,7 +88,7 @@ const ITEMS = [
     keyPoints: ["重建延迟 -40%，但需要 REINDEX 才能生效", "索引磁盘格式有变动", "binary quantization 可做两阶段检索的粗筛层"],
   },
   {
-    src: "papers", daysAgo: 3, hoursAgo: 12, score: 0.88, urgency: "MEDIUM", status: "ACTIVE",
+    src: "papers", daysAgo: 3, hoursAgo: 12, score: 88, urgency: "MEDIUM", status: "ACTIVE",
     classification: "RESEARCH", relevance: 88,
     title: "从 B+ 树到 LSM 树：写放大与读放大的权衡",
     author: "arXiv cs.DC",
@@ -99,7 +99,7 @@ const ITEMS = [
     keyPoints: ["RUM 猜想：读/写/空间放大只能优化两个", "LSM 写放大多在 compaction，典型 10–30x", "选型要看负载形状而不是绝对速度"],
   },
   {
-    src: "hn", daysAgo: 0, hoursAgo: 10, score: 0.87, urgency: "MEDIUM", status: "ACTIVE",
+    src: "hn", daysAgo: 0, hoursAgo: 10, score: 87, urgency: "MEDIUM", status: "ACTIVE",
     classification: "TECHNOLOGY", relevance: 87,
     title: "React 19 的 Server Components 真正改变了什么",
     author: "Hacker News",
@@ -110,7 +110,7 @@ const ITEMS = [
     keyPoints: ["RSC 是执行位置的编译期决策，与 SSR 正交", "最大收益是客户端 bundle 体积", "边界设计不好收益会归零"],
   },
   {
-    src: "hn", daysAgo: 1, hoursAgo: 20, score: 0.83, urgency: "MEDIUM", status: "ACTIVE",
+    src: "hn", daysAgo: 1, hoursAgo: 20, score: 83, urgency: "MEDIUM", status: "ACTIVE",
     classification: "TUTORIAL", relevance: 83,
     title: "CSS 容器查询：响应式设计终于不用猜断点了",
     author: "Hacker News",
@@ -121,7 +121,7 @@ const ITEMS = [
     keyPoints: ["媒体查询问视口，容器查询问容器", "container-type: inline-size 开销最小", "cqw/cqh 让字号随容器缩放"],
   },
   {
-    src: "deep", daysAgo: 4, hoursAgo: 16, score: 0.84, urgency: "MEDIUM", status: "ACTIVE",
+    src: "deep", daysAgo: 4, hoursAgo: 16, score: 84, urgency: "MEDIUM", status: "ACTIVE",
     classification: "TUTORIAL", relevance: 84,
     title: "CAP 定理的常见误读：它不是一个三选二的选择题",
     author: "分布式系统笔记",
@@ -132,7 +132,7 @@ const ITEMS = [
     keyPoints: ["P 是前提不是选项，真实选择只在 C 与 A 之间", "选择是按操作粒度做的", "PACELC 补上了无分区时的延迟/一致性权衡"],
   },
   {
-    src: "weekly", daysAgo: 5, hoursAgo: 9, score: 0.90, urgency: "HIGH", status: "SAVED",
+    src: "weekly", daysAgo: 5, hoursAgo: 9, score: 90, urgency: "HIGH", status: "SAVED",
     classification: "TUTORIAL", relevance: 90,
     title: "动态规划的本质：从状态定义开始，而不是从递推式",
     author: "技术周刊",
@@ -143,7 +143,7 @@ const ITEMS = [
     keyPoints: ["状态必须包含足够信息让转移成立", "只考虑最后一步的几种可能", "LIS 的经典错误是状态少了一个维度"],
   },
   {
-    src: "weekly", daysAgo: 6, hoursAgo: 14, score: 0.89, urgency: "MEDIUM", status: "SAVED",
+    src: "weekly", daysAgo: 6, hoursAgo: 14, score: 89, urgency: "MEDIUM", status: "SAVED",
     classification: "TUTORIAL", relevance: 89,
     title: "Rust 所有权模型到底解决了什么问题",
     author: "技术周刊",
@@ -154,7 +154,7 @@ const ITEMS = [
     keyPoints: ["数据竞争 = 别名 + 可变，所有权直接消灭这个组合", "代价是生命周期心智负担前移", "尾延迟敏感或并发复杂时收益最明显"],
   },
   {
-    src: "gh", daysAgo: 2, hoursAgo: 22, score: 0.86, urgency: "MEDIUM", status: "ACTIVE",
+    src: "gh", daysAgo: 2, hoursAgo: 22, score: 86, urgency: "MEDIUM", status: "ACTIVE",
     classification: "PRODUCT", relevance: 86,
     title: "向量数据库选型：pgvector、Qdrant、Milvus 的真实差异",
     author: "GitHub Release",
@@ -165,7 +165,7 @@ const ITEMS = [
     keyPoints: ["算法无差异，差异在运维/过滤/事务/规模", "pgvector 能和业务数据共享事务，这是杀手级优势", "千万级以内优先 pgvector"],
   },
   {
-    src: "papers", daysAgo: 1, hoursAgo: 2, score: 0.95, urgency: "HIGH", status: "IMPORTANT",
+    src: "papers", daysAgo: 1, hoursAgo: 2, score: 95, urgency: "HIGH", status: "IMPORTANT",
     classification: "RESEARCH", relevance: 95,
     title: "RAG 检索质量的决定因素：分块策略比模型选择更重要",
     author: "arXiv cs.DC",
@@ -176,7 +176,7 @@ const ITEMS = [
     keyPoints: ["分块策略的影响大于换模型", "父小块检索 + 父块生成", "块前拼章节标题几乎零成本涨点"],
   },
   {
-    src: "hn", daysAgo: 7, hoursAgo: 11, score: 0.79, urgency: "LOW", status: "ACTIVE",
+    src: "hn", daysAgo: 7, hoursAgo: 11, score: 79, urgency: "LOW", status: "ACTIVE",
     classification: "TECHNOLOGY", relevance: 79,
     title: "Go 泛型实战：什么时候不该用泛型",
     author: "Hacker News",
@@ -187,7 +187,7 @@ const ITEMS = [
     keyPoints: ["单类型使用不要泛型", "需要运行时分支就该用接口", "stenciling 会增大二进制体积"],
   },
   {
-    src: "weekly", daysAgo: 8, hoursAgo: 15, score: 0.81, urgency: "MEDIUM", status: "ACTIVE",
+    src: "weekly", daysAgo: 8, hoursAgo: 15, score: 81, urgency: "MEDIUM", status: "ACTIVE",
     classification: "TECHNOLOGY", relevance: 81,
     title: "Java 26 进入提案阶段：结构化并发正式候选项",
     author: "技术周刊",
@@ -198,7 +198,7 @@ const ITEMS = [
     keyPoints: ["取消与异常传播随作用域自动完成", "与虚拟线程配合才有完整价值", "子任务逃逸出作用域是反模式"],
   },
   {
-    src: "docs", daysAgo: 9, hoursAgo: 18, score: 0.76, urgency: "LOW", status: "ACTIVE",
+    src: "docs", daysAgo: 9, hoursAgo: 18, score: 76, urgency: "LOW", status: "ACTIVE",
     classification: "DOCUMENT", relevance: 76,
     title: "为什么『抄一遍源码』比『看十遍教程』有效",
     author: "官方文档追踪",
@@ -209,7 +209,7 @@ const ITEMS = [
     keyPoints: ["抄写强制经过决策点，阅读会跳过", "合上源码凭记忆续写是核心技巧", "用自己的话复述设计才算学会"],
   },
   {
-    src: "docs", daysAgo: 10, hoursAgo: 20, score: 0.75, urgency: "LOW", status: "ARCHIVED",
+    src: "docs", daysAgo: 10, hoursAgo: 20, score: 75, urgency: "LOW", status: "ARCHIVED",
     classification: "OTHER", relevance: 75,
     title: "费曼学习法在编程中的正确用法",
     author: "官方文档追踪",
@@ -220,7 +220,7 @@ const ITEMS = [
     keyPoints: ["不能用术语才算解释清楚", "讲不通的地方就是没懂的地方", "类比要警惕过度延伸"],
   },
   {
-    src: "papers", daysAgo: 11, hoursAgo: 4, score: 0.72, urgency: "LOW", status: "ARCHIVED",
+    src: "papers", daysAgo: 11, hoursAgo: 4, score: 72, urgency: "LOW", status: "ARCHIVED",
     classification: "OTHER", relevance: 72,
     title: "为什么大厂面试还在考红黑树",
     author: "arXiv cs.DC",

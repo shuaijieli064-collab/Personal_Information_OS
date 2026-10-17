@@ -324,7 +324,10 @@ describe("BriefPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Daily brief: 4 signals")).toBeInTheDocument();
+    // The heading is chrome, composed from the payload so it follows the interface
+    // language — the stored title would stay in whatever language the backend wrote.
+    expect(screen.getByText('notifBriefTitle:{"count":4}')).toBeInTheDocument();
+    expect(screen.queryByText("Daily brief: 4 signals")).not.toBeInTheDocument();
     expect(screen.getByText("Two things matter today.")).toBeInTheDocument();
     expect(screen.getByText("20")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();

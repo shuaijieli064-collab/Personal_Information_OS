@@ -44,15 +44,18 @@ public class SignalGenerationService {
     private final InformationRepository infoRepo;
     private final InformationUnderstandingRepository undRepo;
     private final SignalRepository signalRepo;
+    private final WhyItMattersService whyItMatters;
     private final double minScore;
     private final ObjectMapper json = new ObjectMapper();
 
     public SignalGenerationService(InformationRepository infoRepo,
                                    InformationUnderstandingRepository undRepo,
                                    SignalRepository signalRepo,
+                                   WhyItMattersService whyItMatters,
                                    @Value("${app.signal.min-score:70}") double minScore) {
         this.infoRepo = infoRepo; this.undRepo = undRepo;
-        this.signalRepo = signalRepo; this.minScore = minScore;
+        this.signalRepo = signalRepo; this.whyItMatters = whyItMatters;
+        this.minScore = minScore;
     }
 
     /**
@@ -93,7 +96,10 @@ public class SignalGenerationService {
         s.setTitle(info.getTitle());
         s.setSummary(scored.summary());
         s.setSignalScore(scored.score());
-        s.setWhyItMatters(relevance.why());
+        // The reason is written by the model, in the user's language; null when it cannot
+        // be — the UI omits the block rather than showing an untranslatable template.
+        s.setWhyItMatters(whyItMatters.generate(info.getTitle(), scored.summary(),
+                relevance.matchedGoal(), relevance.matchedInterests()));
         s.setUpdatedAt(Instant.now());
         return signalRepo.save(s);
     }
@@ -159,7 +165,8 @@ public class SignalGenerationService {
         if (notBlank(text)) return text;
         text = info.getContent();
         if (notBlank(text)) return text.length() > 240 ? text.substring(0, 240) + "…" : text;
-        return relevance.why();
+        // No prose fallback from the relevance pass any more — its text was machine English.
+        return info.getTitle();
     }
 
     /** Persists the computed score/factors onto the understanding row for observability. */

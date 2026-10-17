@@ -170,7 +170,7 @@ export default function TodayPage() {
                 <p className="kicker text-signal-2">{t("lead")}</p>
                 <span aria-hidden="true" className="h-px flex-1 bg-line" />
                 {lead.signalScore != null && (
-                  <p className="dateline">score {lead.signalScore.toFixed(2)}</p>
+                  <p className="dateline">score {Math.round(lead.signalScore)}</p>
                 )}
               </div>
 

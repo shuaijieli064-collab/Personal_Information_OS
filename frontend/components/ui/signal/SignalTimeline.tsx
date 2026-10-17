@@ -36,7 +36,9 @@ export function SignalTimeline({ signals }: { signals: SignalItem[] }) {
               {s.title}
             </p>
             {s.signalScore !== undefined && (
-              <p className="mt-0.5 text-xs tnum text-signal/80">{t("score")}: {s.signalScore}</p>
+              <p className="mt-0.5 text-xs tnum text-signal/80">
+                {t("score")}: {Math.round(s.signalScore)}
+              </p>
             )}
           </Link>
         </motion.li>

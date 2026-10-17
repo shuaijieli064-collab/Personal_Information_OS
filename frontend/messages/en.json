@@ -357,7 +357,17 @@
     "runStatusAwaiting": "awaiting confirmation",
     "runStatusCompleted": "completed",
     "runStatusFailed": "failed",
-    "runStatusRejected": "rejected"
+    "runStatusRejected": "rejected",
+    "toolDesc": {
+      "addGoal": "Create a new goal for the user.",
+      "archiveInformation": "Archive one of the user's information items so it leaves the active feed.",
+      "askKnowledge": "Answer a question strictly from the user's own knowledge base, with citations.",
+      "listSignals": "List the user's signals, ranked by signal score.",
+      "listSources": "List the user's ingestion sources (RSS, GitHub, URL, file).",
+      "searchKnowledge": "Search the user's own knowledge base for passages relevant to a query.",
+      "syncSource": "Synchronise one of the user's sources, fetching and storing new items.",
+      "todaySummary": "Summarise the user's current day: information count, signal count and how many need action."
+    }
   },
   "Automation": {
     "title": "Automation",
@@ -422,7 +432,9 @@
     "ageNow": "just now",
     "ageMinutes": "{value}m ago",
     "ageHours": "{value}h ago",
-    "ageDays": "{value}d ago"
+    "ageDays": "{value}d ago",
+    "notifBriefTitle": "Daily brief · {count} signals",
+    "notifJobFailedTitle": "Scheduled job failed: {jobType}"
   },
   "Signals": {
     "notFoundTitle": "Signal not found.",

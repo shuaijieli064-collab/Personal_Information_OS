@@ -27,7 +27,11 @@ export function ToolCatalog({ tools }: { tools: AgentTool[] }) {
               <span className="font-mono text-xs text-text-1">{tool.name}</span>
               <Chip tone={permissionTone(tool.permission)} label={tool.permission} />
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-text-3">{tool.description}</p>
+            <p className="mt-2 text-xs leading-relaxed text-text-3">
+              {/* The backend description is English-only documentation text; when the
+                  catalogue carries a translation, the interface language wins. */}
+              {t.has(`toolDesc.${tool.name}`) ? t(`toolDesc.${tool.name}`) : tool.description}
+            </p>
             {params.length > 0 && (
               <p className="mt-2 font-mono text-[11px] text-text-3">
                 {params

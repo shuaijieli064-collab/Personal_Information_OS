@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>正在登录 · SIGNAL</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #f6f1e7; color: #1a1a16;
+    font: 15px/1.6 Geist, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .card {
+    width: min(420px, calc(100vw - 48px)); border: 1px solid #ddd4c2; border-radius: 3px;
+    background: #fffdf8; padding: 28px;
+  }
+  .kicker {
+    margin: 0 0 10px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: #6f6a5e; font-weight: 600;
+  }
+  h1 { margin: 0 0 14px; font-size: 22px; font-weight: 500; letter-spacing: -.015em; }
+  p { margin: 0 0 8px; font-size: 14px; color: #4b4739; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
+  .state { margin-top: 16px; padding-top: 14px; border-top: 1px solid #e6ded0; font-size: 13px; color: #6f6a5e; }
+  .err { color: #a1321f; }
+  a { color: #8a5a1c; }
+  .spin {
+    display: inline-block; width: 11px; height: 11px; border: 2px solid #cbbfa8;
+    border-top-color: #8a5a1c; border-radius: 50%; vertical-align: -1px; margin-right: 7px;
+    animation: r .7s linear infinite;
+  }
+  @keyframes r { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <p class="kicker">SIGNAL · 一键登录</p>
+    <h1>正在为你登录</h1>
+    <p>凭据从地址栏读取，不会写入任何文件；成功后会直接跳转到今日要闻。</p>
+    <div class="state" id="state"><span class="spin"></span>正在连接服务…</div>
+  </div>
+
+<script>
+  // Dev convenience only: performs the SAME real login the /login form performs,
+  // it just does it for you. Nothing is stored but the tokens the app already
+  // stores (localStorage `signal.access` / `signal.refresh`).
+  (async () => {
+    const state = document.getElementById("state");
+    const say = (html) => { state.innerHTML = html; };
+
+    const q = new URLSearchParams(location.search);
+    const email = q.get("email");
+    const password = q.get("password");
+    const next = q.get("next") || "/zh-CN/today";
+    const API = "http://localhost:8080";
+
+    if (!email || !password) {
+      say('<span class="err">缺少 email / password 参数。</span>请从完整链接打开，或回到 ' +
+          '<a href="/zh-CN/login">手动登录页</a>。');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/api/v1/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const body = await res.json().catch(() => null);
+      const d = body && body.data;
+      if (!res.ok || !body || body.success === false || !d || !d.accessToken) {
+        const msg = (body && body.message) || `HTTP ${res.status}`;
+        say(`<span class="err">登录失败：${String(msg).replace(/[<>&]/g, "")}</span> · ` +
+            '<a href="/zh-CN/login">手动登录</a>');
+        return;
+      }
+
+      localStorage.setItem("signal.access", d.accessToken);
+      if (d.refreshToken) localStorage.setItem("signal.refresh", d.refreshToken);
+      say("登录成功，正在跳转…");
+      // replace() so this helper does not sit in the history stack
+      location.replace(next);
+    } catch (err) {
+      say(`<span class="err">无法连接后端 ${API}：${String(err && err.message || err)
+        .replace(/[<>&]/g, "")}</span> · 请确认后端已启动在 :8080，然后重试。`);
+    }
+  })();
+</script>
+</body>
+</html>

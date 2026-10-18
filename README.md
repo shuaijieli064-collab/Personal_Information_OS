@@ -51,6 +51,7 @@ SIGNAL/
 | [docs/AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md) | Provider abstraction, prompt boundary |
 | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Design tokens + motion system |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Local/容器启动与环境变量 |
+| [docs/STARTUP_AND_USER_MANUAL.md](docs/STARTUP_AND_USER_MANUAL.md) | **从零启动全流程 + 每页面使用手册 + 故障排查** |
 
 ## Development
 

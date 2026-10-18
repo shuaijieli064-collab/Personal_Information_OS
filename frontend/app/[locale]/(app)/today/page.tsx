@@ -32,7 +32,7 @@ function greetingKey(hour: number, evening: boolean): "morning" | "afternoon" | 
  * Today — the front page.
  *
  * Laid out the way a broadsheet is: a figures strip ruled off at the top, one
- * lead story set in the display serif at full measure, then two columns —
+ * lead story set in the display serif at a headline measure, then two columns —
  * the rest of the day's copy on the left, the desk's numbers on the right —
  * and a colophon closing the edition. No card grid, because a newspaper is
  * not a grid of boxes; it is columns and rules.
@@ -64,7 +64,7 @@ export default function TodayPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-page-wide px-5 py-8 md:px-8 md:py-10">
+    <div className="mx-auto w-full max-w-page px-5 py-8 md:px-8 md:py-10">
       <PageHeader
         eyebrow={t("kicker")}
         title={t(greetingKey(new Date().getHours(), theme === "dark"))}
@@ -174,12 +174,18 @@ export default function TodayPage() {
                 )}
               </div>
 
-              <h2 className="mt-4 max-w-[46ch] font-display text-[clamp(1.65rem,2.7vw,2.3rem)] font-medium leading-[1.16] tracking-[-0.02em] text-text-1 text-balance">
+              {/*
+                Broadside measures, not box widths: `ch` is the advance of a Latin "0", which
+                for this display serif is ~24px, so 46ch let a 26-character CJK headline sit
+                on a single 1120px line. 26ch wraps a headline into the two lines a front
+                page wants, and 42rem keeps the deck inside a readable CJK measure.
+              */}
+              <h2 className="mt-4 max-w-[26ch] font-display text-[clamp(1.65rem,2.7vw,2.3rem)] font-medium leading-[1.16] tracking-[-0.02em] text-text-1 text-balance">
                 {lead.title}
               </h2>
 
               {(lead.whyItMatters || lead.summary) && (
-                <p className="mt-5 max-w-[68ch] text-[15px] leading-[1.75] text-text-2 text-pretty">
+                <p className="mt-5 max-w-[42rem] text-[15px] leading-[1.75] text-text-2 text-pretty">
                   {lead.whyItMatters ?? lead.summary}
                 </p>
               )}

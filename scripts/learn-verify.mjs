@@ -48,7 +48,27 @@ let text = await goto("/today");
 check("front page leads with the Raft deep-dive", text.includes("Raft 精读"), text.split("\n").slice(0, 3).join(" "));
 check("front page carries the seeded figures", /\b17\b/.test(text), text.match(/\d+/g)?.slice(0, 6).join("/"));
 check("front page lists the rest of the news", text.includes("其余要闻") && text.includes("Raft 精读"));
-check("front page shows the highest score", /score\s*96\b/.test(text), text.match(/score[^\n]{0,12}/)?.[0]);
+// The lead is `signals[0]` of a score-descending list, so its dateline must
+// carry that signal's rounded score. Read it from the API instead of pinning a
+// number: re-running the pipeline legitimately re-scores the corpus, and a
+// fixture here fails on a healthy system while saying nothing about it.
+const topScore = await page.evaluate(() => localStorage.getItem("signal.access")).then(async (token) => {
+  if (!token) return { score: null, note: "no access token" };
+  const res = await fetch(`${process.env.API || "http://localhost:8080"}/api/v1/today`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch(() => null);
+  if (!res?.ok) return { score: null, note: `api ${res?.status ?? "unreachable"}` };
+  const body = await res.json();
+  const data = body?.data ?? body; // ApiResponse envelope
+  const scores = (data.signals ?? []).map((s) => s.signalScore).filter((n) => n != null);
+  return scores.length ? { score: Math.round(Math.max(...scores)), note: "" } : { score: null, note: "no signals" };
+});
+const shown = text.match(/score\s*(\d+)/);
+check(
+  "front page shows the highest score",
+  topScore.score != null && shown != null && Number(shown[1]) === topScore.score,
+  `page=${shown?.[0] ?? "none"} api=${topScore.score ?? topScore.note}`,
+);
 check("front page carries the colophon", text.includes("本版由 SIGNAL"));
 await page.screenshot({ path: path.join(SHOTS, "01-today.png"), fullPage: true });
 

@@ -1,6 +1,7 @@
 package com.signal.signal.service;
 
 import com.signal.common.exceptions.ResourceNotFoundException;
+import com.signal.dedup.DuplicateSignalGuard;
 import com.signal.ingestion.entity.Information;
 import com.signal.ingestion.repository.InformationRepository;
 import com.signal.signal.entity.Signal;
@@ -45,6 +46,7 @@ public class SignalGenerationService {
     private final InformationUnderstandingRepository undRepo;
     private final SignalRepository signalRepo;
     private final WhyItMattersService whyItMatters;
+    private final DuplicateSignalGuard dedup;
     private final double minScore;
     private final ObjectMapper json = new ObjectMapper();
 
@@ -52,9 +54,11 @@ public class SignalGenerationService {
                                    InformationUnderstandingRepository undRepo,
                                    SignalRepository signalRepo,
                                    WhyItMattersService whyItMatters,
+                                   DuplicateSignalGuard dedup,
                                    @Value("${app.signal.min-score:70}") double minScore) {
         this.infoRepo = infoRepo; this.undRepo = undRepo;
         this.signalRepo = signalRepo; this.whyItMatters = whyItMatters;
+        this.dedup = dedup;
         this.minScore = minScore;
     }
 
@@ -87,6 +91,16 @@ public class SignalGenerationService {
         if (scored.score() < minScore) {
             log.debug("Below threshold information={} score={} min={}",
                     informationId, scored.score(), minScore);
+            return null;
+        }
+
+        // Same event, different URL: the item stays (two sources agreeing is corroboration),
+        // but a second Signal would be the product telling the user the same thing twice.
+        var anchor = dedup.duplicateOf(userId, info);
+        if (anchor.isPresent()) {
+            dedup.corroborate(userId, anchor.get(), info);
+            log.info("Duplicate suppressed information={} anchor={} similarity={}",
+                    informationId, anchor.get().informationId(), anchor.get().similarity());
             return null;
         }
 
@@ -142,9 +156,9 @@ public class SignalGenerationService {
     }
 
     /**
-     * Phase 5.6 semantic clustering is not wired yet, so every item is treated as
-     * novel — exact-duplicate suppression already happens at ingestion.
-     * Revisit when signal_clusters starts carrying embeddings.
+     * Every item that reaches this point is novel by construction: exact duplicates are
+     * dropped at ingestion and same-event republished items are suppressed just above
+     * (see {@link DuplicateSignalGuard}). Scoring therefore does not need a novelty penalty.
      */
     private double novelty() {
         return 80;

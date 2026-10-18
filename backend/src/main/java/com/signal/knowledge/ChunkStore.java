@@ -130,11 +130,6 @@ public class ChunkStore {
     }
 
     static String vectorLiteral(List<Double> v) {
-        StringBuilder sb = new StringBuilder(v.size() * 10).append('[');
-        for (int i = 0; i < v.size(); i++) {
-            if (i > 0) sb.append(',');
-            sb.append(v.get(i));
-        }
-        return sb.append(']').toString();
+        return com.signal.common.Vectors.literal(v);
     }
 }

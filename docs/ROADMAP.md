@@ -87,7 +87,7 @@
 |---|---|
 | LLM 幻觉污染 summary / why | 事实型模板 + 规则评分优先 + 引用原文 |
 | Prompt injection via 外部内容 | SYSTEM / USER_PROFILE / UNTRUSTED_CONTENT 隔离（PromptBoundary，有单测） |
-| 去重质量回退 | URL hash → title 相似 → pgvector 语义三级，阈值可配置 |
+| 去重质量回退 | URL hash → title 相似 → pgvector 语义三级，阈值可配置（前两级已实现；语义级 2026-10-18 接线，见 RUNTIME_VERIFICATION 120–121 行） |
 | 第三方 ToS / 私有数据 | 仅 RSS、公开 API、用户主动导入；SSRF 防护 |
 | 假验证 | 所有"完成"必须附运行证据；未验证项显式标 NOT VERIFIED |
 | 密钥泄漏 | `.env` gitignore + 不入 jar + CI 扫描 |

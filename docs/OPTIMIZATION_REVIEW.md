@@ -29,8 +29,9 @@
 | #6 | 「AI 过滤」栏永远是 0 条 | 整栏删除（宁缺勿假），原位换成**真实数据**的「已生成信号」区（`useToday().signalCount` + `SignalTimeline`） | 该区显示库里真实的 18 条信号，不再是占位文案 |
 | #7 | 「生成信号」只跳详情页；「保留」什么都不做 | 「分析」改调真实 `POST /information/{id}/understanding`，由管线决定是否成信号；成功回报**管线算出的分数**而不是假装生成；「保留」写 `KEPT` | 走查点击「分析」→ 提示「已分析：信号分 56。达到门槛的条目才会出现在「已生成信号」。」——56 < 阈值 70，因此**没有**生成信号，阈值仍然生效 |
 | #8 | 所有条目都堆在「需要处理」 | `reviewItems = items.filter(it => !signalIds[it.id])`；后端 `GET /information` 支持 `status` 过滤与 `signalIds` 映射 | 「需要处理」从 19 条（其中 18 条已处理）变为真实的 1 条；UI 行数与 API 交叉核对一致：`ui=1 api=1 (of 19 active/kept)` |
+| #3 | **语义去重是死代码**，README 却宣称「Exact + semantic dedup」 | `SemanticDedupService` 全仓无调用方；V7 建的 `signal_clusters` / `signal_sources` / `information_embeddings` 三张表也从未被写过，跨源同一文章会各生成一条信号 | 删除死代码，改由 `DuplicateSignalGuard` + `InformationEmbeddingStore` 实现：只对**够格成信号**的条目做 embedding（每条信号一次，不是每条入库一次），pgvector 找同用户下最近的另一条，相似度 ≥ 阈值（`app.dedup.similarity-threshold:0.85`）则条目照常入库但不生成第二条信号，并写一行 `signal_sources` 作为「互相印证」的凭据；embedding 或查询失败一律按「不重复」降级（只 WARN，绝不影响管线） | 见验证行 |
 
-**仍未修（下一步）**：#3 语义去重接线、#4 演示数据走真实管线、#12 通知 payload 带 top signals、
+**仍未修（下一步）**：#4 演示数据走真实管线、#12 通知 payload 带 top signals、
 #13 知识页首屏、#14 收件箱显示来源名、#15 测试数据清理、#16 AI 页历史运行。
 
 ## P0 — 会让用户直接判定「这系统不准」

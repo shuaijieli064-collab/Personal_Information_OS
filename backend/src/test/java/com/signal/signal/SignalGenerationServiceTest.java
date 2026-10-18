@@ -1,5 +1,7 @@
 package com.signal.signal;
 
+import com.signal.dedup.DuplicateSignalGuard;
+import com.signal.dedup.InformationEmbeddingStore;
 import com.signal.ingestion.entity.Information;
 import com.signal.ingestion.repository.InformationRepository;
 import com.signal.signal.entity.Signal;
@@ -27,9 +29,10 @@ class SignalGenerationServiceTest {
     private final InformationUnderstandingRepository undRepo = mock(InformationUnderstandingRepository.class);
     private final SignalRepository signalRepo = mock(SignalRepository.class);
     private final WhyItMattersService whyItMatters = mock(WhyItMattersService.class);
+    private final DuplicateSignalGuard dedup = mock(DuplicateSignalGuard.class);
 
     private final SignalGenerationService svc =
-            new SignalGenerationService(infoRepo, undRepo, signalRepo, whyItMatters, 70);
+            new SignalGenerationService(infoRepo, undRepo, signalRepo, whyItMatters, dedup, 70);
 
     @BeforeEach
     void stubUnderstandingRow() {
@@ -38,6 +41,7 @@ class SignalGenerationServiceTest {
         when(undRepo.findByInformationId(any())).thenReturn(Optional.of(und));
         when(undRepo.save(any())).thenAnswer(a -> a.getArgument(0));
         when(whyItMatters.generate(any(), any(), any(), any())).thenReturn("why");
+        when(dedup.duplicateOf(any(), any())).thenReturn(Optional.empty());
     }
 
     private Information info() {
@@ -111,5 +115,26 @@ class SignalGenerationServiceTest {
         Signal s = svc.generate(UUID.randomUUID(), i.getId(), rel(70, true, 2));
         assertNotNull(s);
         assertTrue(s.getSignalScore() >= 70);
+    }
+
+    /**
+     * Same event under a second URL: the item clears the threshold, but the user already has
+     * this story. No second Signal — the duplicate is recorded as corroboration instead.
+     */
+    @Test void sameEventDoesNotCreateSecondSignal() {
+        Information i = info();
+        UUID anchorId = UUID.randomUUID();
+        when(infoRepo.findByIdAndUserId(any(), any())).thenReturn(Optional.of(i));
+        when(signalRepo.existsByInformationId(any())).thenReturn(false);
+        var match = new InformationEmbeddingStore.Match(anchorId, 0.93, "the same story");
+        when(dedup.duplicateOf(any(), any())).thenReturn(Optional.of(match));
+
+        assertNull(svc.generate(UUID.randomUUID(), i.getId(), rel(95, true, 1)));
+
+        verify(signalRepo, never()).save(any());
+        verify(dedup).corroborate(any(), eq(match), eq(i));
+        // The score is still recorded: the user can see this item scored well and was
+        // suppressed as a duplicate rather than falling below the bar.
+        verify(undRepo).save(any());
     }
 }

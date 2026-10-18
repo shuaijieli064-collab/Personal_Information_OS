@@ -1,7 +1,10 @@
 package com.signal.common;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,10 +12,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,6 +30,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Client-input errors must never surface as 500. Two reachable cases are covered:
  * an un-bindable path variable and an unreadable request body. Uses standalone
  * MockMvc (no Spring context, no DB, no security) so it stays a pure unit test.
+ *
+ * The unknown-route case is exercised directly: Spring Boot hands an unmapped path
+ * to the static-resource handler, which throws {@link NoResourceFoundException} —
+ * not the {@link NoHandlerFoundException} the advice also covers — and before the
+ * fix that fell through to the catch-all as a 500.
  */
 class GlobalExceptionHandlerTest {
 
@@ -59,5 +72,17 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void unknownApiPathReturns404() {
+        ResponseEntity<ApiResponse<Void>> res = new GlobalExceptionHandler().handleNoResource(
+                new NoResourceFoundException(HttpMethod.GET, "No static resource", "api/v1/inbox/ignored"));
+        assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
+        ApiResponse<Void> body = res.getBody();
+        assertNotNull(body);
+        assertFalse(body.success());
+        assertEquals("NOT_FOUND", body.error().code());
+        assertTrue(body.error().message().contains("api/v1/inbox/ignored"), body.error().message());
     }
 }

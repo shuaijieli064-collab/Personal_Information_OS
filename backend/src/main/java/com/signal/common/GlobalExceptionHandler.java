@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -117,11 +118,25 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.BAD_REQUEST, "FILE_INVALID", ex.getMessage());
     }
 
-    /** Unknown route — 404, not a server fault. */
+    /**
+     * Unknown route — 404, not a server fault.
+     *
+     * <p>{@link NoHandlerFoundException} is the case when handler-mapping throws are enabled.
+     * Spring Boot's default is the opposite: an unmapped path is handed to the static-resource
+     * handler, which throws {@link NoResourceFoundException} instead — so without the second
+     * handler below an unknown API path (e.g. a client calling a renamed endpoint) falls
+     * through to the catch-all and is reported as a 500.
+     */
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleNoHandler(NoHandlerFoundException ex) {
         return body(HttpStatus.NOT_FOUND, "NOT_FOUND",
                 "No handler for " + ex.getHttpMethod() + " " + ex.getRequestURL());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResource(NoResourceFoundException ex) {
+        return body(HttpStatus.NOT_FOUND, "NOT_FOUND",
+                "No handler for " + ex.getHttpMethod() + " " + ex.getResourcePath());
     }
 
     @ExceptionHandler(Exception.class)

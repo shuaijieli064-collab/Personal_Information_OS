@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -26,11 +27,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class KnowledgeControllerTest {
 
     private final ChunkService chunks = mock(ChunkService.class);
+    private final ChunkStore store = mock(ChunkStore.class);
     private final KnowledgeSearchService search = mock(KnowledgeSearchService.class);
     private final KnowledgeAskService ask = mock(KnowledgeAskService.class);
 
     private final MockMvc mockMvc = MockMvcBuilders
-            .standaloneSetup(new KnowledgeController(chunks, search, ask))
+            .standaloneSetup(new KnowledgeController(chunks, store, search, ask))
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
 
@@ -149,6 +151,33 @@ class KnowledgeControllerTest {
                 .andExpect(jsonPath("$.data.scanned").value(2))
                 .andExpect(jsonPath("$.data.chunks").value(7))
                 .andExpect(jsonPath("$.data.failed").value(0));
+    }
+
+    /**
+     * The console's first screen reports the corpus, so a user who has never indexed
+     * anything sees "0 documents" instead of an empty search box with no explanation.
+     */
+    @Test
+    void statsReportTheCorpusAndTolerateAnEmptyOne() throws Exception {
+        authenticate();
+        when(store.stats(userId)).thenReturn(
+                new ChunkStore.Stats(3, 21, 20, java.time.Instant.parse("2026-10-18T23:00:00Z")));
+
+        mockMvc.perform(get("/api/v1/knowledge/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.documents").value(3))
+                .andExpect(jsonPath("$.data.chunks").value(21))
+                .andExpect(jsonPath("$.data.embedded").value(20))
+                .andExpect(jsonPath("$.data.lastIndexedAt").value("2026-10-18T23:00:00Z"));
+
+        // Empty corpus: null timestamp, not a 500 and not a fake date.
+        when(store.stats(userId)).thenReturn(new ChunkStore.Stats(0, 0, 0, null));
+        mockMvc.perform(get("/api/v1/knowledge/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.documents").value(0))
+                .andExpect(jsonPath("$.data.lastIndexedAt").doesNotExist());
+
+        verify(store, times(2)).stats(userId);
     }
 
     @Test

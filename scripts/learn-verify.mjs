@@ -89,6 +89,24 @@ check(
 );
 const inboxTotal = text.match(/(\d+)\s*条信息/);
 check("inbox reports the real total", inboxTotal != null && Number(inboxTotal[1]) >= 17, inboxTotal?.[0] ?? "");
+// A row that says only "ARTICLE" cannot be judged for trustworthiness; it has to
+// name the source it came from. Read the expected name from the API — the review
+// row may come from any of the six feeds, or from a file import.
+const reviewSource = await page.evaluate(() => localStorage.getItem("signal.access")).then(async (token) => {
+  if (!token) return null;
+  const res = await fetch(`${process.env.API || "http://localhost:8080"}/api/v1/information?page=0&size=20&status=ACTIVE,KEPT`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch(() => null);
+  if (!res?.ok) return null;
+  const data = (await res.json())?.data;
+  const pending = (data?.items ?? []).find((it) => !data?.signalIds?.[it.id]);
+  return pending ? (data.sourceNames?.[pending.sourceId] ?? null) : null;
+});
+check(
+  "inbox names the source of each row",
+  reviewSource != null && text.includes(reviewSource),
+  `api=${reviewSource ?? "none"}`,
+);
 await page.screenshot({ path: path.join(SHOTS, "02-inbox.png"), fullPage: true });
 
 /* ── 发现 ─────────────────────────────────────────────────────────────── */
@@ -107,6 +125,28 @@ await page.screenshot({ path: path.join(SHOTS, "03-discover.png"), fullPage: tru
 /* ── 知识 ─────────────────────────────────────────────────────────────── */
 text = await goto("/knowledge");
 check("knowledge console renders", text.length > 40, text.split("\n").slice(0, 3).join(" "));
+// The first screen reports the corpus instead of being one empty box. The numbers
+// on screen must equal what the API says — a stat strip that lies is worse than none.
+const corpus = await page.evaluate(() => localStorage.getItem("signal.access")).then(async (token) => {
+  if (!token) return null;
+  const res = await fetch(`${process.env.API || "http://localhost:8080"}/api/v1/knowledge/stats`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch(() => null);
+  if (!res?.ok) return null;
+  return (await res.json())?.data ?? null;
+});
+const shownDocs = text.match(/语料文档\s*(\d+)/)?.[1];
+const shownChunks = text.match(/段落\s*(\d+)/)?.[1];
+check(
+  "knowledge reports the real corpus",
+  corpus != null && shownDocs === String(corpus.documents) && shownChunks === String(corpus.chunks),
+  `page=${shownDocs}/${shownChunks} api=${corpus?.documents}/${corpus?.chunks}`,
+);
+check(
+  "knowledge offers a starting point",
+  text.includes("试试这些") && text.includes("关于「"),
+  text.match(/试试这些[^\n]{0,40}/)?.[0],
+);
 await page.screenshot({ path: path.join(SHOTS, "04-knowledge.png"), fullPage: true });
 
 /* ── 动态 ─────────────────────────────────────────────────────────────── */

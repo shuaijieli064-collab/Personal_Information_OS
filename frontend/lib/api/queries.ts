@@ -39,6 +39,7 @@ export const queryKeys = {
   goals: ["goals"] as const,
   interests: ["interests"] as const,
   skills: ["skills"] as const,
+  knowledgeStats: ["knowledge", "stats"] as const,
 };
 
 export function useToday() {
@@ -198,6 +199,14 @@ export function useSkills() {
 
 /* ── Phase 6 Knowledge (K3 search / K4 RAG) ───────────────────────────────── */
 
+/** Corpus shape for the first screen — cheap counts, refetched after a reindex. */
+export function useKnowledgeStats() {
+  return useQuery({
+    queryKey: queryKeys.knowledgeStats,
+    queryFn: () => knowledgeApi.stats(),
+  });
+}
+
 /**
  * Search and ask are mutations, not queries: they are user-triggered, run once
  * per submit, and must not be refetched on window focus or cache-key churn.
@@ -222,6 +231,7 @@ export function useKnowledgeReindex() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.today });
       qc.invalidateQueries({ queryKey: queryKeys.inbox });
+      qc.invalidateQueries({ queryKey: queryKeys.knowledgeStats });
     },
   });
 }

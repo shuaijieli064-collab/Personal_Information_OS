@@ -176,6 +176,32 @@ const INBOX_ADD = {
   },
 };
 
+/** Knowledge console: the first screen reports the corpus and offers a starting point. */
+const KNOWLEDGE_ADD = {
+  "zh-CN": {
+    statsDocuments: "语料文档",
+    statsChunks: "段落",
+    statsEmbedded: "已向量化",
+    statsLastIndexed: "最近索引",
+    statsEmpty: "语料还是空的——点「重建索引」把你的信息切块并向量化。",
+    examplesLabel: "试试这些",
+    exampleInterest: "关于「{name}」，我记录了什么？",
+    exampleGeneric1: "我的语料里有哪些关键结论？",
+    exampleGeneric2: "总结一下我最近收集的内容。",
+  },
+  en: {
+    statsDocuments: "Documents",
+    statsChunks: "Chunks",
+    statsEmbedded: "Embedded",
+    statsLastIndexed: "Last indexed",
+    statsEmpty: "The corpus is empty — hit Reindex to chunk and embed your information.",
+    examplesLabel: "Try one",
+    exampleInterest: "What have I written about “{name}”?",
+    exampleGeneric1: "What are the key conclusions in my corpus?",
+    exampleGeneric2: "Summarise what I collected recently.",
+  },
+};
+
 /** Namespaces whose owning component was deleted in the UI recast. */
 const DROP_NAMESPACES = ["LocaleSwitch"];
 
@@ -224,6 +250,7 @@ for (const locale of LOCALES) {
   };
   json.Inbox = { ...(json.Inbox ?? {}), ...INBOX_ADD[locale].section };
   json.InboxItem = { ...(json.InboxItem ?? {}), ...INBOX_ADD[locale].item };
+  json.Knowledge = { ...(json.Knowledge ?? {}), ...KNOWLEDGE_ADD[locale] };
 
   const out = `${JSON.stringify(json, null, 2)}\n`;
   if (out !== raw) {

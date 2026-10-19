@@ -317,7 +317,16 @@
     "reindex": "重建索引",
     "reindexing": "重建中…",
     "reindexDone": "已扫描 {scanned} 条，重建 {chunked} 条，共 {chunks} 个分块（失败 {failed}）。",
-    "reindexFailed": "重建索引失败。"
+    "reindexFailed": "重建索引失败。",
+    "statsDocuments": "语料文档",
+    "statsChunks": "段落",
+    "statsEmbedded": "已向量化",
+    "statsLastIndexed": "最近索引",
+    "statsEmpty": "语料还是空的——点「重建索引」把你的信息切块并向量化。",
+    "examplesLabel": "试试这些",
+    "exampleInterest": "关于「{name}」，我记录了什么？",
+    "exampleGeneric1": "我的语料里有哪些关键结论？",
+    "exampleGeneric2": "总结一下我最近收集的内容。"
   },
   "Agent": {
     "title": "AI 代理",

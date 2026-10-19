@@ -3,7 +3,9 @@ package com.signal.ingestion.controller;
 import com.signal.common.ApiResponse;
 import com.signal.common.exceptions.ResourceNotFoundException;
 import com.signal.ingestion.entity.Information;
+import com.signal.ingestion.entity.Source;
 import com.signal.ingestion.repository.InformationRepository;
+import com.signal.ingestion.repository.SourceRepository;
 import com.signal.signal.entity.Signal;
 import com.signal.signal.repository.SignalRepository;
 import jakarta.validation.Valid;
@@ -32,10 +34,12 @@ public class InformationController {
 
     private final InformationRepository repo;
     private final SignalRepository signals;
+    private final SourceRepository sources;
 
-    public InformationController(InformationRepository repo, SignalRepository signals) {
+    public InformationController(InformationRepository repo, SignalRepository signals, SourceRepository sources) {
         this.repo = repo;
         this.signals = signals;
+        this.sources = sources;
     }
 
     /**
@@ -44,7 +48,9 @@ public class InformationController {
      *
      * <p>{@code signalIds} maps information id → signal id for the rows on this page, so the
      * client can offer "view signal" instead of "analyse" on something already analysed. It
-     * is a read-only lookup across modules, not a write dependency.
+     * is a read-only lookup across modules, not a write dependency. {@code sourceNames} does
+     * the same for provenance: a row that says "RSS" tells you nothing about whether to
+     * trust it, a row that says "分布式系统笔记" does.
      */
     @GetMapping
     public ApiResponse<Map<String, Object>> list(
@@ -72,12 +78,25 @@ public class InformationController {
             }
         }
 
+        Map<String, String> sourceNames = new HashMap<>();
+        List<UUID> sourceIds = p.getContent().stream()
+                .map(Information::getSourceId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        if (!sourceIds.isEmpty()) {
+            for (Source s : sources.findAllById(sourceIds)) {
+                sourceNames.put(s.getId().toString(), s.getName());
+            }
+        }
+
         Map<String, Object> body = new HashMap<>();
         body.put("items", p.getContent());
         body.put("page", p.getNumber());
         body.put("size", p.getSize());
         body.put("total", p.getTotalElements());
         body.put("signalIds", signalIds);
+        body.put("sourceNames", sourceNames);
         return ApiResponse.ok(body);
     }
 

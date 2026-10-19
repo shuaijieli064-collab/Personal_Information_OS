@@ -45,6 +45,12 @@ export default function InboxPage() {
     {},
     ...pages.map((p) => p.signalIds ?? {}),
   );
+  /* Source names travel with each page (information id → source id → name), so a row
+     can say where it came from — "RSS" alone cannot be judged for trustworthiness. */
+  const sourceNames: Record<string, string> = Object.assign(
+    {},
+    ...pages.map((p) => p.sourceNames ?? {}),
+  );
 
   /**
    * "Needs review" means the item still needs a decision. An item that already became a
@@ -164,6 +170,7 @@ export default function InboxPage() {
               <BlurReveal key={it.id} index={Math.min(i, 10)}>
                 <InboxItem
                   item={it}
+                  sourceName={it.sourceId ? sourceNames[it.sourceId] : undefined}
                   busy={busyId === it.id}
                   onAction={(a) => handleAction(it.id, a)}
                 />

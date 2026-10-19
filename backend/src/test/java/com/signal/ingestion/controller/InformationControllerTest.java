@@ -2,7 +2,9 @@ package com.signal.ingestion.controller;
 
 import com.signal.common.GlobalExceptionHandler;
 import com.signal.ingestion.entity.Information;
+import com.signal.ingestion.entity.Source;
 import com.signal.ingestion.repository.InformationRepository;
+import com.signal.ingestion.repository.SourceRepository;
 import com.signal.signal.entity.Signal;
 import com.signal.signal.repository.SignalRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -35,9 +37,10 @@ class InformationControllerTest {
 
     private final InformationRepository repo = mock(InformationRepository.class);
     private final SignalRepository signals = mock(SignalRepository.class);
+    private final SourceRepository sources = mock(SourceRepository.class);
 
     private final MockMvc mockMvc = MockMvcBuilders
-            .standaloneSetup(new InformationController(repo, signals))
+            .standaloneSetup(new InformationController(repo, signals, sources))
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
 
@@ -151,5 +154,35 @@ class InformationControllerTest {
                 .andExpect(jsonPath("$.data.items.length()").value(1));
 
         verify(repo, never()).findByUserIdAndStatus(any(), any(), any());
+    }
+
+    /**
+     * A row that says only "RSS" cannot be judged for trustworthiness; the feed has to
+     * name the source. Direct imports have no source and must not fail the batch.
+     */
+    @Test
+    void feedNamesTheSourceOfEachRow() throws Exception {
+        authenticate();
+        Information withSource = info();
+        UUID sourceId = UUID.randomUUID();
+        withSource.setSourceId(sourceId);
+
+        Information imported = info();
+        imported.setTitle("导入的笔记");
+        imported.setSourceId(null);
+
+        when(repo.findByUserId(eq(userId), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(withSource, imported)));
+        when(signals.findByInformationIdIn(any())).thenReturn(List.of());
+
+        Source s = new Source();
+        s.setId(sourceId);
+        s.setName("分布式系统笔记");
+        when(sources.findAllById(any())).thenReturn(List.of(s));
+
+        mockMvc.perform(get("/api/v1/information"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.sourceNames." + sourceId).value("分布式系统笔记"))
+                .andExpect(jsonPath("$.data.items[0].sourceId").value(sourceId.toString()));
     }
 }

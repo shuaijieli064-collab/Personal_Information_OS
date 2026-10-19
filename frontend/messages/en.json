@@ -317,7 +317,16 @@
     "reindex": "Reindex",
     "reindexing": "Reindexing…",
     "reindexDone": "Scanned {scanned}, rebuilt {chunked}, {chunks} chunks total ({failed} failed).",
-    "reindexFailed": "Reindex failed."
+    "reindexFailed": "Reindex failed.",
+    "statsDocuments": "Documents",
+    "statsChunks": "Chunks",
+    "statsEmbedded": "Embedded",
+    "statsLastIndexed": "Last indexed",
+    "statsEmpty": "The corpus is empty — hit Reindex to chunk and embed your information.",
+    "examplesLabel": "Try one",
+    "exampleInterest": "What have I written about “{name}”?",
+    "exampleGeneric1": "What are the key conclusions in my corpus?",
+    "exampleGeneric2": "Summarise what I collected recently."
   },
   "Agent": {
     "title": "AI agent",

@@ -21,12 +21,15 @@ function freshnessClass(iso?: string): string {
  */
 export function InboxItem({
   item,
+  sourceName,
   classification,
   confidence,
   onAction,
   busy = false,
 }: {
   item: InformationItem;
+  /** Where it came from, when it came from a connected source. Imports have none. */
+  sourceName?: string;
   classification?: string;
   confidence?: number;
   onAction?: (action: InboxAction) => void;
@@ -68,6 +71,14 @@ export function InboxItem({
               <p className="mt-1 truncate text-xs text-text-3">{excerpt}</p>
             )}
             <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-text-3 tnum">
+              {sourceName && (
+                <>
+                  <span className="max-w-40 truncate text-text-2" title={sourceName}>
+                    {sourceName}
+                  </span>
+                  <span className="text-text-3/50">·</span>
+                </>
+              )}
               <span className="uppercase tracking-wider text-text-3/80">{item.type}</span>
               {item.publishedAt && (
                 <>

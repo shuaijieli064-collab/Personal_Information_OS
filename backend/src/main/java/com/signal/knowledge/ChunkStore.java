@@ -50,6 +50,36 @@ public class ChunkStore {
     }
 
     /**
+     * Corpus shape for the console's first screen — a user who has never reindexed
+     * needs to see that the corpus is empty, not an empty search box.
+     *
+     * @param documents      distinct information items that carry chunks
+     * @param chunks         chunk rows
+     * @param embedded       chunks that actually carry a vector (keyword-only rows excluded)
+     * @param lastIndexedAt  newest chunk write, or {@code null} when the corpus is empty
+     */
+    public record Stats(long documents, long chunks, long embedded, java.time.Instant lastIndexedAt) {}
+
+    public Stats stats(java.util.UUID userId) {
+        return jdbc.queryForObject("""
+                SELECT count(DISTINCT information_id)                        AS documents,
+                       count(*)                                              AS chunks,
+                       count(*) FILTER (WHERE embedding IS NOT NULL)         AS embedded,
+                       max(updated_at)                                       AS last_indexed_at
+                FROM information_chunks
+                WHERE user_id = ?
+                """,
+                (rs, n) -> new Stats(
+                        rs.getLong("documents"),
+                        rs.getLong("chunks"),
+                        rs.getLong("embedded"),
+                        rs.getTimestamp("last_indexed_at") == null
+                                ? null
+                                : rs.getTimestamp("last_indexed_at").toInstant()),
+                userId);
+    }
+
+    /**
      * K3 semantic retrieval — nearest chunks by cosine distance for one user.
      * Cosine similarity = {@code 1 - (embedding <=> query)}; only rows that actually
      * carry a vector participate (chunks whose embedding failed are keyword-only and

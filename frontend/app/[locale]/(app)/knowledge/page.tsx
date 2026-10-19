@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { ArrowsClockwise, MagnifyingGlass, Sparkle } from "@phosphor-icons/react";
 import { ApiError, type AskStatus, type KnowledgeMode } from "@/lib/api/client";
 import {
+  useInterests,
   useKnowledgeAsk,
   useKnowledgeReindex,
   useKnowledgeSearch,
+  useKnowledgeStats,
 } from "@/lib/api/queries";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -70,6 +72,26 @@ export default function KnowledgePage() {
   const search = useKnowledgeSearch();
   const ask = useKnowledgeAsk();
   const reindex = useKnowledgeReindex();
+  const stats = useKnowledgeStats();
+  const interests = useInterests();
+
+  /* A search box with nothing behind it is a dead end. The examples come from the
+     account's own interests (top three by weight) so the first click retrieves
+     something; an account with no interests yet gets two corpus-agnostic questions
+     instead of a fabricated topic. */
+  const examples = useMemo(() => {
+    const top = (interests.data ?? [])
+      .slice()
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 3)
+      .map((i) => t("exampleInterest", { name: i.name }));
+    return top.length > 0 ? top : [t("exampleGeneric1"), t("exampleGeneric2")];
+  }, [interests.data, t]);
+
+  const applyExample = (text: string) => {
+    if (tab === "search") setQuery(text);
+    else setQuestion(text);
+  };
 
   const minScoreValue = useMemo(() => {
     const n = Number.parseFloat(minScore);
@@ -166,6 +188,23 @@ export default function KnowledgePage() {
             {t("reindexLabel")}
           </p>
           <p className="mt-1 text-xs text-text-3">{t("reindexHint")}</p>
+          {/* The corpus is a fact, not a guess: report what is actually indexed. */}
+          {stats.data && (
+            <Meta
+              items={[
+                [t("statsDocuments"), String(stats.data.documents)],
+                [t("statsChunks"), String(stats.data.chunks)],
+                [t("statsEmbedded"), String(stats.data.embedded)],
+                ...(stats.data.lastIndexedAt
+                  ? ([[t("statsLastIndexed"),
+                       new Date(stats.data.lastIndexedAt).toLocaleString()]] as [string, string][])
+                  : []),
+              ]}
+            />
+          )}
+          {stats.data && stats.data.documents === 0 && (
+            <p className="mt-2 text-xs text-warning">{t("statsEmpty")}</p>
+          )}
           {reindex.isSuccess && (
             <p className="mt-2 text-xs text-success">
               {t("reindexDone", {
@@ -214,6 +253,24 @@ export default function KnowledgePage() {
             }`}
           >
             {key === "search" ? t("tabSearch") : t("tabAsk")}
+          </button>
+        ))}
+      </div>
+
+      {/* A first screen with one empty box is a dead end; these fill it with the
+          account's own interests, so the first search has something to hit. */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] uppercase tracking-[0.18em] text-text-3">
+          {t("examplesLabel")}
+        </span>
+        {examples.map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            onClick={() => applyExample(ex)}
+            className="rounded-pill border border-line bg-bg-1 px-3 py-1 text-xs text-text-2 transition-colors hover:border-signal/50 hover:text-signal"
+          >
+            {ex}
           </button>
         ))}
       </div>

@@ -2,12 +2,14 @@ package com.signal.knowledge.controller;
 
 import com.signal.common.ApiResponse;
 import com.signal.knowledge.ChunkService;
+import com.signal.knowledge.ChunkStore;
 import com.signal.knowledge.KnowledgeAskService;
 import com.signal.knowledge.KnowledgeSearchService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,16 +26,29 @@ import java.util.UUID;
 public class KnowledgeController {
 
     private final ChunkService chunks;
+    private final ChunkStore store;
     private final KnowledgeSearchService search;
     private final KnowledgeAskService ask;
 
-    public KnowledgeController(ChunkService chunks, KnowledgeSearchService search, KnowledgeAskService ask) {
+    public KnowledgeController(ChunkService chunks, ChunkStore store,
+                               KnowledgeSearchService search, KnowledgeAskService ask) {
         this.chunks = chunks;
+        this.store = store;
         this.search = search;
         this.ask = ask;
     }
 
     public record ReindexResponse(int scanned, int chunked, long chunks, int failed) {}
+
+    /** Corpus shape for the console's first screen: what is indexed, and when. */
+    public record StatsResponse(long documents, long chunks, long embedded, String lastIndexedAt) {}
+
+    @GetMapping("/stats")
+    public ApiResponse<StatsResponse> stats() {
+        ChunkStore.Stats s = store.stats(userId());
+        return ApiResponse.ok(new StatsResponse(s.documents(), s.chunks(), s.embedded(),
+                s.lastIndexedAt() == null ? null : s.lastIndexedAt().toString()));
+    }
 
     /** Rebuild the caller's whole retrieval corpus (idempotent; also refreshes embeddings after model change). */
     @PostMapping("/reindex")

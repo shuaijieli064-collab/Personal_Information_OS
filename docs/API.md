@@ -54,6 +54,8 @@ must never surface as 500.
 | Method | Path | Status | Description |
 |---|---|---|---|
 | GET | `/information?page=&size=` | ✅ | paged (size≤100), published_at DESC; `{items, total}` |
+| GET | `/information?status=ACTIVE,KEPT` | ✅ | triage filter (comma-separated); response also carries `signalIds` (information → signal) and `sourceNames` (source id → name, for provenance on each row) |
+| PATCH | `/information/{id}` | ✅ | `{status: ACTIVE\|KEPT\|ARCHIVED}` — triage decision, persisted; bad status → 400 |
 | GET | `/information/{id}` | ✅ | user-scoped detail |
 | POST | `/information/{id}/summarize` | ✅ | AI summary |
 | POST | `/information/{id}/extract-topics` | ✅ | topic extraction |
@@ -80,6 +82,7 @@ user's resource returns 404 (IDOR protected).
 |---|---|---|
 | GET | `/discover?path=` | ⏳ |
 | POST | `/knowledge/reindex` | ✅ (rebuild caller's chunk corpus; Phase 6 K2) |
+| GET | `/knowledge/stats` | ✅ (`{documents, chunks, embedded, lastIndexedAt}` — corpus shape for the console's first screen; `lastIndexedAt` is `null` on an empty corpus) |
 | POST | `/knowledge/search` | ✅ (K3 retrieval over the caller's own corpus: `mode=HYBRID/VECTOR/KEYWORD`, `rerank`) |
 | POST | `/knowledge/ask` | ✅ (K4 RAG — retrieval + LLM answer with `[n]` citations; same `rerank` knob) |
 | GET/POST | `/knowledge` | ⏳ |

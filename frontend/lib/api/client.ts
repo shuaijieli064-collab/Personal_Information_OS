@@ -136,6 +136,8 @@ export type InformationItem = {
   id: string; type: string; title: string; excerpt?: string;
   content?: string; url?: string; author?: string; publishedAt?: string;
   status?: TriageStatus;
+  /** Null for direct imports that never came from a connected source. */
+  sourceId?: string;
 };
 
 export const sourcesApi = {
@@ -205,6 +207,8 @@ export const informationApi = {
       total: number;
       /** information id → signal id, for the rows on this page. */
       signalIds?: Record<string, string>;
+      /** source id → source name, so a row can name where it came from. */
+      sourceNames?: Record<string, string>;
     }>(
       `/api/v1/information?page=${page}&size=${size}${status ? `&status=${status}` : ""}`),
   get: (id: string) => api.get<InformationItem>(`/api/v1/information/${id}`),
@@ -286,6 +290,14 @@ export type KnowledgeReindexResult = {
   failed: number;
 };
 
+/** What the console's first screen reports before anyone searches. */
+export type KnowledgeStats = {
+  documents: number;
+  chunks: number;
+  embedded: number;
+  lastIndexedAt: string | null;
+};
+
 export type KnowledgeSearchParams = {
   query: string;
   mode?: KnowledgeMode;
@@ -302,6 +314,7 @@ export type KnowledgeAskParams = {
 };
 
 export const knowledgeApi = {
+  stats: () => api.get<KnowledgeStats>("/api/v1/knowledge/stats"),
   search: (body: KnowledgeSearchParams) =>
     api.post<KnowledgeSearchResult>("/api/v1/knowledge/search", body),
   ask: (body: KnowledgeAskParams) =>

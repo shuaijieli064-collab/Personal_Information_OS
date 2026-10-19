@@ -3,8 +3,9 @@
 > 评审时间：2026-10-17 · 方式：读代码 + 查库 + 真实浏览器截图（`ui-design-runs/review-shots/`）
 > 触发原因：「感觉还得优化，体验不是很好，AI 内容生成和一些信息看起来不是很好」
 > 结论：**产品骨架没问题，问题集中在「真实管线」与「演示数据」两套东西不一致，以及收件箱三件套（忽略/保留/生成信号）没有真正接上后端。**
-> 更新（2026-10-17 深夜）：分数尺度、模型写理由、通知/工具本地化、**收件箱三件套落库**均已修复并实跑验证，
-> 见下方「本轮已修」两张表。剩余项集中在**演示数据绕过管线**与**去重未接线**。
+> 更新（2026-10-19）：第三批四条（#13 知识首屏、#14 来源名、#15/#16 测试数据）也已落地并回归全绿。
+> 至此 #1 / #2 / #3 / #5 / #6 / #7 / #8 / #9 / #10 / #11 / #13 / #14 / #15 / #16 全部关闭，
+> 只剩 **#4 演示数据走真实管线** 与 **#12 通知 payload 带 top signals** 两项，见下方「本轮已修」三张表。
 
 ## 一句话诊断
 
@@ -31,8 +32,17 @@
 | #8 | 所有条目都堆在「需要处理」 | `reviewItems = items.filter(it => !signalIds[it.id])`；后端 `GET /information` 支持 `status` 过滤与 `signalIds` 映射 | 「需要处理」从 19 条（其中 18 条已处理）变为真实的 1 条；UI 行数与 API 交叉核对一致：`ui=1 api=1 (of 19 active/kept)` |
 | #3 | **语义去重是死代码**，README 却宣称「Exact + semantic dedup」 | `SemanticDedupService` 全仓无调用方；V7 建的 `signal_clusters` / `signal_sources` / `information_embeddings` 三张表也从未被写过，跨源同一文章会各生成一条信号 | 删除死代码，改由 `DuplicateSignalGuard` + `InformationEmbeddingStore` 实现：只对**够格成信号**的条目做 embedding（每条信号一次，不是每条入库一次），pgvector 找同用户下最近的另一条，相似度 ≥ 阈值（`app.dedup.similarity-threshold:0.85`）则条目照常入库但不生成第二条信号，并写一行 `signal_sources` 作为「互相印证」的凭据；embedding 或查询失败一律按「不重复」降级（只 WARN，绝不影响管线） | 见验证行 |
 
-**仍未修（下一步）**：#4 演示数据走真实管线、#12 通知 payload 带 top signals、
-#13 知识页首屏、#14 收件箱显示来源名、#15 测试数据清理、#16 AI 页历史运行。
+### 第三批：首屏、来源名与测试数据（#13 / #14 / #15 / #16）
+
+| 原编号 | 问题 | 改法 | 验证 |
+|---|---|---|---|
+| #13 | **知识页首屏只有一个空表单**（245 字符），用户不知道该搜什么、也不知道语料有没有建好 | 新增 `GET /api/v1/knowledge/stats`（`documents / chunks / embedded / lastIndexedAt`，空语料时 `lastIndexedAt=null`），首屏把它显示在「索引」卡片里；语料为空时额外提示去「重建索引」。再加一行「试试这些」——三条示例问题按账号真实兴趣（权重前 3）生成，无兴趣时退化为两条通用问题。点击填入当前标签页的输入框 | `learn-verify` 新增两条断言：页面上的数字必须等于 API 返回的数字（`page=19/20 api=19/20`——写死数字会像上一轮那样在数据变化时假失败）；示例条存在且来自真实兴趣（`关于「系统设计」，我记录了什么？`）。`KnowledgeControllerTest` 补 `statsReportTheCorpusAndTolerateAnEmptyOne`（含空语料不 500、不编造时间） |
+| #14 | **收件箱行尾只有 `ARTICLE 2026/10/17`**，判断不了来源可信度 | `GET /information` 响应增加 `sourceNames`（source id → 名称），与既有 `signalIds` 同一种批量映射模式，纯增量不改 items 形状；`InboxItem` 在类型前显示来源名（过长截断 + `title` 全称） | 实测渲染：`FILE import · DOCUMENT · 已保留`。断言不写死来源清单（第一版写死六个种子源，遇到 `FILE import` 行就误报失败）——改为从 API 取该行真实来源名再比对。`InformationControllerTest` 补 `feedNamesTheSourceOfEachRow`（含 source_id 为空的导入行不影响批次） |
+| #15 / #16 | **测试数据残留**：`ai-check.txt` / `hybrid-e2e.txt` / `rerank-e2e.txt` / `Example Domain`，以及一批探针账号 | 新增 `scripts/clean-test-data.mjs`：默认只演练（列出将删的账号与行），`--apply` 才执行；KEEP 分两层——硬编码的产品账号（demo / 所有者 / dev）+ 运行时从 `.probe.json` / `.learn.json` / `.empty.json` 读出的**浏览器套件登录用夹具**，两者都永不删除；先校验 KEEP 与探针模式无交集，否则拒绝运行；只匹配已知探针模式，单事务删除 | 演练 → 执行：`users 25 → 3`、`information 38 → 19`、剩余探针账号 **0**；保留账号的 19 行一条未动。另修了脚本自身的两个坑：SQL `LIKE 'iso_%'` 里的 `_` 是单字符通配符，会误配 `isoask_…`，已显式转义；第一版没保护夹具，删掉了 `brief-verify` 登录用的 `brief-probe-*`，套件死在 `waiting for locator('header')`——夹具已重建，排除逻辑已补上，之后再跑一次确认门禁生效（`users 7 → 5`、`information 27 → 23`、`protected fixtures: brief-probe-…, dev-learn-…, empty-probe-…`） |
+
+**本轮收口**：第三批四条（#13 / #14 / #15 / #16）全部落地，回归门禁一次全绿——后端 **299/299**、tsc 0、eslint 0、**vitest 87/87**、`next build` exit 0、`learn-verify` **23/23**、`brief-verify` **51/51**、`inbox-verify` **10/10**、`empty-account-verify` **27/27**、`dedup-verify` **7/7**、`quick-login-verify` **5/5**、`brief-fonts` **12/12**、i18n **520 键同步**。
+
+**仍未修（下一步）**：#4 演示数据走真实管线、#12 通知 payload 带 top signals。这两项都不是缺陷，是「演示与真实不一致」的遗留面——#4 需要把种子脚本改成走真实 API 管线（会引入模型调用成本与不确定性），#12 需要先定下前端如何展开通知里的信号列表，因此单独作为下一轮。
 
 ## P0 — 会让用户直接判定「这系统不准」
 

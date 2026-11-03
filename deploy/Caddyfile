@@ -1,0 +1,28 @@
+# SIGNAL production reverse proxy.
+#
+# Consumed by docker-compose.prod.yml, which injects SITE_ADDRESS:
+#   - a real domain   (e.g. https://signal.example.com) → automatic TLS via Let's Encrypt
+#   - an HTTP address (e.g. http://192.168.1.10 or :80)  → plain HTTP, for LAN-only setups
+# Keep SITE_ADDRESS identical to NEXT_PUBLIC_API_URL in .env.prod — the frontend bakes
+# that value at build time, so the browser and caddy always see the same origin.
+
+{
+	# Uncomment and set your email when serving a real domain (optional:
+	# Caddy needs only a reachable port 443 to complete ACME, but the address
+	# gives expiry notices).
+	# email you@example.com
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# Backend — the only path that leaves the Next.js origin.
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	# Everything else is the Next.js standalone server.
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.production.example
 **/.env
 !**/.env.example
 
@@ -26,6 +27,7 @@ ui-design-runs/
 
 # Runtime artifacts
 *.pid
+backups/
 
 # Coverage / tooling
 **/coverage/
@@ -37,5 +39,6 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Local tooling state (extra).acl-recovery/
+# Local tooling state (extra)
+.acl-recovery/
 .workbuddy/

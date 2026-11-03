@@ -1,0 +1,117 @@
+# SIGNAL production stack — 4 containers on one small host (tested budget: 2 vCPU / 2 GB RAM + 2 GB swap).
+#
+# Usage (from the repo root, with a completed .env.prod):
+#   cp .env.production.example .env.prod     # then fill JWT_SECRET, DB password, AI keys, SITE_ADDRESS
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+#
+# Topology:
+#   browser ──(80/443)──> caddy ──/api/*──> backend:8080 ──> postgres:5432
+#                          └──────────────> frontend:3000
+#
+# The public URL is baked into the frontend at build time (NEXT_PUBLIC_API_URL), and it
+# points at the Caddy origin — so the browser talks to ONE address (same-origin, zero
+# CORS) and 8080/5432 stay never exposed to the public network.
+#
+# Memory budget (2 GB host): postgres ~300 MB · backend JVM ~800 MB · frontend ~350 MB · caddy ~30 MB.
+# Swap is strongly recommended on 2 GB hosts: `sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+# && sudo mkswap /swapfile && sudo swapon /swapfile` (+ fstab line for persistence).
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: signal-postgres
+    environment:
+      POSTGRES_DB: signal
+      POSTGRES_USER: ${DB_USER:-signal}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.prod}
+    # 2 GB-host tuning: small buffer pool, few connections (backend pool is 10).
+    command: >
+      postgres -c shared_buffers=128MB -c effective_cache_size=512MB
+               -c max_connections=30 -c maintenance_work_mem=32MB
+    volumes:
+      - signal-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signal -d signal"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    image: signal-backend
+    container_name: signal-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/signal
+      DB_USER: ${DB_USER:-signal}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.prod}
+      CORS_ORIGIN: ${SITE_ADDRESS:?set SITE_ADDRESS in .env.prod}
+      JWT_SECRET: ${JWT_SECRET:?set a >=32-char random JWT_SECRET in .env.prod}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800}
+      # The proxy below is ours, so its X-Forwarded-For is trustworthy — without this,
+      # every client would share one rate-limit bucket and 429 out together.
+      RATE_LIMIT_TRUST_FORWARDED_FOR: "true"
+      AI_PROVIDER: ${AI_PROVIDER:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-20000}
+      AI_EMBEDDING_BASE_URL: ${AI_EMBEDDING_BASE_URL:-}
+      AI_EMBEDDING_API_KEY: ${AI_EMBEDDING_API_KEY:-}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-}
+      # MUST match the vector(...) columns (V17/V24): 1024 unless you changed them.
+      AI_EMBEDDING_DIMENSIONS: ${AI_EMBEDDING_DIMENSIONS:-1024}
+      AI_RERANK_BASE_URL: ${AI_RERANK_BASE_URL:-}
+      AI_RERANK_MODEL: ${AI_RERANK_MODEL:-}
+      AI_RERANK_API_KEY: ${AI_RERANK_API_KEY:-}
+      AUTOMATION_ENABLED: ${AUTOMATION_ENABLED:-true}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms128m -Xmx700m -XX:+ExitOnOutOfMemoryError}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # No ports: reachable only through caddy (and the container network).
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked at build time. It is the PUBLIC origin (caddy), NOT backend:8080 —
+        # the browser resolves /api/* against this same address and caddy routes
+        # it to the backend. Change it and you must rebuild this image.
+        NEXT_PUBLIC_API_URL: ${SITE_ADDRESS:?set SITE_ADDRESS in .env.prod}
+    image: signal-frontend
+    container_name: signal-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    # No ports: reachable only through caddy.
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: signal-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      # Consumed by the {$SITE_ADDRESS} placeholder in deploy/Caddyfile.
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env.prod}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # ACME-managed TLS certificates
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  signal-pgdata:
+  caddy_data:
+  caddy_config:

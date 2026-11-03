@@ -35,22 +35,31 @@ public class InformationController {
     private final InformationRepository repo;
     private final SignalRepository signals;
     private final SourceRepository sources;
+    private final com.signal.understanding.repository.InformationUnderstandingRepository understanding;
+    private final com.signal.signal.service.SignalGenerationService signalService;
 
-    public InformationController(InformationRepository repo, SignalRepository signals, SourceRepository sources) {
+    public InformationController(InformationRepository repo, SignalRepository signals,
+                                 SourceRepository sources,
+                                 com.signal.understanding.repository.InformationUnderstandingRepository understanding,
+                                 com.signal.signal.service.SignalGenerationService signalService) {
         this.repo = repo;
         this.signals = signals;
         this.sources = sources;
+        this.understanding = understanding;
+        this.signalService = signalService;
     }
 
     /**
      * The inbox feed. {@code status} narrows it to one triage state — the client asks for
-     * ACTIVE to fill "needs review" and ARCHIVED to fill "ignored".
+     * ACTIVE,KEPT to fill "needs review" and ARCHIVED to fill "ignored".
      *
      * <p>{@code signalIds} maps information id → signal id for the rows on this page, so the
      * client can offer "view signal" instead of "analyse" on something already analysed. It
      * is a read-only lookup across modules, not a write dependency. {@code sourceNames} does
      * the same for provenance: a row that says "RSS" tells you nothing about whether to
-     * trust it, a row that says "分布式系统笔记" does.
+     * trust it, a row that says "分布式系统笔记" does. {@code signalScores} finally answers
+     * the question a kept row raises — "why is this not a signal?" — with the number the
+     * pipeline actually computed, next to {@code signalMinScore}, the bar it did not clear.
      */
     @GetMapping
     public ApiResponse<Map<String, Object>> list(
@@ -78,6 +87,15 @@ public class InformationController {
             }
         }
 
+        Map<String, Double> signalScores = new HashMap<>();
+        if (!ids.isEmpty()) {
+            for (var u : understanding.findByInformationIdIn(ids)) {
+                if (u.getSignalScore() != null) {
+                    signalScores.put(u.getInformationId().toString(), u.getSignalScore());
+                }
+            }
+        }
+
         Map<String, String> sourceNames = new HashMap<>();
         List<UUID> sourceIds = p.getContent().stream()
                 .map(Information::getSourceId)
@@ -96,6 +114,8 @@ public class InformationController {
         body.put("size", p.getSize());
         body.put("total", p.getTotalElements());
         body.put("signalIds", signalIds);
+        body.put("signalScores", signalScores);
+        body.put("signalMinScore", signalService.minScore());
         body.put("sourceNames", sourceNames);
         return ApiResponse.ok(body);
     }

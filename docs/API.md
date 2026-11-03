@@ -26,6 +26,14 @@ must never surface as 500.
 | POST | `/auth/logout` | ✅ | revokes presented refresh |
 | GET | `/auth/me` | ✅ | current user `{id, email, profile:{displayName}}` |
 
+**Rate limits** (`RateLimitFilter`, `app.security.rate-limit.*`): the three credential
+endpoints are throttled per client address — login 10/min, register 30/hour, refresh
+30/min by default. A rejected call returns `429` with
+`{"success":false,"error":{"code":"RATE_LIMITED","message":"…"}}` and a `Retry-After`
+header (seconds); allowed calls carry `X-RateLimit-Limit` / `X-RateLimit-Remaining`.
+Limits are per address, not per account. Set the matching `*_PER_*` env var to `0` to
+disable one rule, or `RATE_LIMIT_ENABLED=false` to disable all of them.
+
 ## Today (home)
 | Method | Path | Status | Description |
 |---|---|---|---|

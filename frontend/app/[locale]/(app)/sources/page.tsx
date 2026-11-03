@@ -16,6 +16,19 @@ import { Spinner } from "@/components/ui/Spinner";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ApiError } from "@/lib/api/client";
 
+/** Reasons the backend can answer a sync failure with (CollectFailure.Reason). */
+const SYNC_REASONS = new Set([
+  "NOT_FOUND",
+  "REJECTED",
+  "TIMEOUT",
+  "PARSE",
+  "NOT_A_FEED",
+  "INVALID_URL",
+  "NETWORK",
+  "BLOCKED",
+  "UNKNOWN",
+]);
+
 /**
  * Sources — live information inputs, not CRUD rows.
  * Status dots, sync pipeline animation, inline add form.
@@ -35,6 +48,20 @@ export default function SourcesPage() {
   const [form, setForm] = useState({ name: "", type: "RSS", url: "" });
 
   const error = actionError || (loadError instanceof Error ? loadError.message : "");
+
+  /**
+   * The backend answers a failed sync with a machine reason — SOURCE_SYNC_NOT_FOUND,
+   * …NOT_A_FEED, …TIMEOUT, …REJECTED — so the user can be told what to fix. The code
+   * is typed; the human string comes from a message key. Anything unknown falls back
+   * to the generic copy rather than showing an English stack message.
+   */
+  const syncFailureText = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      const reason = err.code.replace(/^SOURCE_SYNC_/, "");
+      if (SYNC_REASONS.has(reason)) return t("syncFailed_" + reason);
+    }
+    return t("errSync");
+  };
 
   const add = (ev: React.FormEvent) => {
     ev.preventDefault();
@@ -70,8 +97,7 @@ export default function SourcesPage() {
             failed: r.failed,
           }),
         ),
-      onError: (err) =>
-        setActionError(err instanceof ApiError ? err.message : t("errSync")),
+      onError: (err) => setActionError(syncFailureText(err)),
       onSettled: () => setSyncingId(null),
     });
   };
@@ -94,40 +120,17 @@ export default function SourcesPage() {
   const [hero, ...rest] = sorted;
 
   const renderCard = (s: (typeof sorted)[number], featured: boolean) => (
-    <div key={s.id} className="group relative">
-      <SourceCard
-        source={s}
-        syncing={syncingId === s.id}
-        featured={featured}
-        onSync={() => sync(s.id)}
-      />
-      {confirmingId === s.id ? (
-        <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-button border border-line bg-bg-2 p-1">
-          <button
-            type="button"
-            onClick={() => remove(s.id)}
-            className="rounded-button bg-danger px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
-          >
-            {t("confirmDelete")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmingId(null)}
-            className="rounded-button border border-line px-2.5 py-1 text-xs text-text-2"
-          >
-            {t("cancel")}
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setConfirmingId(s.id)}
-          className="absolute right-3 top-3 z-10 rounded-button border border-line bg-bg-2/90 px-2.5 py-1 text-xs text-danger opacity-0 transition-opacity hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
-        >
-          {t("delete")}
-        </button>
-      )}
-    </div>
+    <SourceCard
+      key={s.id}
+      source={s}
+      syncing={syncingId === s.id}
+      featured={featured}
+      onSync={() => sync(s.id)}
+      onDelete={() => setConfirmingId(s.id)}
+      confirming={confirmingId === s.id}
+      onConfirmDelete={() => remove(s.id)}
+      onCancelDelete={() => setConfirmingId(null)}
+    />
   );
 
   return (

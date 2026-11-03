@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ArrowClockwise,
   Envelope,
@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 import type { Source } from "@/lib/api/client";
+import { Spinner } from "@/components/ui/Spinner";
 
 function SourceIcon({ type, className }: { type: string; className?: string }) {
   const size = 18;
@@ -35,14 +36,15 @@ function SourceIcon({ type, className }: { type: string; className?: string }) {
   }
 }
 
-function relativeTime(iso?: string): string {
+function relativeTime(iso: string | undefined, locale: string): string {
   if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.max(1, Math.round(diff / 60000));
-  if (m < 60) return `${m}m ago`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.round(h / 24)}d ago`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const minutes = Math.max(1, Math.round(diff / 60000));
+  if (minutes < 60) return rtf.format(-minutes, "minute");
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return rtf.format(-hours, "hour");
+  return rtf.format(-Math.round(hours / 24), "day");
 }
 
 function StatusBadge({ status, syncing }: { status: string; syncing: boolean }) {
@@ -74,23 +76,40 @@ function StatusBadge({ status, syncing }: { status: string; syncing: boolean }) 
 /**
  * SourceCard — a source is a live input, not a CRUD row.
  * Status dot + last sync + pipeline flow while syncing.
+ *
+ * <p>Delete lives in the header row next to sync, not as an overlay on top of it:
+ * an absolutely-positioned button at the same corner made the two controls collide,
+ * and on a card whose header is only ~40px tall the delete button sat exactly on the
+ * sync button.
  */
 export function SourceCard({
   source,
   syncing = false,
   featured = false,
   onSync,
+  onDelete,
+  deleting = false,
+  confirming = false,
+  onConfirmDelete,
+  onCancelDelete,
 }: {
   source: Source;
   syncing?: boolean;
   featured?: boolean;
   onSync?: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
+  /** Two-step delete: the header shows confirm/cancel instead of 删除. */
+  confirming?: boolean;
+  onConfirmDelete?: () => void;
+  onCancelDelete?: () => void;
 }) {
   const t = useTranslations("SourceCard");
+  const locale = useLocale();
 
   return (
     <div
-      className={`group relative rounded-card border transition-colors hover:border-line-strong ${
+      className={`rounded-card border transition-colors hover:border-line-strong ${
         featured ? "border-line-strong bg-bg-1 p-5 shadow-card" : "border-line bg-bg-1 p-4"
       }`}
     >
@@ -118,18 +137,52 @@ export function SourceCard({
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onSync}
-          disabled={syncing}
-          className={
-            featured
-              ? "shrink-0 rounded-button bg-signal px-3.5 py-2 text-xs font-medium text-white transition-all hover:brightness-110 hover:shadow-[0_0_16px_-4px_var(--glow)] disabled:opacity-50"
-              : "shrink-0 rounded-button border border-line px-3 py-1.5 text-xs text-text-2 transition-colors hover:border-signal/60 hover:text-signal disabled:opacity-50"
-          }
-        >
-          {t("sync")}
-        </button>
+
+        {confirming ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={onConfirmDelete}
+              disabled={deleting}
+              className="rounded-button bg-danger px-2.5 py-1 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {deleting ? <Spinner className="h-3 w-3" /> : t("confirmDelete")}
+            </button>
+            <button
+              type="button"
+              onClick={onCancelDelete}
+              disabled={deleting}
+              className="rounded-button border border-line px-2.5 py-1 text-xs text-text-2 transition-colors hover:text-text-1 disabled:opacity-50"
+            >
+              {t("cancel")}
+            </button>
+          </div>
+        ) : (
+          <div className="flex shrink-0 items-center gap-2">
+            {onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="rounded-button border border-line px-2.5 py-1 text-xs text-text-3 transition-colors hover:border-danger/60 hover:text-danger"
+              >
+                {t("delete")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onSync}
+              disabled={syncing}
+              className={
+                featured
+                  ? "flex items-center gap-1.5 rounded-button bg-signal px-3.5 py-2 text-xs font-medium text-white transition-all hover:brightness-110 disabled:opacity-50"
+                  : "rounded-button border border-line px-3 py-1.5 text-xs text-text-2 transition-colors hover:border-signal/60 hover:text-signal disabled:opacity-50"
+              }
+            >
+              {syncing && <Spinner className="h-3 w-3" />}
+              {t("sync")}
+            </button>
+          </div>
+        )}
       </div>
 
       {featured ? (
@@ -138,12 +191,12 @@ export function SourceCard({
             {t("lastSync")}
           </span>
           <span className="font-mono text-card-title text-text-1 tnum">
-            {relativeTime(source.lastSyncedAt)}
+            {relativeTime(source.lastSyncedAt, locale)}
           </span>
         </p>
       ) : (
         <p className="mt-2 font-mono text-[11px] text-text-3 tnum">
-          {t("lastSync")} {relativeTime(source.lastSyncedAt)}
+          {t("lastSync")} {relativeTime(source.lastSyncedAt, locale)}
         </p>
       )}
 
@@ -153,7 +206,7 @@ export function SourceCard({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          {["Source", "Pipeline", "Inbox"].map((stage, i) => (
+          {[t("stageSource"), t("stagePipeline"), t("stageInbox")].map((stage, i) => (
             <span key={stage} className="flex items-center gap-2">
               <motion.span
                 initial={{ opacity: 0.25 }}

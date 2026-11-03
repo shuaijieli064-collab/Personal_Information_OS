@@ -202,6 +202,92 @@ const KNOWLEDGE_ADD = {
   },
 };
 
+/**
+ * Why a source sync failed, in the user's language. The backend answers with a
+ * machine reason (SOURCE_SYNC_NOT_FOUND, …NOT_A_FEED, …TIMEOUT, …REJECTED,
+ * …PARSE, …NETWORK, …BLOCKED, …UNKNOWN) — one opaque "无法同步该来源。" told the user
+ * nothing they could act on.
+ */
+const SYNC_FAIL_ADD = {
+  "zh-CN": {
+    syncFailed_NOT_FOUND: "同步失败：这个地址打不开（404）。链接可能已经失效，改一下来源地址再试。",
+    syncFailed_REJECTED: "同步失败：站点拒绝了抓取（403/429）。可能是不欢迎自动访问，稍后再试或换一个地址。",
+    syncFailed_TIMEOUT: "同步失败：站点在 8 秒内没有响应。网络太慢或对方太卡，稍后再试。",
+    syncFailed_NOT_A_FEED: "同步失败：这个地址是一个网页，不是 RSS/Atom 订阅源，站点上也没有找到可用的订阅源。要持续跟踪一个网站，请填它首页的地址，系统会自动抓取上面的文章。",
+    syncFailed_PARSE: "同步失败：返回的内容解析不了，可能不是有效的订阅源。",
+    syncFailed_NETWORK: "同步失败：网络层出错（DNS / 连接被重置）。稍后再试。",
+    syncFailed_BLOCKED: "同步失败：出于安全考虑，这个地址不被允许访问（内网、本地或云元数据地址会被拦截）。",
+    syncFailed_INVALID_URL: "同步失败：这个地址格式不对——请检查是否以 http:// 或 https:// 开头、是否带上了主机名。",
+    syncFailed_UNKNOWN: "同步失败：原因不明，稍后再试；持续失败请换个地址。",
+  },
+  en: {
+    syncFailed_NOT_FOUND: "Sync failed: that URL does not open (404). The link may be dead — edit the source and try again.",
+    syncFailed_REJECTED: "Sync failed: the site refused the fetch (403/429). It may dislike automated access; try later or use another URL.",
+    syncFailed_TIMEOUT: "Sync failed: no answer within 8 seconds. The site is slow or unreachable — try later.",
+    syncFailed_NOT_A_FEED: "Sync failed: that URL is a web page, not an RSS/Atom feed, and the site publishes no discoverable feed. To follow a website, give it the homepage — the articles on it are fetched for you.",
+    syncFailed_PARSE: "Sync failed: the response could not be parsed as a feed.",
+    syncFailed_NETWORK: "Sync failed: network error (DNS / reset connection). Try later.",
+    syncFailed_BLOCKED: "Sync failed: that URL is not allowed (internal, loopback and cloud-metadata addresses are blocked).",
+    syncFailed_INVALID_URL: "Sync failed: that URL is malformed — check it starts with http:// or https:// and carries a hostname.",
+    syncFailed_UNKNOWN: "Sync failed: reason unknown — try later, or use another URL.",
+  },
+};
+
+/** Source card extras: two-step delete inline, localised sync stages and times. */
+const SOURCECARD_ADD = {
+  "zh-CN": {
+    delete: "删除",
+    confirmDelete: "确认删除",
+    cancel: "取消",
+    stageSource: "来源",
+    stagePipeline: "管线",
+    stageInbox: "收件箱",
+  },
+  en: {
+    delete: "Delete",
+    confirmDelete: "Delete",
+    cancel: "Cancel",
+    stageSource: "Source",
+    stagePipeline: "Pipeline",
+    stageInbox: "Inbox",
+  },
+};
+
+/**
+ * Inbox notices that can finally answer "why is this not a signal?" — the pipeline's
+ * score next to the threshold it did not clear. A kept row used to change nothing the
+ * user could see, so the decision looked like a dead end.
+ */
+const INBOX2_ADD = {
+  "zh-CN": {
+    analyseDone: "已分析：信号分 {score}，未达到成为信号的门槛 {min}——所以没有生成信号。想留下这条就点「保留」。",
+    analyseDoneAbove: "已分析：信号分 {score}，已超过门槛 {min}，信号已生成，见下方「已生成信号」。",
+    keptBelow: "已保留：信号分 {score}，未达到门槛 {min}，因此没有生成信号。它留在「需要处理」里并带「已保留」标记。",
+    keptAbove: "已保留：信号分 {score}，已超过门槛 {min}——信号已生成，见下方「已生成信号」。",
+    keptNoScore: "已保留。这条暂时没有分数，点「分析」让管线评一次。",
+  },
+  en: {
+    analyseDone: "Analysed: signal score {score}, below the {min} threshold — no signal was created. Keep it with 「保留」.",
+    analyseDoneAbove: "Analysed: signal score {score}, above the {min} threshold — the signal is in 「已生成信号」 below.",
+    keptBelow: "Kept: signal score {score}, below the {min} threshold, so no signal. It stays in 「需要处理」 marked as kept.",
+    keptAbove: "Kept: signal score {score} is above the {min} threshold — the signal is in 「已生成信号」 below.",
+    keptNoScore: "Kept. This one has no score yet — run 「分析」 to have the pipeline score it.",
+  },
+};
+
+const INBOXITEM_ADD = {
+  "zh-CN": {
+    signalScore: "信号分 {score}",
+    scoreBelow: "未达到成为信号的门槛 {min}，所以它留在「需要处理」里。",
+    scoreAbove: "已达到门槛，会在「已生成信号」中出现。",
+  },
+  en: {
+    signalScore: "Score {score}",
+    scoreBelow: "Below the {min} threshold, so it stays in 「需要处理」.",
+    scoreAbove: "Above the threshold — it appears under 「已生成信号」.",
+  },
+};
+
 /** Namespaces whose owning component was deleted in the UI recast. */
 const DROP_NAMESPACES = ["LocaleSwitch"];
 
@@ -248,9 +334,11 @@ for (const locale of LOCALES) {
     ...(json.Agent ?? {}),
     toolDesc: { ...(json.Agent?.toolDesc ?? {}), ...TOOL_DESC_ADD[locale] },
   };
-  json.Inbox = { ...(json.Inbox ?? {}), ...INBOX_ADD[locale].section };
-  json.InboxItem = { ...(json.InboxItem ?? {}), ...INBOX_ADD[locale].item };
+  json.Inbox = { ...(json.Inbox ?? {}), ...INBOX_ADD[locale].section, ...INBOX2_ADD[locale] };
+  json.InboxItem = { ...(json.InboxItem ?? {}), ...INBOX_ADD[locale].item, ...INBOXITEM_ADD[locale] };
   json.Knowledge = { ...(json.Knowledge ?? {}), ...KNOWLEDGE_ADD[locale] };
+  json.Sources = { ...(json.Sources ?? {}), ...SYNC_FAIL_ADD[locale] };
+  json.SourceCard = { ...(json.SourceCard ?? {}), ...SOURCECARD_ADD[locale] };
 
   const out = `${JSON.stringify(json, null, 2)}\n`;
   if (out !== raw) {

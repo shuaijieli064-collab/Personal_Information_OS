@@ -4,6 +4,14 @@
 > 代码基线：`main` @ `7228d0e`（含未提交的 Phase 6 K2 工作区改动）
 > 验证环境：Windows 11 · JDK 25（编译 Java 21 target）· Node 22 · Docker **未运行**（数据库集成验证本轮未执行）
 
+> 更新（2026-10-22）：**P0-3 已关闭**。`/auth/login`（10/min）、`/auth/register`（30/hour）、
+> `/auth/refresh`（30/min）已按客户端地址限流，超限返回 `429` + `Retry-After`，走统一响应封套
+> （`RateLimitFilter` + `SlidingWindowRateLimiter`，阈值见 `app.security.rate-limit.*`）。
+> 实现刻意用**进程内**滑动窗口而非 Redis：服务是单实例、CI 无 Redis，把外部依赖放进登录路径
+> 只会制造新的故障点。随之移除了零引用的 `spring-boot-starter-data-redis`、
+> `docker-compose` 的 redis 服务与 `REDIS_HOST/PORT`——该依赖还会让 `/actuator/health` 在
+> Redis 未启动时误报 DOWN。上一段 P0-2（令牌存 localStorage）仍未处理，属独立议题。
+
 ---
 
 ## 1. 结论摘要

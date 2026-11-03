@@ -63,7 +63,13 @@
     "lastSync": "上次同步",
     "sync": "同步",
     "itemsCollected": "已收集",
-    "statusFailed": "需关注"
+    "statusFailed": "需关注",
+    "delete": "删除",
+    "confirmDelete": "确认删除",
+    "cancel": "取消",
+    "stageSource": "来源",
+    "stagePipeline": "管线",
+    "stageInbox": "收件箱"
   },
   "InboxItem": {
     "keepHint": "向右拖动保留",
@@ -71,7 +77,10 @@
     "keep": "保留",
     "ignore": "忽略",
     "analyse": "分析",
-    "kept": "已保留"
+    "kept": "已保留",
+    "signalScore": "信号分 {score}",
+    "scoreBelow": "未达到成为信号的门槛 {min}，所以它留在「需要处理」里。",
+    "scoreAbove": "已达到门槛，会在「已生成信号」中出现。"
   },
   "Command": {
     "label": "命令中心",
@@ -114,6 +123,7 @@
     "submitting": "登录中…",
     "noAccount": "还没有账号？",
     "createAccount": "创建账号",
+    "errRateLimited": "尝试过于频繁，请稍后再试。",
     "fallbackError": "信号被中断了。"
   },
   "Register": {
@@ -128,6 +138,7 @@
     "signIn": "登录",
     "errShort": "密码至少需要 8 个字符。",
     "errMismatch": "两次输入的密码不一致。",
+    "errRateLimited": "尝试过于频繁，请稍后再试。",
     "fallbackError": "信号被中断了。"
   },
   "Onboarding": {
@@ -209,9 +220,13 @@
     "ignoredEmpty": "被你忽略的条目会出现在这里，随时可以恢复。",
     "restore": "恢复",
     "actionFailed": "操作失败，请重试。",
-    "analyseDone": "已分析：信号分 {score}。达到门槛的条目才会出现在「已生成信号」。",
+    "analyseDone": "已分析：信号分 {score}，未达到成为信号的门槛 {min}——所以没有生成信号。想留下这条就点「保留」。",
     "analyseDoneNoScore": "已分析，但这次没有算出信号分。",
-    "reviewClear": "这一批都处理完了。新内容进来会出现在这里。"
+    "reviewClear": "这一批都处理完了。新内容进来会出现在这里。",
+    "analyseDoneAbove": "已分析：信号分 {score}，已超过门槛 {min}，信号已生成，见下方「已生成信号」。",
+    "keptBelow": "已保留：信号分 {score}，未达到门槛 {min}，因此没有生成信号。它留在「需要处理」里并带「已保留」标记。",
+    "keptAbove": "已保留：信号分 {score}，已超过门槛 {min}——信号已生成，见下方「已生成信号」。",
+    "keptNoScore": "已保留。这条暂时没有分数，点「分析」让管线评一次。"
   },
   "Detail": {
     "loading": "读取中…",
@@ -245,7 +260,16 @@
     "errSync": "同步失败",
     "errDelete": "删除失败",
     "syncResult": "同步完成：获取 {fetched} 条，新增 {created}，重复 {duplicates}，失败 {failed}",
-    "added": "信息源已添加。"
+    "added": "信息源已添加。",
+    "syncFailed_NOT_FOUND": "同步失败：这个地址打不开（404）。链接可能已经失效，改一下来源地址再试。",
+    "syncFailed_REJECTED": "同步失败：站点拒绝了抓取（403/429）。可能是不欢迎自动访问，稍后再试或换一个地址。",
+    "syncFailed_TIMEOUT": "同步失败：站点在 8 秒内没有响应。网络太慢或对方太卡，稍后再试。",
+    "syncFailed_NOT_A_FEED": "同步失败：这个地址是一个网页，不是 RSS/Atom 订阅源，站点上也没有找到可用的订阅源。要持续跟踪一个网站，请填它首页的地址，系统会自动抓取上面的文章。",
+    "syncFailed_PARSE": "同步失败：返回的内容解析不了，可能不是有效的订阅源。",
+    "syncFailed_NETWORK": "同步失败：网络层出错（DNS / 连接被重置）。稍后再试。",
+    "syncFailed_BLOCKED": "同步失败：出于安全考虑，这个地址不被允许访问（内网、本地或云元数据地址会被拦截）。",
+    "syncFailed_UNKNOWN": "同步失败：原因不明，稍后再试；持续失败请换个地址。",
+    "syncFailed_INVALID_URL": "同步失败：这个地址格式不对——请检查是否以 http:// 或 https:// 开头、是否带上了主机名。"
   },
   "Discover": {
     "title": "发现",

@@ -98,9 +98,17 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.BAD_GATEWAY, "URL_FETCH_FAILED", ex.getMessage());
     }
 
+    /**
+     * A source sync the user asked for and that the remote site refused. This is an
+     * explicit action, not a read of ours, so it must fail — but with a code the UI
+     * can translate into a sentence the user can act on. {@code SOURCE_SYNC_NOT_FOUND}
+     * is a 404 from the site; {@code …NOT_A_FEED} means the URL is a web page, not a
+     * feed, and the site publishes none.
+     */
     @ExceptionHandler(com.signal.ingestion.service.IngestionService.SourceSyncException.class)
-    public ResponseEntity<ApiResponse<Void>> handleSync(Exception ex) {
-        return body(HttpStatus.BAD_GATEWAY, "SOURCE_SYNC_FAILED", ex.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleSync(
+            com.signal.ingestion.service.IngestionService.SourceSyncException ex) {
+        return body(HttpStatus.BAD_GATEWAY, "SOURCE_SYNC_" + ex.reason(), ex.getMessage());
     }
 
     /**

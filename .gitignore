@@ -36,3 +36,6 @@ ui-design-runs/
 Thumbs.db
 .idea/
 .vscode/
+
+# Local tooling state (extra).acl-recovery/
+.workbuddy/

@@ -63,6 +63,14 @@ public class SignalGenerationService {
     }
 
     /**
+     * The bar an item must clear to become a Signal. Exposed so the UI can say
+     * "45.8, threshold 70" instead of showing a number with nothing to compare it to.
+     */
+    public double minScore() {
+        return minScore;
+    }
+
+    /**
      * Computes the score without persisting a Signal. Used by the pipeline so a
      * below-threshold item still records its score on the understanding row.
      */

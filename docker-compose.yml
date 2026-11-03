@@ -1,6 +1,7 @@
-# SIGNAL local dev environment — PostgreSQL 16 + Redis 7.
+# SIGNAL local dev environment — PostgreSQL 16 (pgvector).
 # Usage: docker compose up -d
-# No Kubernetes, no extra services. Add when a real need exists.
+# No Kubernetes, no extra services. Add when a real need exists — Redis was removed
+# because nothing used it; rate limiting is in-process (see RateLimitFilter).
 
 services:
   postgres:
@@ -16,17 +17,6 @@ services:
       - signal-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U signal -d signal"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  redis:
-    image: redis:7-alpine
-    container_name: signal-redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10

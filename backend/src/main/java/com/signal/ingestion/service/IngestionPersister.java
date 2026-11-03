@@ -89,6 +89,6 @@ public class IngestionPersister {
             }
         }
         return new IngestionService.SyncResult(source.getId(), list.size(), created, updated,
-                duplicates, failed, createdIds);
+                duplicates, failed, createdIds, null);
     }
 }

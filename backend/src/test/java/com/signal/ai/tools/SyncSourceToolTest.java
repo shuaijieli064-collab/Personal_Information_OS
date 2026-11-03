@@ -38,7 +38,7 @@ class SyncSourceToolTest {
         UUID user = UUID.randomUUID();
         UUID sourceId = UUID.randomUUID();
         when(ingestion.sync(user, sourceId))
-                .thenReturn(new IngestionService.SyncResult(sourceId, 5, 3, 1, 1, 0, List.of()));
+                .thenReturn(new IngestionService.SyncResult(sourceId, 5, 3, 1, 1, 0, List.of(), null));
 
         Map<?, ?> out = (Map<?, ?>) tool.execute(user, Map.<String, Object>of("sourceId", sourceId.toString()));
 

@@ -7,6 +7,9 @@ import com.signal.ingestion.repository.InformationRepository;
 import com.signal.ingestion.repository.SourceRepository;
 import com.signal.signal.entity.Signal;
 import com.signal.signal.repository.SignalRepository;
+import com.signal.signal.service.SignalGenerationService;
+import com.signal.understanding.entity.InformationUnderstanding;
+import com.signal.understanding.repository.InformationUnderstandingRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
@@ -38,9 +41,12 @@ class InformationControllerTest {
     private final InformationRepository repo = mock(InformationRepository.class);
     private final SignalRepository signals = mock(SignalRepository.class);
     private final SourceRepository sources = mock(SourceRepository.class);
+    private final InformationUnderstandingRepository understanding =
+            mock(InformationUnderstandingRepository.class);
+    private final SignalGenerationService signalService = mock(SignalGenerationService.class);
 
     private final MockMvc mockMvc = MockMvcBuilders
-            .standaloneSetup(new InformationController(repo, signals, sources))
+            .standaloneSetup(new InformationController(repo, signals, sources, understanding, signalService))
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
 
@@ -154,6 +160,51 @@ class InformationControllerTest {
                 .andExpect(jsonPath("$.data.items.length()").value(1));
 
         verify(repo, never()).findByUserIdAndStatus(any(), any(), any());
+    }
+
+    /**
+     * A kept row that is not a signal is the case the UI has to explain: the pipeline
+     * computed 45.8 against a threshold of 70 and stopped there. The feed carries that
+     * number and the bar, so the row can show both instead of looking inert.
+     */
+    @Test
+    void feedCarriesTheScoreAndTheThreshold() throws Exception {
+        authenticate();
+        Information i = info();
+        when(repo.findByUserIdAndStatus(eq(userId), eq("ACTIVE"), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(i)));
+        when(signals.findByInformationIdIn(any())).thenReturn(List.of());
+
+        InformationUnderstanding u = new InformationUnderstanding();
+        u.setInformationId(i.getId());
+        u.setSignalScore(45.8);
+        when(understanding.findByInformationIdIn(any())).thenReturn(List.of(u));
+        when(signalService.minScore()).thenReturn(70.0);
+
+        mockMvc.perform(get("/api/v1/information").param("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.signalScores." + i.getId()).value(45.8))
+                .andExpect(jsonPath("$.data.signalMinScore").value(70.0));
+
+        verify(signalService).minScore();
+    }
+
+    /** An item the pipeline never reached must not break the batch or invent a 0. */
+    @Test
+    void feedToleratesAnItemWithNoUnderstandingRow() throws Exception {
+        authenticate();
+        when(repo.findByUserId(eq(userId), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(info(), info())));
+        when(signals.findByInformationIdIn(any())).thenReturn(List.of());
+        InformationUnderstanding u = new InformationUnderstanding();
+        u.setInformationId(UUID.randomUUID()); // belongs to some other row
+        when(understanding.findByInformationIdIn(any())).thenReturn(List.of(u));
+        when(signalService.minScore()).thenReturn(70.0);
+
+        mockMvc.perform(get("/api/v1/information"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.signalScores").isEmpty())
+                .andExpect(jsonPath("$.data.signalMinScore").value(70.0));
     }
 
     /**

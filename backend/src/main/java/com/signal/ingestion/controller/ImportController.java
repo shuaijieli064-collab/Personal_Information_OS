@@ -2,6 +2,7 @@ package com.signal.ingestion.controller;
 
 import com.signal.common.ApiResponse;
 import com.signal.ingestion.entity.Source;
+import com.signal.ingestion.pipeline.ArticleExtractor;
 import com.signal.ingestion.pipeline.HttpFetcher;
 import com.signal.ingestion.pipeline.NormalizedItem;
 import com.signal.ingestion.repository.SourceRepository;
@@ -12,7 +13,6 @@ import jakarta.validation.constraints.NotBlank;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.jsoup.Jsoup;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,13 +31,15 @@ public class ImportController {
 
     private final UrlValidator validator;
     private final HttpFetcher fetcher;
+    private final ArticleExtractor extractor;
     private final SourceRepository sources;
     private final IngestionService ingestion;
 
-    public ImportController(UrlValidator validator, HttpFetcher fetcher,
+    public ImportController(UrlValidator validator, HttpFetcher fetcher, ArticleExtractor extractor,
                             SourceRepository sources, IngestionService ingestion) {
         this.validator = validator;
         this.fetcher = fetcher;
+        this.extractor = extractor;
         this.sources = sources;
         this.ingestion = ingestion;
     }
@@ -47,20 +49,21 @@ public class ImportController {
     @PostMapping("/url")
     public ApiResponse<Map<String, Object>> importUrl(@Valid @RequestBody UrlImportRequest req) throws IOException {
         validator.validate(req.url());
-        byte[] body = fetcher.get(req.url());
-        String html = new String(body, StandardCharsets.UTF_8);
-        var doc = Jsoup.parse(html, req.url());
-        String title = doc.title() == null || doc.title().isBlank() ? "Untitled" : doc.title().trim();
-        var main = doc.selectFirst("article");
-        if (main == null) main = doc.body();
-        String text = main == null ? Jsoup.clean(html, org.jsoup.safety.Safelist.none())
-                : Jsoup.clean(main.html(), org.jsoup.safety.Safelist.none());
+        // Same extraction the URL collector uses: charset-aware, real content container,
+        // navigation stripped. The old version decoded as UTF-8 unconditionally and
+        // fell back to <body>, so a GBK article arrived as mojibake and a portal
+        // homepage arrived as its navigation menu.
+        HttpFetcher.FetchResult fetched = fetcher.getResult(req.url());
+        ArticleExtractor.Article article = extractor.extract(
+                fetched.body(), fetched.contentType(), fetched.finalUrl());
+        String text = article.text();
+        if (text.isBlank()) throw new FileRejectedException("No extractable text on that page");
 
         Source s = transientSource("URL", req.url());
         ingestion.persistDirect(s, new NormalizedItem(
                 com.signal.ingestion.pipeline.Hashing.canonicalUrl(req.url()),
-                title, text, excerpt(text), req.url(), null, null, "ARTICLE", null, Map.of()));
-        return ApiResponse.ok(Map.of("imported", true, "title", title));
+                article.title(), text, excerpt(text), req.url(), null, null, "ARTICLE", null, Map.of()));
+        return ApiResponse.ok(Map.of("imported", true, "title", article.title()));
     }
 
     @PostMapping("/file")

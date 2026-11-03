@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
-import { api, tokens, ApiError } from "@/lib/api/client";
+import { api, tokens } from "@/lib/api/client";
+import { authErrorMessage } from "@/lib/api/authError";
 import { Warning } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -32,7 +33,7 @@ export default function RegisterPage() {
       tokens.set(data.accessToken, data.refreshToken);
       router.push("/onboarding");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : t("fallbackError"));
+      setError(authErrorMessage(err, t));
     } finally {
       setLoading(false);
     }

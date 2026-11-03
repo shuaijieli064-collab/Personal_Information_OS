@@ -24,6 +24,7 @@ export const queryKeys = {
   inboxIgnored: ["inbox", "ignored"] as const,
   sources: ["sources"] as const,
   information: (id: string) => ["information", id] as const,
+  understanding: (id: string) => ["understanding", id] as const,
   discover: ["discover"] as const,
   agentTools: ["agent", "tools"] as const,
   agentRunsAll: ["agent", "runs"] as const,
@@ -90,7 +91,7 @@ export function useInformation(id: string) {
 
 export function useUnderstanding(id: string) {
   return useQuery({
-    queryKey: ["understanding", id] as const,
+    queryKey: queryKeys.understanding(id),
     queryFn: () => informationApi.understanding(id),
     enabled: Boolean(id),
   });

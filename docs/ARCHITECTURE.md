@@ -124,9 +124,9 @@ so the system degrades gracefully when the LLM is unavailable.
 └───────┬──────────────────┬───────────────────┬────────────┘
         │                  │                   │
 ┌───────▼───────┐  ┌────────▼────────┐  ┌───────▼─────────┐
-│ PostgreSQL 16 │  │ Redis           │  │ MQ [deferred]   │
-│ + pgvector    │  │ session/rate    │  │ RabbitMQ later  │
-│ (Phase 6–8)   │  │ limit/cache     │  │                 │
+│ PostgreSQL 16 │  │ In-process      │  │ MQ [deferred]   │
+│ + pgvector    │  │ sliding-window  │  │ RabbitMQ later  │
+│ (Phase 6–8)   │  │ limiter (§2.5)  │  │                 │
 └───────────────┘  └─────────────────┘  └─────────────────┘
         ▲
         │
@@ -144,7 +144,7 @@ so the system degrades gracefully when the LLM is unavailable.
 | Frontend framework | Next.js App Router | SSR for fast first paint, file routing, one deployable |
 | Backend | Spring Boot 4.1.1 / Java 21 | Spec-mandated; portfolio value; strong JPA/security ecosystem |
 | Primary store | PostgreSQL (+ pgvector when RAG arrives) | One operational store; avoids a separate vector DB in Phase 1 |
-| Cache | Redis | Sessions, rate limits, hot signals, AI response cache |
+| Cache | None (deliberately) | One instance, and every query is indexed; an external cache would be an extra service to run for no measured gain. Redis was removed as dead weight — reintroduce it with a benchmark, not in advance |
 | Queue | In-process `@Scheduled` scheduler (Phase 8, `app.automation.*`) → RabbitMQ later | One-instance scheduling is enough at this scale; the tick is table-driven (`scheduled_jobs`) so swapping in a broker later is a delivery change, not a redesign |
 | AI access | `AIProvider` interface with OpenAI-compatible impls | No vendor lock-in; keys in env only |
 | Monorepo | Single repo, `frontend/` + `backend/` + `docs/` | Simplest coherent structure for one team |
@@ -184,7 +184,12 @@ backend/src/main/java/com/signal/
 
 - JWT access token (short-lived) + refresh token rotation; HttpOnly secure cookies.
 - Per-user row isolation on every query (JPA filter / tenant id).
-- Rate limiting at gateway + per-route (Redis sliding window).
+- Rate limiting on the credential endpoints (`/auth/login`, `/auth/register`,
+  `/auth/refresh`): in-process sliding window per client address, 429 + `Retry-After`
+  (`RateLimitFilter`, `app.security.rate-limit.*`). In-process because the backend is a
+  single instance and CI has no Redis; scaling out means replacing one class
+  (`SlidingWindowRateLimiter`) with a shared counter. Limits are per address, not per
+  account — the filter runs before the body is read.
 - SSRF guard on URL fetching: private IP ranges blocked, allow-list of schemes, size caps.
 - Input validation on all boundaries (Bean Validation); XSS via output encoding; CSRF
   protection on cookie auth; parameterized queries only (JPA).

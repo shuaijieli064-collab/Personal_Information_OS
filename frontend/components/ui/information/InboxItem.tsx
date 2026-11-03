@@ -18,12 +18,19 @@ function freshnessClass(iso?: string): string {
 /**
  * InboxItem — an item in the information sorting center.
  * Drag left to ignore, drag right to keep (mail-style), or use the explicit actions.
+ *
+ * <p>The score chip exists because of the question every kept row raises: "why is this
+ * not a signal?" The pipeline already computed the number and stored it; showing it —
+ * with the threshold it did not clear — is the difference between a decision and a
+ * guess. Without it, 保留 looked like a dead end that did nothing.
  */
 export function InboxItem({
   item,
   sourceName,
   classification,
   confidence,
+  signalScore,
+  minScore,
   onAction,
   busy = false,
 }: {
@@ -32,12 +39,18 @@ export function InboxItem({
   sourceName?: string;
   classification?: string;
   confidence?: number;
+  /** The score the pipeline computed for this item, when it has been understood. */
+  signalScore?: number;
+  /** The bar a score must clear to become a signal. */
+  minScore?: number;
   onAction?: (action: InboxAction) => void;
   busy?: boolean;
 }) {
   const t = useTranslations("InboxItem");
   const freshness = freshnessClass(item.publishedAt);
   const excerpt = item.excerpt || item.content;
+  const shownScore = signalScore == null ? null : Math.round(signalScore);
+  const belowBar = signalScore != null && minScore != null && signalScore < minScore;
 
   return (
     <div className="group relative overflow-hidden rounded-card border border-line bg-bg-1 transition-colors hover:border-line-strong">
@@ -100,6 +113,18 @@ export function InboxItem({
               {confidence !== undefined && (
                 <span className="tnum text-signal"> · {Math.round(confidence * 100)}%</span>
               )}
+            </span>
+          )}
+          {shownScore != null && (
+            <span
+              title={belowBar ? t("scoreBelow", { min: minScore ?? 0 }) : t("scoreAbove")}
+              className={`shrink-0 rounded-pill border px-2 py-0.5 font-mono text-[11px] tnum ${
+                belowBar
+                  ? "border-line bg-bg-2 text-text-3"
+                  : "border-success/40 bg-success/10 text-success"
+              }`}
+            >
+              {t("signalScore", { score: shownScore })}
             </span>
           )}
         </div>

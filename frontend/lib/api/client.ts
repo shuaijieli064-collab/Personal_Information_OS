@@ -207,6 +207,11 @@ export const informationApi = {
       total: number;
       /** information id → signal id, for the rows on this page. */
       signalIds?: Record<string, string>;
+      /** information id → the score the pipeline computed, so a kept row can say
+       *  "45.8, threshold 70" instead of leaving the user to guess why it is not a signal. */
+      signalScores?: Record<string, number>;
+      /** The bar a score must clear to become a signal (app.signal.min-score). */
+      signalMinScore?: number;
       /** source id → source name, so a row can name where it came from. */
       sourceNames?: Record<string, string>;
     }>(

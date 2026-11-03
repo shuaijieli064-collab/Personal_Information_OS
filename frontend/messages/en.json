@@ -63,7 +63,13 @@
     "lastSync": "Last sync",
     "sync": "Sync",
     "itemsCollected": "Items collected",
-    "statusFailed": "Attention"
+    "statusFailed": "Attention",
+    "delete": "Delete",
+    "confirmDelete": "Delete",
+    "cancel": "Cancel",
+    "stageSource": "Source",
+    "stagePipeline": "Pipeline",
+    "stageInbox": "Inbox"
   },
   "InboxItem": {
     "keepHint": "Drag right to keep",
@@ -71,7 +77,10 @@
     "keep": "Keep",
     "ignore": "Ignore",
     "analyse": "Analyse",
-    "kept": "Kept"
+    "kept": "Kept",
+    "signalScore": "Score {score}",
+    "scoreBelow": "Below the {min} threshold, so it stays in 「需要处理」.",
+    "scoreAbove": "Above the threshold — it appears under 「已生成信号」."
   },
   "Command": {
     "label": "Command Center",
@@ -114,6 +123,7 @@
     "submitting": "Signing in…",
     "noAccount": "Don't have an account?",
     "createAccount": "Create account",
+    "errRateLimited": "Too many attempts. Wait a moment and try again.",
     "fallbackError": "Something interrupted the signal."
   },
   "Register": {
@@ -128,6 +138,7 @@
     "signIn": "Sign in",
     "errShort": "Password must be at least 8 characters.",
     "errMismatch": "Passwords do not match.",
+    "errRateLimited": "Too many attempts. Wait a moment and try again.",
     "fallbackError": "Something interrupted the signal."
   },
   "Onboarding": {
@@ -209,9 +220,13 @@
     "ignoredEmpty": "Items you dismiss land here, and can be restored at any time.",
     "restore": "Restore",
     "actionFailed": "That did not work. Try again.",
-    "analyseDone": "Analysed: signal score {score}. Only items above the threshold become signals.",
+    "analyseDone": "Analysed: signal score {score}, below the {min} threshold — no signal was created. Keep it with 「保留」.",
     "analyseDoneNoScore": "Analysed, but no signal score came back this time.",
-    "reviewClear": "Nothing left to review. New items will land here."
+    "reviewClear": "Nothing left to review. New items will land here.",
+    "analyseDoneAbove": "Analysed: signal score {score}, above the {min} threshold — the signal is in 「已生成信号」 below.",
+    "keptBelow": "Kept: signal score {score}, below the {min} threshold, so no signal. It stays in 「需要处理」 marked as kept.",
+    "keptAbove": "Kept: signal score {score} is above the {min} threshold — the signal is in 「已生成信号」 below.",
+    "keptNoScore": "Kept. This one has no score yet — run 「分析」 to have the pipeline score it."
   },
   "Detail": {
     "loading": "Reading…",
@@ -245,7 +260,16 @@
     "errSync": "Sync failed",
     "errDelete": "Could not delete",
     "syncResult": "Synced: {fetched} fetched, {created} created, {duplicates} duplicates, {failed} failed",
-    "added": "Source added."
+    "added": "Source added.",
+    "syncFailed_NOT_FOUND": "Sync failed: that URL does not open (404). The link may be dead — edit the source and try again.",
+    "syncFailed_REJECTED": "Sync failed: the site refused the fetch (403/429). It may dislike automated access; try later or use another URL.",
+    "syncFailed_TIMEOUT": "Sync failed: no answer within 8 seconds. The site is slow or unreachable — try later.",
+    "syncFailed_NOT_A_FEED": "Sync failed: that URL is a web page, not an RSS/Atom feed, and the site publishes no discoverable feed. To follow a website, give it the homepage — the articles on it are fetched for you.",
+    "syncFailed_PARSE": "Sync failed: the response could not be parsed as a feed.",
+    "syncFailed_NETWORK": "Sync failed: network error (DNS / reset connection). Try later.",
+    "syncFailed_BLOCKED": "Sync failed: that URL is not allowed (internal, loopback and cloud-metadata addresses are blocked).",
+    "syncFailed_UNKNOWN": "Sync failed: reason unknown — try later, or use another URL.",
+    "syncFailed_INVALID_URL": "Sync failed: that URL is malformed — check it starts with http:// or https:// and carries a hostname."
   },
   "Discover": {
     "title": "Discover",

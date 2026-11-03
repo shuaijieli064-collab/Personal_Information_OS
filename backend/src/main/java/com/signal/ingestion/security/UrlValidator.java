@@ -26,9 +26,21 @@ public class UrlValidator {
 
     public void validate(String rawUrl) {
         if (rawUrl == null || rawUrl.isBlank()) throw new BlockedUrlException("URL is required");
+        // Canonicalise first: a pasted URL with a space or a CJK character is not a
+        // security problem, and rejecting it as "Blocked host" sent the user hunting
+        // for a security setting that had nothing to do with their paste.
+        String url;
+        try {
+            url = com.signal.ingestion.pipeline.UrlCodec.normalize(rawUrl);
+        } catch (RuntimeException e) {
+            // "file:///etc/passwd" and "javascript:alert(1)" are rejected here by
+            // shape, not by encoding — keep the validator's contract that everything
+            // it refuses is a BlockedUrlException.
+            throw new BlockedUrlException("Invalid URL");
+        }
         URI uri;
         try {
-            uri = URI.create(rawUrl.trim());
+            uri = URI.create(url);
         } catch (Exception e) {
             throw new BlockedUrlException("Invalid URL");
         }

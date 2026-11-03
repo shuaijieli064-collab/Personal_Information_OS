@@ -32,19 +32,8 @@ public class GithubCollector implements SourceCollector {
 
     @Override public boolean supports(String type) { return "GITHUB".equalsIgnoreCase(type); }
 
-    private String ownerRepo(Source s) {
-        String path = s.getUrl().replaceFirst("\\.git$", "").replaceAll("/*$", "");
-        String[] parts = path.replace("https://github.com/", "").split("/");
-        if (parts.length < 2) throw new IllegalArgumentException("Invalid GitHub repository URL");
-        return parts[0] + "/" + parts[1];
-    }
-
-    private JsonNode getJson(String path) throws Exception {
-        return json.readTree(fetcher.get(apiBase + path));
-    }
-
     @Override
-    public List<NormalizedItem> collect(Source source) throws Exception {
+    public CollectResult collect(Source source) throws Exception {
         String repo = ownerRepo(source);
         List<NormalizedItem> out = new ArrayList<>();
 
@@ -69,7 +58,18 @@ public class GithubCollector implements SourceCollector {
                 p.path("html_url").asText(), p.path("user").path("login").asText(null),
                 p.path("created_at").asText(null), "PULL_REQUEST"));
 
-        return out;
+        return CollectResult.of(out);
+    }
+
+    private String ownerRepo(Source s) {
+        String path = s.getUrl().replaceFirst("\\.git$", "").replaceAll("/*$", "");
+        String[] parts = path.replace("https://github.com/", "").split("/");
+        if (parts.length < 2) throw new IllegalArgumentException("Invalid GitHub repository URL");
+        return parts[0] + "/" + parts[1];
+    }
+
+    private JsonNode getJson(String path) throws Exception {
+        return json.readTree(fetcher.get(apiBase + path));
     }
 
     private NormalizedItem item(String extId, String title, String body, String url,

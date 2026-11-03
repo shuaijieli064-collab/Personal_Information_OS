@@ -87,14 +87,19 @@ image **rebuild** (it is a compile-time constant, not runtime env).
 4. **Verify (the "it actually landed" checklist)**:
 
    ```bash
-   curl -s http://127.0.0.1/actuator/health | grep '"status":"UP"'      # via caddy→backend
-   curl -s --head http://127.0.0.1/ | head -1                          # frontend 200
+   # Backend alive through caddy (401 envelope = Spring Security responding; actuator
+   # deliberately has NO public route — only /api/* is proxied):
+   curl -s http://localhost/api/v1/auth/me | grep 'UNAUTHORIZED'
+   docker inspect --format="{{.State.Health.Status}}" $(docker compose --env-file .env.prod \
+     -f docker-compose.prod.yml ps -q backend)     # expect: healthy
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost/    # frontend: 200
    ```
 
    Then in the browser, open `SITE_ADDRESS`: register → complete onboarding →
    Today renders → create an RSS source → sync → the inbox and Today feed fill.
    Without an AI key the understanding/summary fields show the deterministic
-   fallbacks; with keys, real summaries/embeddings/rerank appear.
+   fallbacks and signals stay below the 70 threshold (rule scoring on mock
+   output); with keys, real summaries/embeddings/scores appear.
 
 5. **DNS / TLS**: point the domain's A/AAAA record at the host. Caddy obtains and
    renews certificates automatically; no certbot, no manual renewal.

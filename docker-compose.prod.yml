@@ -19,7 +19,6 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: signal-postgres
     environment:
       POSTGRES_DB: signal
       POSTGRES_USER: ${DB_USER:-signal}
@@ -31,7 +30,7 @@ services:
     volumes:
       - signal-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U signal -d signal"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-signal} -d signal"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -41,7 +40,6 @@ services:
     build:
       context: ./backend
     image: signal-backend
-    container_name: signal-backend
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/signal
       DB_USER: ${DB_USER:-signal}
@@ -83,7 +81,6 @@ services:
         # it to the backend. Change it and you must rebuild this image.
         NEXT_PUBLIC_API_URL: ${SITE_ADDRESS:?set SITE_ADDRESS in .env.prod}
     image: signal-frontend
-    container_name: signal-frontend
     depends_on:
       backend:
         condition: service_healthy
@@ -92,7 +89,6 @@ services:
 
   caddy:
     image: caddy:2-alpine
-    container_name: signal-caddy
     ports:
       - "80:80"
       - "443:443"
@@ -112,6 +108,12 @@ services:
     restart: unless-stopped
 
 volumes:
+  # Explicit names keep this stack's data separate from docker-compose.yml (dev):
+  # both files live in the same directory and would otherwise derive identical
+  # volume names, so a prod `down -v` could wipe the dev database.
   signal-pgdata:
+    name: signal-prod-pgdata
   caddy_data:
+    name: signal-prod-caddy-data
   caddy_config:
+    name: signal-prod-caddy-config

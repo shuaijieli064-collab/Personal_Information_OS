@@ -18,6 +18,7 @@
 | 7 | Agent & Tools | Tool Registry、Permission、Planner/Executor、Audit、Confirmation、Failure Recovery | ✅ Frozen 2026-10-16（`docs/PHASE_7_FINAL_QA.md`） |
 | 8 | Automation | Scheduled Sync、Daily Brief、Notification、Feedback Loop、Job Monitoring、Retry/Dead Letter | ✅ Frozen 2026-10-16（`docs/PHASE_8_FINAL_QA.md`） |
 | **5.5+** | **UI 重铸 · 方向 B「晨报 The Brief」** | 四轴反转设计语言、报头 + 竖排文字轨 + 头版语法、晨/晚报双 impression、字体自托管（构建离线化） | **✅ 完成 2026-10-17（`docs/UI_RECAST_BRIEF.md`）** |
+| **L** | **Landing（单体主机落地）** | `backend/Dockerfile`、4 容器生产编排（compose + Caddy 同域 `/api` 路由）、`.env.production.example`、备份/恢复脚本、VM Runbook（`docs/DEPLOYMENT.md`） | ✅ 2026-11-03（镜像构建与 config 校验见下） |
 
 **硬性顺序**：先 Hardening，再 5.5，再 6 → 7 → 8。不在不稳定基础上堆功能。
 5.5+ 是在 Phase 8 冻结之后、对**视觉层**的独立重铸，不触碰 Phase 1–8 的任何后端契约。
@@ -92,7 +93,25 @@
 | 假验证 | 所有"完成"必须附运行证据；未验证项显式标 NOT VERIFIED |
 | 密钥泄漏 | `.env` gitignore + 不入 jar + CI 扫描 |
 
-## Future (Phase 9+ 候选)
+## Future (Phase 9+ 候选)，及 Phase L（Landing）纪要
+
+### Phase L · 单体主机落地（2026-11-03）
+
+生产部署工件一次补齐，目标形态：「一台 2 vCPU / 2 GB 主机跑全套」。
+
+| 交付 | 内容 |
+|---|---|
+| `backend/Dockerfile` | 多阶段：maven+temurin-21 构建 fat jar → jre-alpine 非 root 运行；镜像内 `HEALTHCHECK` 打 `/actuator/health` |
+| `docker-compose.prod.yml` | postgres（内存调参）+ backend（`-Xmx700m`、`ExitOnOutOfMemoryError`）+ frontend（standalone）+ caddy；全部 healthcheck 门控启动；8080/5432 不暴露 |
+| `deploy/Caddyfile` | `{$SITE_ADDRESS}` 站点块：`/api/*` → backend，其余 → frontend；一个域名自动 HTTPS |
+| `.env.production.example` | 三组 AI 坐标、JWT/DB 生成指引、JVM 内存预算、限流注释 |
+| `scripts/backup.sh` / `restore.sh` | pg_dump 一致性快照 + 带 RESTORE 确认的恢复；`backups/` 已 gitignore |
+| `docs/DEPLOYMENT.md` | 全新 Production Runbook：2G swap、空库到 smoke 全流程、运维表、故障前提 |
+| 验证 | compose `config --quiet` 通过；backend/frontend 镜像构建通过；**4 容器全栈本机实测拉起**：空库 24 迁移→v24、注册→JWT→Today、RSS 同步 20/20、reindex 108 chunks/0 failed、内存合计 ≈585 MB（2C2G 预算成立）——证据 `docs/RUNTIME_VERIFICATION.md` #126。目标 VM 上的真实拉起 + 浏览器走查为唯一遗留 |
+
+**已记录偏差**：`NEXT_PUBLIC_API_URL` 是构建期常量 → 换域名需重建 frontend 镜像（选 Caddy 同域路由的代价，换来的是零 CORS 与 8080/5432 不暴露）。令牌仍存 localStorage（P0-2，单人自用信任设备形态下暂不动）。
+
+### Phase 9+ 候选（原 Future 内容，不变）
 
 - **Phase 6–8 已全部完成**（2026-10-16）。主线功能闭环：信息入库 → 理解/评分 → 检索/重排/RAG → 代理执行 → 定时自动化与通知。
 - **Phase 9 候选**（均为独立阶段，不在 Phase 8 冻结范围）：

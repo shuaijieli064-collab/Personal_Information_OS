@@ -29,6 +29,18 @@ Information → Collect → Normalize → Understand → Deduplicate
 
 Main line complete: Phase 6 → 7 → 8 all frozen 2026-10-16. Candidate next steps (distributed scheduling, cron/NL scheduling, push channels, agent dependency graphs, `/api/v1/discover`) are listed under *Future (Phase 9+)* in [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Deploy to a single host (2 vCPU / 2 GB)
+
+```bash
+cp .env.production.example .env.prod   # fill SITE_ADDRESS, DB_PASSWORD, JWT_SECRET, AI keys
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+```
+
+postgres + backend + frontend + caddy, automatic HTTPS, healthcheck-ordered startup,
+Flyway rebuilds an empty database through V1–V24 on boot, `/api/*` is routed same-origin
+by Caddy (no CORS, 8080/5432 not exposed). Full runbook + backup/restore:
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Repository Layout
 
 ```
@@ -36,8 +48,11 @@ SIGNAL/
 ├── docs/          # Architecture, API, DB, Design, Roadmap, QA reports
 ├── frontend/      # Next.js App Router app ([locale] routing, zh-CN/en)
 ├── backend/       # Spring Boot modular monolith + Flyway migrations (sole authority)
-├── docker-compose.yml
-└── .env.example   # all runtime configuration keys
+├── deploy/        # Caddyfile — production reverse proxy (same-origin /api routing)
+├── backend/Dockerfile + docker-compose.prod.yml   # 4-container production stack
+├── scripts/       # e2e smoke, i18n sync, backup/restore
+├── docker-compose.yml          # dev: PostgreSQL 16 + pgvector
+└── .env.example   # all runtime configuration keys (+ .env.production.example for prod)
 ```
 
 ## Documentation Map

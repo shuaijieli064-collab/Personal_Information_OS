@@ -71,6 +71,18 @@
     "stagePipeline": "管线",
     "stageInbox": "收件箱"
   },
+  "SourceDetail": {
+    "toggle": "详情",
+    "toggleClose": "收起",
+    "urlLabel": "地址",
+    "addedLabel": "添加于",
+    "itemsTitle": "该源收录的内容",
+    "itemsLoading": "加载中…",
+    "itemsEmpty": "还没有从该源同步到内容",
+    "itemsEmptyHint": "点卡片上的「同步」拉取一次",
+    "itemsError": "内容加载失败",
+    "retry": "重试"
+  },
   "InboxItem": {
     "keepHint": "向右拖动保留",
     "ignoreHint": "向左拖动忽略",

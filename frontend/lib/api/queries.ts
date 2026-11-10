@@ -24,6 +24,7 @@ export const queryKeys = {
   inbox: ["inbox"] as const,
   inboxIgnored: ["inbox", "ignored"] as const,
   sources: ["sources"] as const,
+  sourceItems: (id: string) => ["sources", id, "items"] as const,
   information: (id: string) => ["information", id] as const,
   understanding: (id: string) => ["understanding", id] as const,
   agentTools: ["agent", "tools"] as const,
@@ -78,6 +79,17 @@ export function useSources() {
   return useQuery({
     queryKey: queryKeys.sources,
     queryFn: () => sourcesApi.list(),
+  });
+}
+
+/**
+ * The pieces one source contributed — the source-detail drawer's list. Scoped under
+ * the `sources` key prefix, so any sync/create/delete invalidation also refreshes it.
+ */
+export function useSourceItems(sourceId: string) {
+  return useQuery({
+    queryKey: queryKeys.sourceItems(sourceId),
+    queryFn: () => informationApi.page(0, 20, undefined, sourceId),
   });
 }
 

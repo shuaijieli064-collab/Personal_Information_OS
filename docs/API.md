@@ -63,6 +63,7 @@ disable one rule, or `RATE_LIMIT_ENABLED=false` to disable all of them.
 |---|---|---|---|
 | GET | `/information?page=&size=` | ✅ | paged (size≤100), published_at DESC; `{items, total}` |
 | GET | `/information?status=ACTIVE,KEPT` | ✅ | triage filter (comma-separated); response also carries `signalIds` (information → signal) and `sourceNames` (source id → name, for provenance on each row) |
+| GET | `/information?sourceId=` | ✅ | items one source contributed (source-detail drawer); user-scoped, so someone else's source id is an honest empty list, not a leak; combines with `status` |
 | PATCH | `/information/{id}` | ✅ | `{status: ACTIVE\|KEPT\|ARCHIVED}` — triage decision, persisted; bad status → 400 |
 | GET | `/information/{id}` | ✅ | user-scoped detail |
 | POST | `/information/{id}/summarize` | ✅ | AI summary |

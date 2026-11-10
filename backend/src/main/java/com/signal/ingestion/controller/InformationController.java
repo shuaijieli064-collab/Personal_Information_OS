@@ -64,6 +64,7 @@ public class InformationController {
     @GetMapping
     public ApiResponse<Map<String, Object>> list(
             @RequestParam(required = false) String status,
+            @RequestParam(name = "sourceId", required = false) UUID sourceId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         size = Math.min(Math.max(size, 1), 100);
@@ -71,7 +72,17 @@ public class InformationController {
                 Sort.by(Sort.Direction.DESC, "publishedAt", "createdAt"));
         List<String> wanted = parseStatuses(status);
         Page<Information> p;
-        if (wanted.isEmpty()) {
+        if (sourceId != null) {
+            // Source-detail drawer: the rows one source contributed. Keyed on the caller's
+            // userId too, so someone else's source id is an honest empty list, not a leak.
+            if (wanted.isEmpty()) {
+                p = repo.findByUserIdAndSourceId(userId(), sourceId, pageable);
+            } else if (wanted.size() == 1) {
+                p = repo.findByUserIdAndSourceIdAndStatus(userId(), sourceId, wanted.get(0), pageable);
+            } else {
+                p = repo.findByUserIdAndSourceIdAndStatusIn(userId(), sourceId, wanted, pageable);
+            }
+        } else if (wanted.isEmpty()) {
             p = repo.findByUserId(userId(), pageable);
         } else if (wanted.size() == 1) {
             p = repo.findByUserIdAndStatus(userId(), wanted.get(0), pageable);

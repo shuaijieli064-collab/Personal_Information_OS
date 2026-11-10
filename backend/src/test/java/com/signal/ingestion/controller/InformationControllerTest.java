@@ -236,4 +236,52 @@ class InformationControllerTest {
                 .andExpect(jsonPath("$.data.sourceNames." + sourceId).value("分布式系统笔记"))
                 .andExpect(jsonPath("$.data.items[0].sourceId").value(sourceId.toString()));
     }
+
+    /**
+     * Source-detail drawer: ?sourceId= narrows the feed to the rows that source
+     * contributed. The plain inbox query must not be the one answering — if it were,
+     * a drawer would silently show other sources' rows.
+     */
+    @Test
+    void sourceIdFilterReturnsOnlyThatSource() throws Exception {
+        authenticate();
+        Information i = info();
+        UUID sid = UUID.randomUUID();
+        when(repo.findByUserIdAndSourceId(eq(userId), eq(sid), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(i)));
+        when(signals.findByInformationIdIn(any())).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/information").param("sourceId", sid.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].title").value("Raft 精读"));
+
+        verify(repo, never()).findByUserId(any(), any(PageRequest.class));
+    }
+
+    @Test
+    void sourceIdCombinesWithAStatusList() throws Exception {
+        authenticate();
+        UUID sid = UUID.randomUUID();
+        when(repo.findByUserIdAndSourceIdAndStatusIn(eq(userId), eq(sid), any(), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc.perform(get("/api/v1/information")
+                        .param("sourceId", sid.toString())
+                        .param("status", "ACTIVE,KEPT"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items").isEmpty());
+    }
+
+    /** Someone else's source id (or a deleted one) is an honest empty list, not a 404. */
+    @Test
+    void unknownSourceIdIsAnHonestEmptyList() throws Exception {
+        authenticate();
+        UUID sid = UUID.randomUUID();
+        when(repo.findByUserIdAndSourceId(eq(userId), eq(sid), any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc.perform(get("/api/v1/information").param("sourceId", sid.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(0));
+    }
 }

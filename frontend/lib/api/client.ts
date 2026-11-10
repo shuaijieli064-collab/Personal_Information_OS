@@ -138,6 +138,7 @@ export type InformationItem = {
   status?: TriageStatus;
   /** Null for direct imports that never came from a connected source. */
   sourceId?: string;
+  createdAt: string;
 };
 
 export const sourcesApi = {
@@ -218,7 +219,7 @@ export const profileApi = {
 };
 
 export const informationApi = {
-  page: (page = 0, size = 20, status?: TriageStatus | `${TriageStatus},${TriageStatus}`) =>
+  page: (page = 0, size = 20, status?: TriageStatus | `${TriageStatus},${TriageStatus}`, sourceId?: string) =>
     api.get<{
       items: InformationItem[];
       total: number;
@@ -232,7 +233,8 @@ export const informationApi = {
       /** source id → source name, so a row can name where it came from. */
       sourceNames?: Record<string, string>;
     }>(
-      `/api/v1/information?page=${page}&size=${size}${status ? `&status=${status}` : ""}`),
+      `/api/v1/information?page=${page}&size=${size}${status ? `&status=${status}` : ""}` +
+        `${sourceId ? `&sourceId=${sourceId}` : ""}`),
   get: (id: string) => api.get<InformationItem>(`/api/v1/information/${id}`),
   understanding: (id: string) =>
     api.get<Understanding | null>(`/api/v1/information/${id}/understanding`),

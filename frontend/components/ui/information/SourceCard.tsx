@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   ArrowClockwise,
@@ -14,6 +15,7 @@ import {
 import { motion } from "framer-motion";
 import type { Source } from "@/lib/api/client";
 import { Spinner } from "@/components/ui/Spinner";
+import { DetailToggle, SourceDetail } from "./SourceDetail";
 
 function SourceIcon({ type, className }: { type: string; className?: string }) {
   const size = 18;
@@ -36,8 +38,7 @@ function SourceIcon({ type, className }: { type: string; className?: string }) {
   }
 }
 
-function relativeTime(iso: string | undefined, locale: string): string {
-  if (!iso) return "—";
+export function relativeTime(iso: string | undefined, locale: string): string {  if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   const minutes = Math.max(1, Math.round(diff / 60000));
@@ -106,6 +107,7 @@ export function SourceCard({
 }) {
   const t = useTranslations("SourceCard");
   const locale = useLocale();
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   return (
     <div
@@ -159,6 +161,11 @@ export function SourceCard({
           </div>
         ) : (
           <div className="flex shrink-0 items-center gap-2">
+            <DetailToggle
+              open={detailsOpen}
+              label={detailsOpen ? t("detailsClose") : t("details")}
+              onClick={() => setDetailsOpen((v) => !v)}
+            />
             {onDelete && (
               <button
                 type="button"
@@ -199,6 +206,8 @@ export function SourceCard({
           {t("lastSync")} {relativeTime(source.lastSyncedAt, locale)}
         </p>
       )}
+
+      {detailsOpen && <SourceDetail source={source} />}
 
       {syncing && (
         <motion.div

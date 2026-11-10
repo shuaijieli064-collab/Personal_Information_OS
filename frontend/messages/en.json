@@ -71,6 +71,18 @@
     "stagePipeline": "Pipeline",
     "stageInbox": "Inbox"
   },
+  "SourceDetail": {
+    "toggle": "Details",
+    "toggleClose": "Hide",
+    "urlLabel": "Address",
+    "addedLabel": "Added",
+    "itemsTitle": "Content from this source",
+    "itemsLoading": "Loading…",
+    "itemsEmpty": "Nothing synced from this source yet",
+    "itemsEmptyHint": "Hit Sync on the card to pull once",
+    "itemsError": "Couldn’t load the items",
+    "retry": "Retry"
+  },
   "InboxItem": {
     "keepHint": "Drag right to keep",
     "ignoreHint": "Drag left to ignore",

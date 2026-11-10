@@ -7,6 +7,7 @@ import {
   GearSix,
   Graph,
   House,
+  Rss,
   SignOut,
   Sparkle,
   Tray,
@@ -22,6 +23,9 @@ const GROUPS: { items: NavItem[] }[] = [
     items: [
       { href: "/today", key: "today", icon: House },
       { href: "/inbox", key: "inbox", icon: Tray },
+      // The inputs have a home too — without this rail entry /sources was an
+      // orphaned page no navigation reached (the "看不到信息源详情" report).
+      { href: "/sources", key: "sources", icon: Rss },
       { href: "/discover", key: "discover", icon: Compass },
     ],
   },

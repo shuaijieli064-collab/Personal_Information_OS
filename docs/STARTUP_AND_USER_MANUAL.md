@@ -35,6 +35,18 @@
 
 ## 2. 快速开始（5 分钟）
 
+**一键方式（推荐，本机 Windows）**：
+
+```powershell
+pwsh -File scripts/start-dev.ps1          # 起 docker→postgres→backend→frontend，顺序拉全；已起的自动跳过，可安全重跑
+pwsh -File scripts/start-dev.ps1 -Browser # 同上，起来后自动打开一键登录页
+pwsh -File scripts/stop-dev.ps1           # 停 frontend/backend 进程 + postgres 容器（Docker Desktop 保留）
+```
+
+输出结尾给出登录入口与 seed 账号路径（`backend\target\.learn.json`，dev-learn-…@example.com）；日志在 `scripts/logs/`。首次没有 `.next` 或 jar 时脚本会自动构建/打包。
+
+手动方式（等价四人步）：
+
 ```bash
 # 1) 基础设施：PostgreSQL 16 + pgvector
 docker compose up -d

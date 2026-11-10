@@ -150,6 +150,23 @@ export const sourcesApi = {
       `/api/v1/sources/${id}/sync`),
 };
 
+/** One live-verified source suggestion from the discover pipeline. */
+export type SourceSuggestion = {
+  title: string; url: string; type: string; reason: string;
+};
+
+export type DiscoverSuggest = {
+  /** Verified candidates only; empty + fallback="manual" means the engine degraded. */
+  suggestions: SourceSuggestion[];
+  /** null on the happy path; the UI shows an honest placeholder when it names one. */
+  fallback: string | null;
+};
+
+export const discoverApi = {
+  suggest: (body: { query: string; limit?: number }) =>
+    api.post<DiscoverSuggest>("/api/v1/discover/suggest", body),
+};
+
 export type Understanding = {
   classification?: string; confidence?: number; status?: string;
   summary?: string; keyPoints?: string[]; topics?: string[];

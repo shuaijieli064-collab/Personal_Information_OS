@@ -5,6 +5,7 @@ import {
   agentApi,
   automationApi,
   briefApi,
+  discoverApi,
   informationApi,
   knowledgeApi,
   notificationApi,
@@ -25,7 +26,6 @@ export const queryKeys = {
   sources: ["sources"] as const,
   information: (id: string) => ["information", id] as const,
   understanding: (id: string) => ["understanding", id] as const,
-  discover: ["discover"] as const,
   agentTools: ["agent", "tools"] as const,
   agentRunsAll: ["agent", "runs"] as const,
   agentRuns: (page: number) => ["agent", "runs", page] as const,
@@ -140,31 +140,19 @@ export function useSyncSource() {
   });
 }
 
-export type DiscoverItem = {
-  name: string;
-  /** i18n key suffix under `Discover.reason` — never prose. */
-  reasonKey: string;
-  /** i18n key suffix under `Discover.category`. */
-  categoryKey: string;
-  confidence: number;
+export type SourceSuggestion = {
+  title: string; url: string; type: string; reason: string;
 };
 
 /**
- * Discover — AI-recommended sources. GET /api/v1/discover is still planned
- * (docs/ROADMAP.md, no controller yet), so the card set is a deterministic local
- * placeholder and stays that way until the endpoint ships. Everything a user can
- * *read* is an i18n key resolved by the page — only the product names are
- * literal, because they are proper nouns in both locales.
+ * Discover — the user states an information need, the suggest pipeline returns
+ * live-verified source candidates. A user-triggered action, so it is a mutation
+ * (same rule as knowledge search), never an auto-fetching query.
  */
-export function useDiscover() {
-  return useQuery({
-    queryKey: queryKeys.discover,
-    queryFn: async (): Promise<DiscoverItem[]> => [
-      { name: "Spring AI", reasonKey: "springAi", categoryKey: "library", confidence: 92 },
-      { name: "Project Reactor", reasonKey: "projectReactor", categoryKey: "library", confidence: 87 },
-      { name: "JVM Internals", reasonKey: "jvmInternals", categoryKey: "learning", confidence: 84 },
-      { name: "LangChain4j", reasonKey: "langchain4j", categoryKey: "library", confidence: 79 },
-    ],
+export function useSuggestSources() {
+  return useMutation({
+    mutationFn: (body: { query: string; limit?: number }) => discoverApi.suggest(body),
+    // suggestions are momentary (fresh fetches, fresh model answers) — nothing to cache
   });
 }
 

@@ -274,19 +274,23 @@
   "Discover": {
     "title": "发现",
     "basedOn": "基于你的目标",
-    "whyRecommended": "为什么推荐",
-    "loadFailed": "推荐加载失败",
     "basedOnEmpty": "完善你的目标与兴趣后，这里会更懂你",
-    "category": {
-      "library": "开发库",
-      "learning": "学习资源"
-    },
-    "reason": {
-      "springAi": "你在学 RAG 与 AI 应用，Spring AI 是 Java 侧最直接的落点。",
-      "projectReactor": "你做后端性能优化，Reactor 的响应式模型值得放进工具箱。",
-      "jvmInternals": "DDIA 之外的硬基础——延迟从哪来，最终要回到 JVM 里找答案。",
-      "langchain4j": "和 Spring AI 对照着看，LangChain4j 的编排抽象能补全你的选型视野。"
-    }
+    "inputLabel": "想持续关注什么",
+    "inputPlaceholder": "例如：持续关注 PostgreSQL 的向量检索…",
+    "suggestAction": "找信息源",
+    "verifiedHint": "每一条候选都会当场抓取验证，验证不通过的不展示。",
+    "verified": "已验证",
+    "add": "添加",
+    "added": "已添加",
+    "whyRecommended": "为什么推荐",
+    "suggestFailed": "推荐请求失败，请稍后再试。",
+    "retry": "重试",
+    "noVerifiedHint": "没有找到验证通过的信息源。",
+    "noVerifiedSub": "换个说法再试一次，或先到「来源」页手动添加。",
+    "fallbackTitle": "推荐引擎暂不可用",
+    "fallbackBody": "这次没有生成验证过的推荐 —— 可稍后重试，或直接在「来源」页手动添加。",
+    "presetsLabel": "从哪里开始",
+    "presetsHint": "输入一个想关注的话题（例如「Kafka 架构演进」），系统会给出当场验证过的信息源候选，加不加由你决定。"
   },
   "Knowledge": {
     "title": "知识",

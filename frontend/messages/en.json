@@ -274,19 +274,23 @@
   "Discover": {
     "title": "Discover",
     "basedOn": "Based on your goals",
-    "whyRecommended": "Why recommended?",
-    "loadFailed": "Failed to load recommendations",
     "basedOnEmpty": "Add goals and interests and this page will learn you",
-    "category": {
-      "library": "Library",
-      "learning": "Learning"
-    },
-    "reason": {
-      "springAi": "You are learning RAG and AI applications — Spring AI is the most direct path on the JVM.",
-      "projectReactor": "You tune backend performance; the reactive model belongs in your toolbox.",
-      "jvmInternals": "Hard foundations next to DDIA — a latency spike always comes back to the JVM.",
-      "langchain4j": "Weighed against Spring AI, its orchestration abstraction rounds out your options."
-    }
+    "inputLabel": "What do you want to follow",
+    "inputPlaceholder": "e.g. keeping up with vector search in PostgreSQL…",
+    "suggestAction": "Find sources",
+    "verifiedHint": "Every candidate is fetch-verified on the spot — unverified guesses never show up.",
+    "verified": "Verified",
+    "add": "Add",
+    "added": "Added",
+    "whyRecommended": "Why recommended?",
+    "suggestFailed": "The suggestion request failed. Please try again.",
+    "retry": "Retry",
+    "noVerifiedHint": "No verified source found.",
+    "noVerifiedSub": "Try rephrasing, or add a source manually on the Sources page for now.",
+    "fallbackTitle": "Recommender unavailable",
+    "fallbackBody": "No verified suggestions came back this time — retry shortly, or add a source manually on the Sources page.",
+    "presetsLabel": "Where to start",
+    "presetsHint": "Type a topic you want to follow (e.g. \"Kafka architecture\") and verified source candidates come back for you to approve."
   },
   "Knowledge": {
     "title": "Knowledge",

@@ -26,7 +26,8 @@ class NotificationServiceTest {
 
     private final NotificationRepository repo = mock(NotificationRepository.class);
     private final SignalRepository signals = mock(SignalRepository.class);
-    private final NotificationService service = new NotificationService(repo, signals);
+    private final WebhookNotifier webhook = mock(WebhookNotifier.class);
+    private final NotificationService service = new NotificationService(repo, signals, webhook);
 
     private final UUID user = UUID.randomUUID();
 
@@ -80,6 +81,7 @@ class NotificationServiceTest {
         assertEquals("JOB_FAILED", dto.type());
         assertTrue(dto.title().contains("SOURCE_SYNC"));
         assertEquals("boom", dto.body());
+        verify(webhook).push("JOB_FAILED", dto.title(), "boom");
     }
 
     // ── user scoping ────────────────────────────────────────────────────────────

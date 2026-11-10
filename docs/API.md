@@ -85,10 +85,10 @@ disable one rule, or `RATE_LIMIT_ENABLED=false` to disable all of them.
 Authorization: every resource query uses `findByIdAndUserId(...)` — accessing another
 user's resource returns 404 (IDOR protected).
 
-## Discover / Knowledge / AI (planned — 无 controller)
+## Discover / Knowledge / AI
 | Method | Path | Status |
 |---|---|---|
-| GET | `/discover?path=` | ⏳ |
+| POST | `/discover/suggest` | ✅ (Phase 9-N2 — body `{query, limit?}`，回答只含**当场验证通过**的 `{title,url,type,reason}` 候选；引擎不可用时 `{suggestions:[], fallback:"manual"}`，UI 显示诚实占位而非伪造推荐) |
 | POST | `/knowledge/reindex` | ✅ (rebuild caller's chunk corpus; Phase 6 K2) |
 | GET | `/knowledge/stats` | ✅ (`{documents, chunks, embedded, lastIndexedAt}` — corpus shape for the console's first screen; `lastIndexedAt` is `null` on an empty corpus) |
 | POST | `/knowledge/search` | ✅ (K3 retrieval over the caller's own corpus: `mode=HYBRID/VECTOR/KEYWORD`, `rerank`) |

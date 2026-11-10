@@ -19,6 +19,8 @@
 | 8 | Automation | Scheduled Sync、Daily Brief、Notification、Feedback Loop、Job Monitoring、Retry/Dead Letter | ✅ Frozen 2026-10-16（`docs/PHASE_8_FINAL_QA.md`） |
 | **5.5+** | **UI 重铸 · 方向 B「晨报 The Brief」** | 四轴反转设计语言、报头 + 竖排文字轨 + 头版语法、晨/晚报双 impression、字体自托管（构建离线化） | **✅ 完成 2026-10-17（`docs/UI_RECAST_BRIEF.md`）** |
 | **L** | **Landing（单体主机落地）** | `backend/Dockerfile`、4 容器生产编排（compose + Caddy 同域 `/api` 路由）、`.env.production.example`、备份/恢复脚本、VM Runbook（`docs/DEPLOYMENT.md`） | ✅ 2026-11-03（镜像构建与 config 校验见下） |
+| **9-N1** | **通知 Webhook 推送** | `WebhookNotifier`：站点内通知经 `NOTIFY_WEBHOOK_URL` 外发（飞书/企微/钉钉/通用 JSON 四方言、钉钉 HMAC 加签、1800 字符上限、类型白名单、commit 后虚拟线程投递 + 一次重试、失败只记 warn 不阻塞主链路）；`.env.example`/`.env.production.example`/compose 透传齐备 | ✅ 2026-11-10（379/379 测试 + 真实 sink 运行证据，`RUNTIME_VERIFICATION` #127） |
+| **9-N2** | **Discover 源推荐** | `/discover` 页重铸：用户描述想看什么 → 一次 structured 模型提议（喂入 goals/interests 做个性化）→ `CandidateVerifier` 对每个候选**当场抓取验证**（RSS 须解析出 ≥1 条目、GitHub 仓库须经公共 API 探真）→ 只返回验证通过者，用户自己点添加。无 confidence 假数字；模型违约/不可用降级 `{fallback:"manual"}`（UI 显式标注），显式空数组是诚实的空结果；全部候选继承 SSRF 防护/超时/大小上限（既有 `HttpFetcher/FeedGateway`） | ✅ 2026-11-10（后端 26/26 + 前端 97/97 + lint/tsc/build 全绿 + 真实端到端证据，`RUNTIME_VERIFICATION` #128） |
 
 **硬性顺序**：先 Hardening，再 5.5，再 6 → 7 → 8。不在不稳定基础上堆功能。
 5.5+ 是在 Phase 8 冻结之后、对**视觉层**的独立重铸，不触碰 Phase 1–8 的任何后端契约。
@@ -114,10 +116,11 @@
 ### Phase 9+ 候选（原 Future 内容，不变）
 
 - **Phase 6–8 已全部完成**（2026-10-16）。主线功能闭环：信息入库 → 理解/评分 → 检索/重排/RAG → 代理执行 → 定时自动化与通知。
+- **Phase 9 已开始**（2026-11-10）：N1 通知 Webhook 推送落地（上表 9-N1 行）；N2 Discover 源推荐落地（上表 9-N2 行）。
 - **Phase 9 候选**（均为独立阶段，不在 Phase 8 冻结范围）：
   - 分布式调度（多实例互斥 / 选主），解除单实例假设。
-  - 排期表达力：cron 表达式、自然语言排期。
-  - 通知推送通道：邮件、IM（企业微信 / 飞书）、WebPush。
+  - 排期表达力：cron 表达式、自然语言排期，「每天早 8 点」级别的时点语义（目前简报送达时间随固定间隔漂移）。
+  - 通知推送扩展：邮件 SMTP、WebPush、机器人之外的完整 IM SDK；webhook 群机器人通道已于 N1 落地。
   - 代理计划升级：依赖图、失败后重新规划、跨运行记忆。
   - `/api/v1/discover` 后端端点（前端目前是本地兜底，端点上线后恢复探测）。
   - 检索规模化：>10⁵ chunks 的延迟与召回基准、按文档/时间范围过滤、多轮问答。

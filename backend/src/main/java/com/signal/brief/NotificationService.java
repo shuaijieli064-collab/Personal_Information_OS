@@ -12,6 +12,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,10 +39,13 @@ public class NotificationService {
 
     private final NotificationRepository repo;
     private final SignalRepository signals;
+    private final WebhookNotifier webhook;
 
-    public NotificationService(NotificationRepository repo, SignalRepository signals) {
+    public NotificationService(NotificationRepository repo, SignalRepository signals,
+                               WebhookNotifier webhook) {
         this.repo = repo;
         this.signals = signals;
+        this.webhook = webhook;
     }
 
     /** Newest-first page of the inbox; {@code unreadOnly} filters to unread. */
@@ -124,7 +129,28 @@ public class NotificationService {
         n.setTitle(title);
         n.setBody(body);
         n.setPayload(payload);
-        return NotificationDto.from(repo.save(n));
+        Notification saved = repo.save(n);
+        fireWebhook(saved);
+        return NotificationDto.from(saved);
+    }
+
+    /**
+     * The single outbound hook: every notification created through {@code create} has one
+     * chance to be pushed to the webhook channel. Firing <b>after commit</b> so a webhook
+     * can never announce a notification that rolled back; without an active transaction
+     * (tests) it fires inline. The notifier itself delivers asynchronously and cannot throw.
+     */
+    private void fireWebhook(Notification n) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    webhook.push(n.getType(), n.getTitle(), n.getBody());
+                }
+            });
+        } else {
+            webhook.push(n.getType(), n.getTitle(), n.getBody());
+        }
     }
 
     private static String signalPayload(UUID signalId) {

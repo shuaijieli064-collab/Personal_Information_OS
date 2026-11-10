@@ -273,7 +273,7 @@ const arr = (a) => jq(a);
 const lines = [];
 lines.push("BEGIN;");
 lines.push(`DO $$
-DECLARE uid uuid; iid uuid; infid uuid; sigid uuid; tid uuid; jid uuid;`);
+DECLARE uid uuid; iid uuid; infid uuid; sigid uuid; sigcid uuid; tid uuid; jid uuid;`);
 SOURCES.forEach((s) => lines.push(`  src_${s.key} uuid;`));
 lines.push(`BEGIN
   SELECT id INTO uid FROM users WHERE email = ${q(email)};
@@ -337,13 +337,22 @@ ITEMS.forEach((it, i) => {
   VALUES (infid, 'zh', 'ARTICLE', ${q(it.classification)}, ${arr(tags)}, '[]', ${q(it.summary)}, 'COMPLETED', 'seed', 'v1',
           now() - interval '${it.daysAgo} days' - interval '${it.hoursAgo} hours', 0.9, ${arr(it.keyPoints)}, ${it.relevance});
 
-  INSERT INTO signals (user_id, information_id, title, summary, signal_score, why_it_matters, urgency, status, created_at, updated_at)
-  VALUES (uid, infid, ${q(it.title)}, ${q(it.summary)}, ${it.score}, ${q(it.why)}, ${q(it.urgency)}, ${q(it.status)},
+  /* dedup shape after V24: a cluster anchors the signal evidence, signal_sources
+     links cluster → its corroborating information rows (cluster_id, information_id) */
+  INSERT INTO signal_clusters (user_id, title, anchor_information_id, confidence, created_at, updated_at)
+  VALUES (uid, ${q(it.title)}, infid, 0.90,
+          now() - interval '${it.daysAgo} days' - interval '${it.hoursAgo} hours',
+          now() - interval '${it.daysAgo} days' - interval '${it.hoursAgo} hours')
+  RETURNING id INTO sigcid;
+
+  INSERT INTO signals (user_id, information_id, cluster_id, title, summary, signal_score, why_it_matters, urgency, status, created_at, updated_at)
+  VALUES (uid, infid, sigcid, ${q(it.title)}, ${q(it.summary)}, ${it.score}, ${q(it.why)}, ${q(it.urgency)}, ${q(it.status)},
           now() - interval '${it.daysAgo} days' - interval '${it.hoursAgo} hours',
           now() - interval '${it.daysAgo} days' - interval '${it.hoursAgo} hours')
   RETURNING id INTO sigid;
 
-  INSERT INTO signal_sources (signal_id, source_item_id) VALUES (sigid, iid) ON CONFLICT DO NOTHING;`);
+  INSERT INTO signal_sources (cluster_id, information_id, similarity)
+  VALUES (sigcid, infid, 1.000) ON CONFLICT DO NOTHING;`);
 
   for (const t of tags) {
     lines.push(`

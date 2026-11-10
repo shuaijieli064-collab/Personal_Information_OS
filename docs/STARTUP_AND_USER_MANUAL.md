@@ -11,7 +11,6 @@
 | 组件 | 技术 | 端口 | 容器/进程 |
 |---|---|---|---|
 | PostgreSQL + pgvector | pgvector/pgvector:pg16 | 5432 | Docker 容器 `signal-postgres` |
-| Redis | redis:7-alpine | 6379 | Docker 容器 `signal-redis` |
 | 后端 | Spring Boot 4.1.1 + Java 21 | **8080** | `java -jar` 或 `./mvnw spring-boot:run` |
 | 前端 | Next.js 16 + React 19 | **3000** | `next dev` 或 `next start` |
 | 健康检查 | Actuator | 8080 | `GET /actuator/health` |
@@ -37,7 +36,7 @@
 ## 2. 快速开始（5 分钟）
 
 ```bash
-# 1) 基础设施：PostgreSQL + pgvector、Redis
+# 1) 基础设施：PostgreSQL 16 + pgvector
 docker compose up -d
 
 # 2) 后端（新开终端；首次启动会自动跑 Flyway 迁移，约 20 秒就绪）
@@ -61,8 +60,8 @@ cd frontend && npm run dev
 ### 3.1 基础设施（Docker）
 
 ```bash
-docker compose up -d                 # 创建并启动 postgres + redis
-docker ps                            # 看到 signal-postgres / signal-redis 即正常
+docker compose up -d                 # 创建并启动 postgres（pgvector 镜像）
+docker ps                            # 看到 signal-postgres 即正常
 ```
 
 首次启动会创建命名卷 `signal-pgdata`，**数据在容器重建后依然保留**。想彻底重来（清空所有数据）：
@@ -157,6 +156,9 @@ cp .env.example backend/.env
 | `AUTOMATION_ENABLED` / `AUTOMATION_TICK_MS` | 调度器总开关 / 扫描间隔（毫秒） | true / 60000 |
 | `KNOWLEDGE_CONTEXT_MAX_CHARS` | RAG 上下文预算（≈10 个 chunk） | 8000 |
 | `AGENT_MAX_STEPS` / `AGENT_MAX_PLAN_STEPS` | Agent 单次运行的步骤预算 / 规划器硬上限 | 6 / 10 |
+| `NOTIFY_WEBHOOK_URL` | **通知外发 webhook**：填入 IM 群机器人的 Webhook 地址后，简报 / 任务死信 / 重要信号会主动推送到你的手机。留空 = 通道关闭，站内收件箱照常 | 空（关闭） |
+| `NOTIFY_WEBHOOK_TYPE` / `NOTIFY_WEBHOOK_SECRET` | Payload 方言：`feishu` / `wecom` / `dingtalk` / `json`；`secret` 仅钉钉加签机器人才填 | feishu / 空 |
+| `NOTIFY_WEBHOOK_TYPES` | 哪些通知类型值得外发（逗号分隔） | `DAILY_BRIEF,JOB_FAILED,IMPORTANT_SIGNAL` |
 
 > **安全红线：API Key 永不进代码、永不进前端**，只存在于 `backend/.env` 或部署平台的环境变量里。
 
@@ -226,6 +228,15 @@ docker exec -i signal-postgres psql -U signal -d signal \
 ### 6.7 自动化（/automation）— 调度与简报
 
 三类任务：**信息源同步 / 每日简报 / 反馈闭环**，各自独立节奏（默认 60 秒扫一次 overdue）。每页可看运行历史（成功/失败/第几次尝试/详情）、暂停/恢复、立即运行；连续失败 3 次自动停用并发一条失败通知。**每日简报**由模型基于当日信号写成一段中文评述，替代你自己翻 126 条。通知铃铛的数字来自这里。
+
+**把通知推到手机**（Phase 9-N1，可选）：新建一个飞书群，群设置 → 机器人 → 添加自定义机器人，复制它的 Webhook 地址，写进 `backend/.env`：
+
+```env
+NOTIFY_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx
+NOTIFY_WEBHOOK_TYPE=feishu
+```
+
+重启后端，**每日简报、任务死信、重要信号**三类通知会即时推送到飞书（人不在电脑前也能收到）。企微机器人的群语法是 `wecom`，钉钉机器人是 `dingtalk`（带加签能力的把 `secret` 填上）；其它平台（ntfy、IFTTT、自建脚本）用 `json`,收到的是 `{"type","title","body"}` 对象。webhook 只是便利通道：**站内收件箱永远是权威**，推送失败只打扰日志，不影响任何业务流程。
 
 ### 6.8 信息源（/sources）
 

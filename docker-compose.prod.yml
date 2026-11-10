@@ -66,6 +66,12 @@ services:
       AI_RERANK_API_KEY: ${AI_RERANK_API_KEY:-}
       AUTOMATION_ENABLED: ${AUTOMATION_ENABLED:-true}
       JAVA_OPTS: ${JAVA_OPTS:--Xms128m -Xmx700m -XX:+ExitOnOutOfMemoryError}
+      # Outbound webhook push (Phase 9-N1): blank URL = channel disabled.
+      NOTIFY_WEBHOOK_URL: ${NOTIFY_WEBHOOK_URL:-}
+      NOTIFY_WEBHOOK_TYPE: ${NOTIFY_WEBHOOK_TYPE:-feishu}
+      NOTIFY_WEBHOOK_SECRET: ${NOTIFY_WEBHOOK_SECRET:-}
+      NOTIFY_WEBHOOK_TYPES: ${NOTIFY_WEBHOOK_TYPES:-DAILY_BRIEF,JOB_FAILED,IMPORTANT_SIGNAL}
+      NOTIFY_WEBHOOK_TIMEOUT_MS: ${NOTIFY_WEBHOOK_TIMEOUT_MS:-10000}
     depends_on:
       postgres:
         condition: service_healthy

@@ -43,7 +43,8 @@ class BriefServiceTest {
     private final NotificationRepository notificationRepo = mock(NotificationRepository.class);
     private final FakeAI ai = new FakeAI();
 
-    private final NotificationService notifications = new NotificationService(notificationRepo, signals);
+    private final NotificationService notifications = new NotificationService(
+            notificationRepo, signals, mock(WebhookNotifier.class));
     private final BriefService briefs = new BriefService(signals, information, notifications, ai, 10);
 
     private final UUID user = UUID.randomUUID();

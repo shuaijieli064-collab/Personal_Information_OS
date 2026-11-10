@@ -72,6 +72,10 @@ image **rebuild** (it is a compile-time constant, not runtime env).
    - AI keys — chat / embedding / rerank may point at one provider (DashScope) or
      three different ones. Without any key, AI features degrade to deterministic
      mock/heuristic behaviour (verified in Phases 5–8) — the app still boots.
+   - Optional: `NOTIFY_WEBHOOK_URL` (+ `NOTIFY_WEBHOOK_TYPE` feishu/wecom/dingtalk/json)
+     pushes the daily brief, dead-lettered jobs and important signals to an IM group
+     bot so alerts reach a phone without the app open. Blank = off, the in-app
+     notification inbox always keeps working either way. See `.env.production.example`.
 
 3. **Build and start** (first run pulls/builds for a few minutes):
 
